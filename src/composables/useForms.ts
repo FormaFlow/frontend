@@ -1,0 +1,88 @@
+import {useFormsStore} from '@/stores/forms'
+import {useUiStore} from '@/stores/ui'
+import type {CreateFormRequest, UpdateFormRequest} from '@/types/form'
+
+export const useForms = () => {
+  const formsStore = useFormsStore()
+  const uiStore = useUiStore()
+
+  const createForm = async (data: CreateFormRequest) => {
+    try {
+      const form = await formsStore.createForm(data)
+      uiStore.addNotification({
+        type: 'success',
+        message: 'Form created successfully'
+      })
+      return form
+    } catch (error: any) {
+      uiStore.addNotification({
+        type: 'error',
+        message: error.message || 'Failed to create form'
+      })
+      throw error
+    }
+  }
+
+  const updateForm = async (id: string, data: UpdateFormRequest) => {
+    try {
+      const form = await formsStore.updateForm(id, data)
+      uiStore.addNotification({
+        type: 'success',
+        message: 'Form updated successfully'
+      })
+      return form
+    } catch (error: any) {
+      uiStore.addNotification({
+        type: 'error',
+        message: error.message || 'Failed to update form'
+      })
+      throw error
+    }
+  }
+
+  const deleteForm = async (id: string) => {
+    try {
+      await formsStore.deleteForm(id)
+      uiStore.addNotification({
+        type: 'success',
+        message: 'Form deleted successfully'
+      })
+    } catch (error: any) {
+      uiStore.addNotification({
+        type: 'error',
+        message: error.message || 'Failed to delete form'
+      })
+      throw error
+    }
+  }
+
+  const publishForm = async (id: string) => {
+    try {
+      const form = await formsStore.publishForm(id)
+      uiStore.addNotification({
+        type: 'success',
+        message: 'Form published successfully'
+      })
+      return form
+    } catch (error: any) {
+      uiStore.addNotification({
+        type: 'error',
+        message: error.message || 'Failed to publish form'
+      })
+      throw error
+    }
+  }
+
+  return {
+    forms: formsStore.forms,
+    currentForm: formsStore.currentForm,
+    loading: formsStore.loading,
+    pagination: formsStore.pagination,
+    fetchForms: formsStore.fetchForms,
+    fetchForm: formsStore.fetchForm,
+    createForm,
+    updateForm,
+    deleteForm,
+    publishForm
+  }
+}
