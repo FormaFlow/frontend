@@ -36,7 +36,7 @@
 
       <!-- Fields -->
       <div class="card">
-        <h2 class="text-xl font-bold mb-4">{{ $t('forms.field_name') }}s</h2>
+        <h2 class="text-xl font-bold mb-4">{{ $t('forms.field_name') }}</h2>
         <div v-if="currentForm.fields.length === 0" class="text-center py-8 text-gray-500">
           No fields yet
         </div>

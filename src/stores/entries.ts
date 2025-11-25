@@ -22,9 +22,14 @@ export const useEntriesStore = defineStore('entries', () => {
       const params = {page}
       if (formId) params.form_id = formId
       const response = await entriesApi.list(params)
-      if (response.data) {
-        entries.value = response.data.data
-        pagination.value = response.data.pagination
+      if (response) {
+        entries.value = response.entries || []
+        pagination.value = {
+          total: response.total || 0,
+          per_page: response.limit || 10,
+          current_page: 1,
+          last_page: Math.ceil((response.total || 0) / (response.limit || 10))
+        }
       }
     } catch (err: any) {
       error.value = err.message
@@ -39,8 +44,8 @@ export const useEntriesStore = defineStore('entries', () => {
     error.value = null
     try {
       const response = await entriesApi.get(id)
-      if (response.data) {
-        currentEntry.value = response.data
+      if (response) {
+        currentEntry.value = response
       }
     } catch (err: any) {
       error.value = err.message
@@ -55,9 +60,9 @@ export const useEntriesStore = defineStore('entries', () => {
     error.value = null
     try {
       const response = await entriesApi.create(data)
-      if (response.data) {
-        entries.value.unshift(response.data)
-        return response.data
+      if (response) {
+        entries.value.unshift(response)
+        return response
       }
     } catch (err: any) {
       error.value = err.message
@@ -72,15 +77,15 @@ export const useEntriesStore = defineStore('entries', () => {
     error.value = null
     try {
       const response = await entriesApi.update(id, data)
-      if (response.data) {
+      if (response) {
         const index = entries.value.findIndex(e => e.id === id)
         if (index !== -1) {
-          entries.value[index] = response.data
+          entries.value[index] = response
         }
         if (currentEntry.value?.id === id) {
-          currentEntry.value = response.data
+          currentEntry.value = response
         }
-        return response.data
+        return response
       }
     } catch (err: any) {
       error.value = err.message

@@ -37,7 +37,7 @@
               </span>
             </div>
             <p class="text-sm text-gray-600 dark:text-gray-400">
-              Тип: {{ $t(`forms.fieldtypes.${field.type}`) }} • Имя: {{ field.name }}
+              Тип: {{ $t(`forms.field_types.${field.type}`) }} • Имя: {{ field.name }}
             </p>
             <p v-if="field.description" class="text-sm text-gray-500 mt-1">
               {{ field.description }}
@@ -212,10 +212,12 @@ const emit = defineEmits<{
   'delete-field': [fieldId: string]
 }>()
 
-const fields = computed(() => props.fields)
-const sortedFields = computed(() =>
-    [...fields.value].sort((a, b) => a.order - b.order)
-)
+const sortedFields = computed(() => {
+  if (!props.fields || !Array.isArray(props.fields)) {
+    return []
+  }
+  return [...props.fields].sort((a, b) => a.order - b.order)
+})
 
 const showAddFieldModal = ref(false)
 const editingField = ref<FormField | null>(null)
@@ -290,7 +292,7 @@ const confirmDeleteField = (field: FormField) => {
 }
 
 const moveField = (index: number, direction: 'up' | 'down') => {
-  const newFields = [...sortedFields.value]
+  const newFields = [...sortedFields]
   const targetIndex = direction === 'up' ? index - 1 : index + 1
 
   const temp = newFields[index]
@@ -301,7 +303,7 @@ const moveField = (index: number, direction: 'up' | 'down') => {
     field.order = idx
   })
 
-  emit('update:modelValue', newFields)
+  emit('update-field', newFields)
 }
 
 const addOption = () => {

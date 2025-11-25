@@ -21,10 +21,6 @@ export const useFormsStore = defineStore('forms', () => {
     try {
       const response = await formsApi.list({page, search})
       if (response) {
-        // TODO remove after debug
-        console.log('------- RESPONSE')
-        console.log(response)
-
         forms.value = response.forms
         pagination.value = {
           total: response.total,
@@ -32,10 +28,6 @@ export const useFormsStore = defineStore('forms', () => {
           current_page: Math.ceil((response.offset / response.limit) + 1),
           last_page: Math.ceil(response.total / response.limit)
         }
-
-        console.log('------ RESULTS');
-        console.log(forms.value)
-        console.log(pagination.value)
       }
     } catch (err: any) {
       error.value = err.message

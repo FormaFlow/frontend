@@ -95,9 +95,9 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
     try {
       const response = await authApi.getProfile()
-      if (response.data) {
-        user.value = response.data
-        localStorage.setItem('user', JSON.stringify(response.data))
+      if (response) {
+        user.value = response
+        localStorage.setItem('user', JSON.stringify(response))
       }
     } catch (err: any) {
       error.value = err.message
