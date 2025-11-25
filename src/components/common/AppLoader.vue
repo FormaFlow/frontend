@@ -11,5 +11,4 @@
 </template>
 
 <script setup lang="ts">
-// Simple loader component - no configuration needed
 </script>

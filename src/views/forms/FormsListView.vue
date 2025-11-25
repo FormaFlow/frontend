@@ -91,7 +91,6 @@ import {debounce} from '@/utils/helpers'
 import {storeToRefs} from "pinia";
 import {useFormsStore} from "@/stores/forms";
 
-const formsStore = useFormsStore()
 const {
   forms,
   loading,
@@ -104,18 +103,10 @@ const filteredForms = computed(() => {
   if (!Array.isArray(forms.value)) {
     return []
   }
-    return forms.value
+  return forms.value
 })
 
 const searchQuery = ref('')
-
-// const filteredForms = computed(() => {
-//   if (!searchQuery.value) return forms
-//   return forms.filter(f =>
-//       f.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-//       f.description?.toLowerCase().includes(searchQuery.value.toLowerCase())
-//   )
-// })
 
 const handleSearch = debounce(async () => {
   await fetchForms(1, searchQuery.value)

@@ -200,7 +200,7 @@ import type {FormField, FormFieldOption} from '@/types/form'
 const {t} = useI18n()
 
 interface Props {
-  modelValue: FormField[]
+  fields: FormField[]
   formId?: string
 }
 
@@ -212,7 +212,7 @@ const emit = defineEmits<{
   'delete-field': [fieldId: string]
 }>()
 
-const fields = computed(() => props.modelValue)
+const fields = computed(() => props.fields)
 const sortedFields = computed(() =>
     [...fields.value].sort((a, b) => a.order - b.order)
 )
@@ -297,7 +297,6 @@ const moveField = (index: number, direction: 'up' | 'down') => {
   newFields[index] = newFields[targetIndex]
   newFields[targetIndex] = temp
 
-  // Обновляем order
   newFields.forEach((field, idx) => {
     field.order = idx
   })

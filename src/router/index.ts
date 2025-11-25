@@ -83,7 +83,6 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
-  // TODO remove debug
   console.log('Navigation guard:', {
     to: to.name,
     from: from.name,

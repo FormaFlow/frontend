@@ -91,7 +91,6 @@ const handleLogin = async () => {
       password: form.password
     })
 
-    // await router.push('/')
   } catch (error) {
     console.error('Login error:', error)
   }

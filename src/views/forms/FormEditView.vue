@@ -25,8 +25,8 @@
             <label class="form-label">{{ $t('forms.form_description') }}</label>
             <textarea v-model="form.description" class="form-textarea" rows="4"></textarea>
           </div>
-          <AppButton type="submit" :disabled="updateLoading">
-            {{ updateLoading ? $t('common.loading') : $t('common.save') }}
+          <AppButton type="submit" :disabled="updateLoading.value">
+            {{ updateLoading.value ? $t('common.loading') : $t('common.save') }}
           </AppButton>
         </form>
       </div>
@@ -42,42 +42,34 @@
             @delete-field="handleDeleteField"
         />
       </div>
-<!--      <div class="card">-->
-<!--        <h2 class="text-xl font-bold mb-4">{{ $t('forms.field_name') }}</h2>-->
-<!--        <div v-if="currentForm?.fields" class="space-y-4">-->
-<!--          <div v-for="(field, idx) in currentForm.fields" :key="field.id" class="p-4 border rounded-lg">-->
-<!--            <div class="flex justify-between items-start">-->
-<!--              <div>-->
-<!--                <p class="font-medium">{{ field.label }}</p>-->
-<!--                <p class="text-sm text-gray-600 dark:text-gray-400">{{ field.type }}</p>-->
-<!--              </div>-->
-<!--              <button type="button" class="btn-danger btn-sm" @click="removeField(field.id)">-->
-<!--                {{ $t('common.delete') }}-->
-<!--              </button>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {onMounted, reactive} from 'vue'
+import {onMounted, reactive, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
+import {storeToRefs} from "pinia"
 import AppInput from '@/components/common/AppInput.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
+import FormFieldBuilder from '@/components/forms/FormFieldBuilder.vue'
 import {useForms} from '@/composables/useForms'
+import {useFormsStore} from "@/stores/forms"
+import {useUiStore} from "@/stores/ui"
+import {formsApi} from "@/api/forms"
 import {validateForm, type ValidationRules} from '@/utils/validation'
-import {storeToRefs} from "pinia";
-import {useFormsStore} from "@/stores/forms";
-import FormFieldBuilder from "@/components/forms/FormFieldBuilder.vue";
+import type {FormField} from "@/types/form"
 
 const route = useRoute()
 const router = useRouter()
-const {currentForm, loading} = storeToRefs(useFormsStore())
+const formsStore = useFormsStore()
+const uiStore = useUiStore()
+const {currentForm, loading} = storeToRefs(formsStore)
 const {fetchForm, updateForm} = useForms()
+
+console.log('CURRENT_FORM')
+console.log(currentForm)
 
 const form = reactive({
   name: '',
@@ -88,7 +80,7 @@ const errors = reactive({
   name: ''
 })
 
-const updateLoading = reactive({value: false})
+const updateLoading = ref(false)
 
 const rules: ValidationRules = {
   name: {required: true}
@@ -104,18 +96,87 @@ const handleUpdate = async () => {
   updateLoading.value = true
   try {
     await updateForm(route.params.id as string, form)
-    await router.push('/forms')
+    uiStore.addNotification({
+      type: 'success',
+      message: 'Форма обновлена'
+    })
+  } catch (error: any) {
+    uiStore.addNotification({
+      type: 'error',
+      message: error.message || 'Ошибка обновления формы'
+    })
   } finally {
     updateLoading.value = false
   }
 }
 
-const removeField = (fieldId: string) => {
-  if (confirm('Remove this field?') && currentForm.value) {
-    const idx = currentForm.value.fields.findIndex(f => f.id === fieldId)
+const handleAddField = async (fieldData: Omit<FormField, 'id'>) => {
+  if (!currentForm.value) return
+
+  console.log('Adding field:', fieldData)
+
+  try {
+    const response = await formsApi.addField(currentForm.value.id, fieldData)
+    console.log('Field added response:', response)
+
+    await formsStore.fetchForm(currentForm.value.id)
+
+    uiStore.addNotification({
+      type: 'success',
+      message: 'Поле добавлено'
+    })
+  } catch (error: any) {
+    console.error('Error adding field:', error)
+    uiStore.addNotification({
+      type: 'error',
+      message: error.message || 'Ошибка добавления поля'
+    })
+  }
+}
+
+const handleUpdateField = async (field: FormField) => {
+  if (!currentForm.value) return
+
+  console.log('Updating field:', field)
+
+  try {
+    const idx = currentForm.value.fields.findIndex(f => f.id === field.id)
     if (idx !== -1) {
-      currentForm.value.fields.splice(idx, 1)
+      currentForm.value.fields[idx] = field
     }
+
+    uiStore.addNotification({
+      type: 'success',
+      message: 'Поле обновлено'
+    })
+  } catch (error: any) {
+    console.error('Error updating field:', error)
+    uiStore.addNotification({
+      type: 'error',
+      message: error.message || 'Ошибка обновления поля'
+    })
+  }
+}
+
+const handleDeleteField = async (fieldId: string) => {
+  if (!currentForm.value) return
+
+  console.log('Deleting field:', fieldId)
+
+  try {
+    await formsApi.removeField(currentForm.value.id, fieldId)
+    await formsStore.fetchForm(currentForm.value.id)
+
+    uiStore.addNotification({
+      type: 'success',
+      message: 'Поле удалено'
+    })
+  } catch (error: any) {
+    console.error('Error deleting field:', error)
+    uiStore.addNotification({
+      type: 'error',
+      message: error.message || 'Ошибка удаления поля'
+    })
   }
 }
 
