@@ -21,10 +21,10 @@
 
 ## Установка
 
-\`\`\`bash
+```bash
 # Клонируйте репозиторий
-git clone https://github.com/yourusername/forma-flow-frontend.git
-cd forma-flow-frontend
+git clone https://github.com/FormaFlow/frontend.git
+cd frontend
 
 # Установите зависимости
 npm install
@@ -37,13 +37,13 @@ cp .env.example .env
 
 # Запустите dev-сервер
 npm run dev
-\`\`\`
+```
 
 Приложение будет доступно по адресу: `http://localhost:5173`
 
 ## Команды
 
-\`\`\`bash
+```bash
 # Development server
 npm run dev
 
@@ -55,14 +55,17 @@ npm run preview
 
 # Type checking
 npm run type-check
+```
 
 # Linting
+
+```
 npm run lint
-\`\`\`
+```
 
 ## Структура проекта
 
-\`\`\`
+```
 src/
 ├── api/                  # API клиенты и эндпоинты
 ├── assets/              # Статические ресурсы
@@ -81,13 +84,14 @@ src/
 ├── views/              # Page views
 ├── App.vue
 └── main.ts
-\`\`\`
+```
 
 ## Разработка
 
 ### Добавление нового компонента
 
-\`\`\`vue
+```vue
+
 <template>
   <div class="card">
     <h1>{{ title }}</h1>
@@ -96,49 +100,50 @@ src/
 </template>
 
 <script setup lang="ts">
-interface Props {
-  title: string
-}
+  interface Props {
+    title: string
+  }
 
-defineProps<Props>()
+  defineProps<Props>()
 </script>
-\`\`\`
+```
 
 ### Использование composables
 
-\`\`\`typescript
-import { useForms } from '@/composables/useForms'
+```typescript
+import {useForms} from '@/composables/useForms'
 
 export default {
   setup() {
-    const { forms, loading, fetchForms } = useForms()
-    
+    const {forms, loading, fetchForms} = useForms()
+
     onMounted(async () => {
       await fetchForms()
     })
-    
-    return { forms, loading }
+
+    return {forms, loading}
   }
 }
-\`\`\`
+```
 
 ### Работа с i18n
 
-\`\`\`vue
+```vue
+
 <template>
   <h1>{{ $t('forms.title') }}</h1>
   <p>{{ $t('common.welcome') }}</p>
 </template>
-\`\`\`
+```
 
 ### Использование stores
 
-\`\`\`typescript
-import { useAuthStore } from '@/stores/auth'
+```typescript
+import {useAuthStore} from '@/stores/auth'
 
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-\`\`\`
+```
 
 ## API Integration
 
@@ -147,6 +152,7 @@ Frontend соединяется с backend API по адресу, указанн
 ### Supported Endpoints
 
 **Auth**
+
 - `POST /auth/register` - Регистрация
 - `POST /auth/login` - Вход
 - `POST /auth/logout` - Выход
@@ -154,6 +160,7 @@ Frontend соединяется с backend API по адресу, указанн
 - `GET /auth/profile` - Профиль пользователя
 
 **Forms**
+
 - `GET /forms` - Список форм (с пагинацией)
 - `POST /forms` - Создать форму
 - `GET /forms/:id` - Детали формы
@@ -164,6 +171,7 @@ Frontend соединяется с backend API по адресу, указанн
 - `DELETE /forms/:id/fields/:fieldId` - Удалить поле
 
 **Entries**
+
 - `GET /entries` - Список записей (с пагинацией)
 - `POST /entries` - Создать запись
 - `GET /entries/:id` - Детали записи
@@ -176,21 +184,21 @@ Frontend соединяется с backend API по адресу, указанн
 
 ### Vercel
 
-\`\`\`bash
+```bash
 npm install -g vercel
 vercel
-\`\`\`
+```
 
 ### Netlify
 
-\`\`\`bash
+```bash
 npm install -g netlify-cli
 netlify deploy --prod
-\`\`\`
+```
 
 ### Docker
 
-\`\`\`dockerfile
+```dockerfile
 FROM node:18-alpine as build
 WORKDIR /app
 COPY package*.json ./
@@ -203,11 +211,11 @@ COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
-\`\`\`
+```
 
 ### Docker Compose
 
-\`\`\`yaml
+```yaml
 version: '3.8'
 services:
   frontend:
@@ -218,24 +226,24 @@ services:
       - VITE_API_BASE_URL=http://backend:8000/api/v1
     depends_on:
       - backend
-  
+
   backend:
     image: forma-flow-backend
     ports:
       - "8000:8000"
-\`\`\`
+```
 
 ## Testing
 
 Тесты будут добавлены позже.
 
-\`\`\`bash
+```bash
 # Unit tests
 npm run test:unit
 
 # E2E tests
 npm run test:e2e
-\`\`\`
+```
 
 ## Browser Support
 
@@ -250,10 +258,10 @@ npm run test:e2e
 
 Убедитесь, что backend разрешает запросы с фронтенда:
 
-\`\`\`php
+```php
 // config/cors.php
 'allowed_origins' => ['http://localhost:5173'],
-\`\`\`
+```
 
 ### PWA не устанавливается
 
