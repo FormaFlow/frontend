@@ -25,12 +25,22 @@ export const useForms = () => {
 
   const updateForm = async (id: string, data: UpdateFormRequest) => {
     try {
-      const form = await formsStore.updateForm(id, data)
-      uiStore.addNotification({
-        type: 'success',
-        message: 'Form updated successfully'
-      })
-      return form
+      const response = await formsStore.updateForm(id, data)
+      if (response) {
+        uiStore.addNotification({
+          type: 'success',
+          message: 'Form updated successfully'
+        })
+
+        await formsStore.fetchForm(id)
+
+        const index = formsStore.forms.findIndex(f => f.id === id)
+        if (index !== -1 && formsStore.currentForm) {
+          formsStore.forms[index] = formsStore.currentForm
+        }
+
+        return formsStore.currentForm
+      }
     } catch (error: any) {
       uiStore.addNotification({
         type: 'error',

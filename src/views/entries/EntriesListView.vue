@@ -68,8 +68,9 @@ import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
 import {debounce, formatDateTime} from '@/utils/helpers'
+import {useEntriesStore} from "@/stores/entries";
 
-const {entries, loading, fetchEntries, deleteEntry} = useEntries()
+const {fetchEntries, deleteEntry} = useEntries()
 const {forms, fetchForms} = useForms()
 const {showSuccess, showError} = useNotification()
 
@@ -79,6 +80,10 @@ const selectedFormId = ref('')
 const formOptions = computed(() =>
     forms.map(f => ({label: f.name, value: f.id}))
 )
+
+const entriesStore = useEntriesStore()
+const entries = computed(() => entriesStore.entries)
+const loading = computed(() => entriesStore.loading)
 
 const handleSearch = debounce(async () => {
   await fetchEntries(1)
