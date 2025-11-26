@@ -77,14 +77,19 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import AppLoader from '@/components/common/AppLoader.vue'
 import {useForms} from '@/composables/useForms'
+import {useFormsStore} from "@/stores/forms";
 
 const route = useRoute()
-const {currentForm, loading, fetchForm, publishForm} = useForms()
+const {fetchForm, publishForm} = useForms()
 const publishLoading = ref(false)
+
+const formsStore = useFormsStore()
+const currentForm = computed(() => formsStore.currentForm)
+const loading = computed(() => formsStore.loading)
 
 const handlePublish = async () => {
   if (!currentForm.value) return
@@ -96,7 +101,22 @@ const handlePublish = async () => {
   }
 }
 
+const loadFormData = async () => {
+  const formId = route.params.id as string
+
+  if (!formId) {
+    console.error('No form ID provided!')
+    return
+  }
+
+  await fetchForm(formId)
+}
+
 onMounted(async () => {
-  await fetchForm(route.params.id as string)
+  await loadFormData()
+})
+
+watch(() => route.params.id, () => {
+  loadFormData()
 })
 </script>

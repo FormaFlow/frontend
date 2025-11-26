@@ -3,6 +3,7 @@
     <!-- Welcome Section -->
     <div class="card bg-gradient-to-r from-primary-500 to-primary-600 text-white">
       <h1 class="text-3xl font-bold mb-2">{{ $t('common.app_title') }}</h1>
+      <!-- TODO fix translations -->
       <p class="text-primary-100">{{ $t('forms.title') }} и {{ $t('entries.title') }} в одном месте</p>
     </div>
 

@@ -204,13 +204,14 @@ interface Props {
   formId?: string
 }
 
-const props = defineProps<Props>()
 const emit = defineEmits<{
   'update:modelValue': [value: FormField[]]
   'add-field': [field: Omit<FormField, 'id'>]
   'update-field': [field: FormField]
   'delete-field': [fieldId: string]
 }>()
+
+const props = defineProps<Props>()
 
 const sortedFields = computed(() => {
   if (!props.fields || !Array.isArray(props.fields)) {
@@ -270,7 +271,7 @@ const closeFieldModal = () => {
 const saveField = () => {
   const fieldData = {
     ...fieldForm.value,
-    order: editingField.value?.order ?? (fields?.value?.length ?? 0)
+    order: editingField.value?.order ?? (props.fields?.value?.length ?? 0)
   }
 
   if (editingField.value) {
