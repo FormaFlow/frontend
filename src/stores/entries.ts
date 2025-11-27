@@ -19,7 +19,7 @@ export const useEntriesStore = defineStore('entries', () => {
     loading.value = true
     error.value = null
     try {
-      const params = {page}
+      const params: { page: number; form_id?: string } = {page}
       if (formId) params.form_id = formId
       const response = await entriesApi.list(params)
       if (response) {

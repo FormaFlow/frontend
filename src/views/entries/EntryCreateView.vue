@@ -62,8 +62,8 @@
             >
               <option value="" disabled>Выберите...</option>
               <option
-                  v-for="opt in field.options || []"
-                  :key="opt.value"
+                  v-for="(opt, idx) in (field.options || [])"
+                  :key="String(opt.value ?? idx)"
                   :value="opt.value"
               >
                 {{ opt.label }}

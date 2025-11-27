@@ -4,9 +4,10 @@ import type {
   BulkImportResponse,
   CreateEntryRequest,
   Entry,
-  PaginatedResponse,
   UpdateEntryRequest
 } from '@/types/entry'
+
+import {PaginatedResponse} from "@/types/api";
 
 export const entriesApi = {
   list(params?: any) {

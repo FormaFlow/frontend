@@ -271,7 +271,7 @@ const closeFieldModal = () => {
 const saveField = () => {
   const fieldData = {
     ...fieldForm.value,
-    order: editingField.value?.order ?? (props.fields?.value?.length ?? 0)
+    order: editingField.value?.order ?? (props.fields?.length ?? 0)
   }
 
   if (editingField.value) {
@@ -293,7 +293,7 @@ const confirmDeleteField = (field: FormField) => {
 }
 
 const moveField = (index: number, direction: 'up' | 'down') => {
-  const newFields = [...sortedFields]
+  const newFields = [...sortedFields.value]
   const targetIndex = direction === 'up' ? index - 1 : index + 1
 
   const temp = newFields[index]
@@ -304,7 +304,10 @@ const moveField = (index: number, direction: 'up' | 'down') => {
     field.order = idx
   })
 
-  emit('update-field', newFields)
+  newFields.forEach((field, idx) => {
+    field.order = idx
+    emit('update-field', field)
+  })
 }
 
 const addOption = () => {

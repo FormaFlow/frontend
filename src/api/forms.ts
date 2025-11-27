@@ -1,5 +1,7 @@
 import client from './client'
-import type {AddFieldRequest, CreateFormRequest, Form, PaginatedResponse, UpdateFormRequest} from '@/types/form'
+import type {AddFieldRequest, CreateFormRequest, Form, UpdateFormRequest} from '@/types/form'
+
+import {PaginatedResponse} from "@/types/api";
 
 export const formsApi = {
   list(params?: any) {

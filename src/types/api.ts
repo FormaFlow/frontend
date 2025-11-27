@@ -1,21 +1,22 @@
-export interface ApiResponse<T> {
+export interface ApiResponse<T> extends Record<string, any> {
   message?: string
   errors?: Record<string, string[]>
   status: number
 }
 
-export interface PaginatedResponse<T> {
-  pagination: {
-    total: number
-    count: number
-    per_page: number
-    current_page: number
-    last_page: number
-  }
-}
+export type ApiResult<T> = T & ApiResponse<T>
 
 export interface ApiError {
   status: number
   message: string
   errors?: Record<string, string[]>
+}
+
+export interface PaginatedResponse<T> {
+  data?: T[]
+  forms?: T[]
+  entries?: T[]
+  total: number
+  limit: number
+  offset: number
 }

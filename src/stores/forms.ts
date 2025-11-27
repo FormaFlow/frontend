@@ -21,7 +21,7 @@ export const useFormsStore = defineStore('forms', () => {
     try {
       const response = await formsApi.list({page, search})
       if (response) {
-        forms.value = response.forms
+        forms.value = response.forms || []
         pagination.value = {
           total: response.total,
           per_page: response.limit,

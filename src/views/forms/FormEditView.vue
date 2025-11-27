@@ -25,8 +25,8 @@
             <label class="form-label">{{ $t('forms.form_description') }}</label>
             <textarea v-model="form.description" class="form-textarea" rows="4"></textarea>
           </div>
-          <AppButton type="submit" :disabled="updateLoading.value">
-            {{ updateLoading.value ? $t('common.loading') : $t('common.save') }}
+          <AppButton type="submit" :disabled="updateLoading">
+            {{ updateLoading ? $t('common.loading') : $t('common.save') }}
           </AppButton>
         </form>
       </div>

@@ -1,27 +1,27 @@
-import axios, {AxiosInstance} from 'axios'
-import type {ApiError, ApiResponse} from '@/types/api'
+import axios, {type AxiosInstance, type AxiosResponse} from 'axios'
+import router from '@/router'
+import {PaginatedResponse} from "@/types/api";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
 class ApiClient {
-  private instance: AxiosInstance
-  private baseURL: string
+  private client: AxiosInstance
 
   constructor() {
-    this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
-
-    this.instance = axios.create({
-      baseURL: this.baseURL,
-      timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000'),
+    this.client = axios.create({
+      baseURL: API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-      }
+      },
+      withCredentials: true
     })
 
     this.setupInterceptors()
   }
 
   private setupInterceptors() {
-    this.instance.interceptors.request.use(
+    this.client.interceptors.request.use(
       (config) => {
         const token = localStorage.getItem('auth_token')
         if (token) {
@@ -32,71 +32,78 @@ class ApiClient {
       (error) => Promise.reject(error)
     )
 
-    this.instance.interceptors.response.use(
+    this.client.interceptors.response.use(
       (response) => response,
       async (error) => {
         if (error.response?.status === 401) {
           localStorage.removeItem('auth_token')
           localStorage.removeItem('user')
-          window.location.href = '/login'
+          await router.push('/login')
         }
         return Promise.reject(error)
       }
     )
   }
 
-  public getClient() {
-    return this.instance
+  async get<T>(url: string, params?: any): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.get(url, {params})
+    return response.data
   }
 
-  public async get<T>(url: string, config?: any) {
-    try {
-      const response = await this.instance.get<ApiResponse<T>>(url, config)
-      return response.data
-    } catch (error) {
-      throw this.handleError(error)
-    }
+  async post<T>(url: string, data?: any): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.post(url, data)
+    return response.data
   }
 
-  public async post<T>(url: string, data?: any, config?: any) {
-    try {
-      const response = await this.instance.post<ApiResponse<T>>(url, data, config)
-      return response.data
-    } catch (error) {
-      throw this.handleError(error)
-    }
+  async patch<T>(url: string, data?: any): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.patch(url, data)
+    return response.data
   }
 
-  public async patch<T>(url: string, data?: any, config?: any) {
-    try {
-      const response = await this.instance.patch<ApiResponse<T>>(url, data, config)
-      return response.data
-    } catch (error) {
-      throw this.handleError(error)
-    }
+  async put<T>(url: string, data?: any): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.put(url, data)
+    return response.data
   }
 
-  public async delete<T>(url: string, config?: any) {
-    try {
-      const response = await this.instance.delete<ApiResponse<T>>(url, config)
-      return response.data
-    } catch (error) {
-      throw this.handleError(error)
-    }
+  async delete<T = void>(url: string): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.delete(url)
+    return response.data
   }
 
-  private handleError(error: any): ApiError {
-    if (error.response?.data) {
-      return {
-        status: error.response.status,
-        message: error.response.data.message || 'An error occurred',
-        errors: error.response.data.errors
-      }
-    }
-    return {
-      status: error.response?.status || 0,
-      message: error.message || 'Network error'
-    }
+  async getUser<T>(url: string): Promise<T> {
+    return this.get<T>(url)
+  }
+
+  async getForm<T>(url: string): Promise<T> {
+    return this.get<T>(url)
+  }
+
+  async getEntry<T>(url: string): Promise<T> {
+    return this.get<T>(url)
+  }
+
+  async postUser<T>(url: string, data?: any): Promise<T> {
+    return this.post<T>(url, data)
+  }
+
+  async postForm<T>(url: string, data?: any): Promise<T> {
+    return this.post<T>(url, data)
+  }
+
+  async postEntry<T>(url: string, data?: any): Promise<T> {
+    return this.post<T>(url, data)
+  }
+
+  async patchForm<T>(url: string, data?: any): Promise<T> {
+    return this.patch<T>(url, data)
+  }
+
+  async patchEntry<T>(url: string, data?: any): Promise<T> {
+    return this.patch<T>(url, data)
+  }
+
+  async getPaginatedResponse<T>(url: string, params?: any): Promise<PaginatedResponse<T>> {
+    return this.get<PaginatedResponse<T>>(url, params)
   }
 }
 

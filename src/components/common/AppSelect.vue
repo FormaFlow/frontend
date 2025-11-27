@@ -16,7 +16,11 @@
         @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
     >
       <option value="">{{ placeholder || 'Select an option' }}</option>
-      <option v-for="item in options" :key="item.value" :value="item.value">
+      <option
+          v-for="(item, index) in options"
+          :key="String(item.value ?? index)"
+          :value="item.value"
+      >
         {{ item.label }}
       </option>
     </select>

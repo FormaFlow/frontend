@@ -44,25 +44,31 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import AppLoader from '@/components/common/AppLoader.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import {useEntries} from '@/composables/useEntries'
+import {useEntriesStore} from "@/stores/entries";
 
 const route = useRoute()
 const router = useRouter()
 const {currentEntry, loading, fetchEntry, updateEntry} = useEntries()
 const updateLoading = ref(false)
 
+const entriesStore = useEntriesStore()
+
+const entry = computed(() => entriesStore.currentEntry)
+
 const handleUpdate = async () => {
-  if (!currentEntry.value) return
+  if (!entry.value) return
 
   updateLoading.value = true
   try {
-    await updateEntry(currentEntry.value.id, {
-      data: currentEntry.value.data,
-      tags: currentEntry.value.tags
+    await updateEntry(
+        entry.value.id, {
+      data: entry.value.data,
+      tags: entry.value.tags
     })
     await router.push('/entries')
   } finally {
