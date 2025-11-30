@@ -10,7 +10,7 @@ export const useEntriesStore = defineStore('entries', () => {
   const error = ref<string | null>(null)
   const pagination = ref({
     total: 0,
-    per_page: 10,
+    per_page: 15,
     current_page: 1,
     last_page: 1
   })
@@ -19,16 +19,27 @@ export const useEntriesStore = defineStore('entries', () => {
     loading.value = true
     error.value = null
     try {
-      const params: { page: number; form_id?: string } = {page}
-      if (formId) params.form_id = formId
+      const limit = pagination.value.per_page
+      const offset = (page - 1) * limit
+      
+      const params: { limit: number; offset: number; form_id?: string } = {
+        limit,
+        offset
+      }
+      
+      if (formId) {
+        params.form_id = formId
+      }
+      
       const response = await entriesApi.list(params)
+      
       if (response) {
         entries.value = response.entries || []
         pagination.value = {
           total: response.total || 0,
-          per_page: response.limit || 10,
-          current_page: 1,
-          last_page: Math.ceil((response.total || 0) / (response.limit || 10))
+          per_page: response.limit || 15,
+          current_page: page,
+          last_page: Math.ceil((response.total || 0) / (response.limit || 15))
         }
       }
     } catch (err: any) {
