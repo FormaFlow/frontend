@@ -5,7 +5,7 @@ import {PaginatedResponse} from "@/types/api";
 
 export const formsApi = {
   list(params?: any) {
-    return client.get<PaginatedResponse<Form>>('/forms', {params})
+    return client.get<PaginatedResponse<Form>>('/forms', params)
   },
 
   get(id: string) {
