@@ -92,7 +92,10 @@
     "import_success": "Entries imported successfully",
     "import_failed": "Failed to import entries",
     "tags": "Tags",
-    "add_tag": "Add tag"
+    "add_tag": "Add tag",
+    "summary": "Summary",
+    "records": "records",
+    "created": "Created"
   },
   "settings": {
     "title": "Settings",
