@@ -19,13 +19,26 @@ export const useFormsStore = defineStore('forms', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await formsApi.list({page, search})
+      const limit = pagination.value.per_page
+      const offset = (page - 1) * limit
+      
+      const params: { limit: number; offset: number; search?: string } = {
+        limit,
+        offset
+      }
+      
+      if (search) {
+        params.search = search
+      }
+      
+      const response = await formsApi.list(params)
+      
       if (response) {
         forms.value = response.forms || []
         pagination.value = {
           total: response.total,
           per_page: response.limit,
-          current_page: Math.ceil((response.offset / response.limit) + 1),
+          current_page: page,
           last_page: Math.ceil(response.total / response.limit)
         }
       }
