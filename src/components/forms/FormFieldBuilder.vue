@@ -282,9 +282,15 @@ const saveField = () => {
   } else {
     emit('add-field', fieldData)
   }
-
-  closeFieldModal()
 }
+
+const closeModalAfterSuccess = () => {
+  closeFieldModal();
+};
+
+defineExpose({
+  closeModalAfterSuccess
+});
 
 const confirmDeleteField = (field: FormField) => {
   if (confirm(`Удалить поле "${field.label}"?`)) {

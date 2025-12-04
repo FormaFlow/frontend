@@ -40,7 +40,14 @@ class ApiClient {
           localStorage.removeItem('user')
           await router.push('/login')
         }
-        return Promise.reject(error)
+
+        const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+
+        const customError = new Error(errorMessage);
+        (customError as any).response = error.response;
+        (customError as any).errors = error.response?.data?.errors;
+
+        return Promise.reject(customError)
       }
     )
   }

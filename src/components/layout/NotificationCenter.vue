@@ -1,37 +1,41 @@
 <template>
-  <div class="fixed top-20 right-4 z-50 space-y-4 pointer-events-none">
-    <transition-group name="notification" tag="div">
-      <div
-          v-for="notification in notifications"
-          :key="notification.id"
-          :class="[
-          'notification pointer-events-auto',
-          `notification-${notification.type}`
-        ]"
-      >
-        <div class="flex items-start gap-3">
-          <div class="flex-shrink-0">
-            <component :is="getIcon(notification.type)" class="w-5 h-5"/>
-          </div>
-          <div class="flex-1">
-            <p class="font-medium">{{ notification.message }}</p>
-          </div>
-          <button
-              type="button"
-              class="flex-shrink-0 text-gray-400 hover:text-gray-600"
-              @click="remove(notification.id)"
-          >
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd"
+  <Teleport to="body">
+    <div class="fixed top-20 right-4 z-[200] space-y-3 pointer-events-none max-w-sm w-full" style="z-index: 10000 !important;">
+      <transition-group name="notification" tag="div" class="space-y-3">
+        <div
+            v-for="notification in notifications"
+            :key="notification.id"
+            :class="[
+            'notification pointer-events-auto',
+            `notification-${notification.type}`
+          ]"
+        >
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0">
+              <component :is="getIcon(notification.type)" class="w-5 h-5"/>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-sm break-words">{{ notification.message }}</p>
+            </div>
+
+            <button
+                type="button"
+                class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                @click="remove(notification.id)"
+            >
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clip-rule="evenodd"></path>
-            </svg>
-          </button>
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
-    </transition-group>
-  </div>
+      </transition-group>
+    </div>
+  </Teleport>
 </template>
+
 
 <script setup lang="ts">
 import {defineAsyncComponent} from 'vue'
@@ -65,12 +69,68 @@ const getIcon = (type: string) => {
 }
 
 .notification-enter-from {
-  transform: translateX(30px);
+  transform: translateX(100%);
   opacity: 0;
 }
 
 .notification-leave-to {
-  transform: translateX(30px);
+  transform: translateX(100%);
   opacity: 0;
 }
+
+.notification {
+  position: relative;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.notification-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.notification-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+.notification-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+.notification-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+:global(.dark) .notification-success {
+  background-color: #064e3b;
+  color: #6ee7b7;
+  border-color: #10b981;
+}
+
+:global(.dark) .notification-error {
+  background-color: #7f1d1d;
+  color: #fca5a5;
+  border-color: #ef4444;
+}
+
+:global(.dark) .notification-info {
+  background-color: #1e3a8a;
+  color: #93c5fd;
+  border-color: #3b82f6;
+}
+
+:global(.dark) .notification-warning {
+  background-color: #78350f;
+  color: #fcd34d;
+  border-color: #f59e0b;
+}
 </style>
+

@@ -91,6 +91,8 @@
 
     .notification {
         @apply fixed top-4 right-4 rounded-lg shadow-lg p-4 max-w-sm animate-pulse-soft;
+        position: relative;
+        z-index: 1;
     }
 
     .notification-success {
@@ -140,3 +142,4 @@
 .animate-spin-custom {
     animation: spin 1s linear infinite;
 }
+
