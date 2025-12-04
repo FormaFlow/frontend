@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="fixed top-20 right-4 z-[200] space-y-3 pointer-events-none max-w-sm w-full" style="z-index: 10000 !important;">
+    <div class="fixed top-20 right-4 z-[200] space-y-3 pointer-events-none max-w-sm w-full">
       <transition-group name="notification" tag="div" class="space-y-3">
         <div
             v-for="notification in notifications"
@@ -68,18 +68,18 @@ const getIcon = (type: string) => {
   transition: all 0.3s ease;
 }
 
-.notification-enter-from {
-  transform: translateX(100%);
-  opacity: 0;
+.notification-leave-active {
+  position: absolute;
+  width: calc(100% - 2rem);
 }
 
+.notification-enter-from,
 .notification-leave-to {
-  transform: translateX(100%);
+  transform: translateX(120%);
   opacity: 0;
 }
 
 .notification {
-  position: relative;
   padding: 1rem;
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -133,4 +133,3 @@ const getIcon = (type: string) => {
   border-color: #f59e0b;
 }
 </style>
-
