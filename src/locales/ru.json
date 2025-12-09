@@ -96,7 +96,9 @@
     "add_tag": "Добавить тег",
     "summary": "Итого",
     "records": "записей",
-    "created": "Создано"
+    "created": "Создано",
+    "today": "Сегодня",
+    "this_month": "За месяц"
   },
   "settings": {
     "title": "Настройки",

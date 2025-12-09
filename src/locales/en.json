@@ -96,7 +96,9 @@
     "add_tag": "Add tag",
     "summary": "Summary",
     "records": "records",
-    "created": "Created"
+    "created": "Created",
+    "today": "Today",
+    "this_month": "This month"
   },
   "settings": {
     "title": "Settings",

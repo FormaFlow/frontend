@@ -39,11 +39,12 @@ export const entriesApi = {
   },
 
   stats(formId: string) {
-    return client.get<EntryStats>(`/entries/stats`, { form_id: formId })
+    return client.get<{ stats: EntryStats }>(`/entries/stats`, { form_id: formId }).then(res => res.stats)
   }
 }
 
 export type EntryStats = {
+  field: string
   sum_today: number
   sum_month: number
-}
+}[]
