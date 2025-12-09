@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue'
+import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import AppLoader from '@/components/common/AppLoader.vue'
 import AppSelect from '@/components/common/AppSelect.vue'
@@ -204,6 +204,13 @@ onMounted(async () => {
     await fetchForm(formId)
   } else {
     await fetchEntries()
+    if (entries.value.length > 0) {
+      await fetchForm(entries.value[0].form_id)
+    }
   }
+})
+
+onUnmounted(() => {
+  currentForm.value = null
 })
 </script>
