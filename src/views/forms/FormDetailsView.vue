@@ -77,19 +77,14 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue'
+import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import AppLoader from '@/components/common/AppLoader.vue'
 import {useForms} from '@/composables/useForms'
-import {useFormsStore} from "@/stores/forms";
 
 const route = useRoute()
-const {fetchForm, publishForm} = useForms()
+const {currentForm, loading, fetchForm, publishForm} = useForms()
 const publishLoading = ref(false)
-
-const formsStore = useFormsStore()
-const currentForm = computed(() => formsStore.currentForm)
-const loading = computed(() => formsStore.loading)
 
 const handlePublish = async () => {
   if (!currentForm.value) return

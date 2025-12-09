@@ -89,13 +89,7 @@ export const useFormsStore = defineStore('forms', () => {
     try {
       const response = await formsApi.update(id, data)
       if (response) {
-        const index = forms.value.findIndex(f => f.id === id)
-        if (index !== -1) {
-          forms.value[index] = response
-        }
-        if (currentForm.value?.id === id) {
-          currentForm.value = response
-        }
+        await fetchForm(id)
         return response
       }
     } catch (err: any) {
@@ -129,13 +123,7 @@ export const useFormsStore = defineStore('forms', () => {
     try {
       const response = await formsApi.publish(id)
       if (response) {
-        const index = forms.value.findIndex(f => f.id === id)
-        if (index !== -1) {
-          forms.value[index] = response
-        }
-        if (currentForm.value?.id === id) {
-          currentForm.value = response
-        }
+        await fetchForm(id)
         return response
       }
     } catch (err: any) {
