@@ -1,3 +1,4 @@
+import {storeToRefs} from 'pinia'
 import {useFormsStore} from '@/stores/forms'
 import {useUiStore} from '@/stores/ui'
 import type {CreateFormRequest, UpdateFormRequest} from '@/types/form'
@@ -5,6 +6,7 @@ import type {CreateFormRequest, UpdateFormRequest} from '@/types/form'
 export const useForms = () => {
   const formsStore = useFormsStore()
   const uiStore = useUiStore()
+  const {forms, currentForm, loading, pagination} = storeToRefs(formsStore)
 
   const createForm = async (data: CreateFormRequest) => {
     try {
@@ -84,10 +86,10 @@ export const useForms = () => {
   }
 
   return {
-    forms: formsStore.forms,
-    currentForm: formsStore.currentForm,
-    loading: formsStore.loading,
-    pagination: formsStore.pagination,
+    forms,
+    currentForm,
+    loading,
+    pagination,
     fetchForms: formsStore.fetchForms,
     fetchForm: formsStore.fetchForm,
     createForm,

@@ -1,3 +1,4 @@
+import {storeToRefs} from 'pinia'
 import {useEntriesStore} from '@/stores/entries'
 import {useUiStore} from '@/stores/ui'
 import type {CreateEntryRequest, UpdateEntryRequest} from '@/types/entry'
@@ -5,6 +6,7 @@ import type {CreateEntryRequest, UpdateEntryRequest} from '@/types/entry'
 export const useEntries = () => {
   const entriesStore = useEntriesStore()
   const uiStore = useUiStore()
+  const {entries, currentEntry, loading, pagination} = storeToRefs(entriesStore)
 
   const createEntry = async (data: CreateEntryRequest) => {
     try {
@@ -57,10 +59,10 @@ export const useEntries = () => {
   }
 
   return {
-    entries: entriesStore.entries,
-    currentEntry: entriesStore.currentEntry,
-    loading: entriesStore.loading,
-    pagination: entriesStore.pagination,
+    entries,
+    currentEntry,
+    loading,
+    pagination,
     fetchEntries: entriesStore.fetchEntries,
     fetchEntry: entriesStore.fetchEntry,
     createEntry,

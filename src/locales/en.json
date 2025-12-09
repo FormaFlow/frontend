@@ -23,7 +23,8 @@
     "yes": "Yes",
     "no": "No",
     "confirm": "Confirm",
-    "view": "View"
+    "view": "View",
+    "data": "Data"
   },
   "auth": {
     "login": "Login",

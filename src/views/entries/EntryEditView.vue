@@ -15,9 +15,26 @@
         <!-- Entry Data -->
         <div>
           <h2 class="text-lg font-semibold mb-4">{{ $t('common.data') }}</h2>
-          <pre class="bg-gray-100 dark:bg-gray-800 p-4 rounded text-sm overflow-x-auto">{{
-              JSON.stringify(currentEntry.data, null, 2)
-            }}</pre>
+          <div v-if="currentForm" class="space-y-4">
+            <div v-for="field in currentForm.fields" :key="field.id">
+              <AppInput
+                  v-if="['text', 'number', 'email', 'date', 'currency'].includes(field.type)"
+                  v-model="currentEntry.data[field.name]"
+                  :label="field.label"
+                  :type="field.type"
+                  :required="field.required"
+                  :placeholder="field.placeholder"
+              />
+              <AppSelect
+                  v-if="field.type === 'select'"
+                  v-model="currentEntry.data[field.name]"
+                  :label="field.label"
+                  :required="field.required"
+                  :options="field.options || []"
+              />
+              <!-- TODO: Add support for other field types -->
+            </div>
+          </div>
         </div>
 
         <!-- Tags -->
@@ -44,31 +61,30 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref} from 'vue'
+import {onMounted, onUnmounted, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import AppLoader from '@/components/common/AppLoader.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import AppInput from '@/components/common/AppInput.vue'
+import AppSelect from '@/components/common/AppSelect.vue'
 import {useEntries} from '@/composables/useEntries'
-import {useEntriesStore} from "@/stores/entries";
+import {useForms} from '@/composables/useForms'
 
 const route = useRoute()
 const router = useRouter()
 const {currentEntry, loading, fetchEntry, updateEntry} = useEntries()
+const {currentForm, fetchForm} = useForms()
 const updateLoading = ref(false)
 
-const entriesStore = useEntriesStore()
-
-const entry = computed(() => entriesStore.currentEntry)
-
 const handleUpdate = async () => {
-  if (!entry.value) return
+  if (!currentEntry.value) return
 
   updateLoading.value = true
   try {
     await updateEntry(
-        entry.value.id, {
-      data: entry.value.data,
-      tags: entry.value.tags
+        currentEntry.value.id, {
+      data: currentEntry.value.data,
+      tags: currentEntry.value.tags
     })
     await router.push('/entries')
   } finally {
@@ -78,5 +94,13 @@ const handleUpdate = async () => {
 
 onMounted(async () => {
   await fetchEntry(route.params.id as string)
+  if (currentEntry.value) {
+    await fetchForm(currentEntry.value.form_id)
+  }
+})
+
+onUnmounted(() => {
+  currentEntry.value = null
+  currentForm.value = null
 })
 </script>

@@ -94,27 +94,19 @@ import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
 import {debounce, formatDateTime} from '@/utils/helpers'
-import {useEntriesStore} from "@/stores/entries"
-import {useFormsStore} from "@/stores/forms"
-import type {FormField, FormFieldType} from '@/types/form'
+import type {FormFieldType} from '@/types/form'
 
 const route = useRoute()
-const {fetchEntries, deleteEntry} = useEntries()
-const {forms, fetchForms, fetchForm} = useForms()
+const {entries, loading, fetchEntries, deleteEntry} = useEntries()
+const {forms, currentForm, fetchForms, fetchForm} = useForms()
 const {showSuccess, showError} = useNotification()
 
 const searchQuery = ref('')
 const selectedFormId = ref('')
 
 const formOptions = computed(() =>
-    forms.map(f => ({label: f.name, value: f.id}))
+    forms.value.map(f => ({label: f.name, value: f.id}))
 )
-
-const entriesStore = useEntriesStore()
-const formsStore = useFormsStore()
-const entries = computed(() => entriesStore.entries)
-const loading = computed(() => entriesStore.loading)
-const currentForm = computed(() => formsStore.currentForm)
 
 // Calculate summary for numeric fields
 const numericFieldsSummary = computed(() => {

@@ -122,6 +122,7 @@ import AppButton from '@/components/common/AppButton.vue'
 import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
 import {validateForm, type ValidationRules} from '@/utils/validation'
+import type {Form, FormField} from "@/types/form";
 
 const router = useRouter()
 const {loading, createEntry} = useEntries()
@@ -145,18 +146,18 @@ const rules: ValidationRules = {
 }
 
 const formOptions = computed(() =>
-    forms.map(f => ({label: f.name, value: f.id}))
+    forms.value.map((f: Form) => ({label: f.name, value: f.id}))
 )
 
 const selectedForm = computed(() =>
-    forms.find(f => f.id === selectedFormId.value)
+    forms.value.find((f: Form) => f.id === selectedFormId.value)
 )
 
 watch(selectedForm, (form) => {
   Object.keys(formData).forEach(k => delete formData[k])
   if (!form) return
 
-  form.fields.forEach(field => {
+  form.fields.forEach((field: FormField) => {
     formData[field.name] =
         field.type === 'number' || field.type === 'currency' ? null : ''
   })
