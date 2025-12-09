@@ -15,15 +15,15 @@ export const useFormsStore = defineStore('forms', () => {
     last_page: 1
   })
 
-  const fetchForms = async (page = 1, search?: string) => {
+  const fetchForms = async (page = 1, search?: string, limit?: number) => {
     loading.value = true
     error.value = null
     try {
-      const limit = pagination.value.per_page
-      const offset = (page - 1) * limit
+      const pageLimit = limit || pagination.value.per_page
+      const offset = (page - 1) * pageLimit
       
       const params: { limit: number; offset: number; search?: string } = {
-        limit,
+        limit: pageLimit,
         offset
       }
       

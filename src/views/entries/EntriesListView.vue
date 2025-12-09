@@ -38,6 +38,12 @@
       </div>
     </div>
 
+    <!-- Stats Card -->
+    <div v-if="selectedFormId" class="card">
+      <h3 class="text-lg font-semibold mb-4">Статистика</h3>
+      <EntryStats :form-id="selectedFormId" />
+    </div>
+
     <!-- Entries List -->
     <div v-if="loading" class="flex justify-center py-12">
       <AppLoader/>
@@ -58,14 +64,14 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- Tags -->
             <div v-if="entry.tags && entry.tags.length > 0" class="flex gap-2 mb-2">
               <span v-for="tag in entry.tags" :key="tag" class="badge badge-success">
                 {{ tag }}
               </span>
             </div>
-            
+
             <!-- Metadata -->
             <p class="text-sm text-gray-600 dark:text-gray-400">
               {{ $t('entries.created') || 'Создано' }}: {{ formatDateTime(entry.created_at) }}
@@ -95,6 +101,7 @@ import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
 import {debounce, formatDateTime} from '@/utils/helpers'
 import type {FormFieldType} from '@/types/form'
+import EntryStats from '@/components/EntryStats.vue'
 
 const route = useRoute()
 const {entries, loading, fetchEntries, deleteEntry} = useEntries()
@@ -111,17 +118,17 @@ const formOptions = computed(() =>
 // Calculate summary for numeric fields
 const numericFieldsSummary = computed(() => {
   if (!currentForm.value || entries.value.length === 0) return []
-  
-  const numericFields = currentForm.value.fields.filter(f => 
+
+  const numericFields = currentForm.value.fields.filter(f =>
     f.type === 'number' || f.type === 'currency'
   )
-  
+
   return numericFields.map(field => {
     const sum = entries.value.reduce((acc, entry) => {
       const value = entry.data[field.name]
       return acc + (typeof value === 'number' ? value : parseFloat(value) || 0)
     }, 0)
-    
+
     return {
       fieldId: field.id,
       label: field.label,
@@ -136,7 +143,7 @@ const formatFieldValue = (value: any, type: FormFieldType, unit?: string): strin
   if (value === null || value === undefined || value === '') {
     return '-'
   }
-  
+
   switch (type) {
     case 'boolean':
       return value ? '✓' : '✗'
@@ -164,7 +171,7 @@ const handleSearch = debounce(async () => {
 
 const handleFormFilter = async () => {
   await fetchEntries(1, selectedFormId.value || undefined)
-  
+
   // Load form details to get field definitions
   if (selectedFormId.value) {
     await fetchForm(selectedFormId.value)
@@ -195,7 +202,7 @@ watch(() => route.query.form_id, async (newFormId) => {
 
 onMounted(async () => {
   await fetchForms()
-  
+
   // Check if form_id is in query params
   const formId = route.query.form_id
   if (formId && typeof formId === 'string') {

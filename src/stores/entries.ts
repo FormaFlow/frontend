@@ -15,15 +15,15 @@ export const useEntriesStore = defineStore('entries', () => {
     last_page: 1
   })
 
-  const fetchEntries = async (page = 1, formId?: string) => {
+  const fetchEntries = async (page = 1, formId?: string, limit?: number) => {
     loading.value = true
     error.value = null
     try {
-      const limit = pagination.value.per_page
-      const offset = (page - 1) * limit
+      const pageLimit = limit || pagination.value.per_page
+      const offset = (page - 1) * pageLimit
       
       const params: { limit: number; offset: number; form_id?: string } = {
-        limit,
+        limit: pageLimit,
         offset
       }
       

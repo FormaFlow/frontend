@@ -36,5 +36,14 @@ export const entriesApi = {
 
   listByForm(formId: string, params?: any) {
     return client.get<PaginatedResponse<Entry>>(`/forms/${formId}/entries`, params)
+  },
+
+  stats(formId: string) {
+    return client.get<EntryStats>(`/entries/stats`, { form_id: formId })
   }
+}
+
+export type EntryStats = {
+  sum_today: number
+  sum_month: number
 }
