@@ -1,5 +1,5 @@
 import client from './client'
-import type {AddFieldRequest, CreateFormRequest, Form, UpdateFormRequest} from '@/types/form'
+import type {AddFieldRequest, CreateFormRequest, Form, UpdateFormRequest, UpdateFieldRequest} from '@/types/form'
 
 import {PaginatedResponse} from "@/types/api";
 
@@ -34,5 +34,9 @@ export const formsApi = {
 
   removeField(id: string, fieldId: string) {
     return client.delete(`/forms/${id}/fields/${fieldId}`)
+  },
+
+  updateField(id: string, fieldId: string, data: UpdateFieldRequest) {
+    return client.patch<Form>(`/forms/${id}/fields/${fieldId}`, data)
   }
 }

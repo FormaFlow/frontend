@@ -56,3 +56,18 @@ export interface AddFieldRequest {
   description?: string
   order: number
 }
+
+export interface UpdateFieldRequest {
+  name?: string
+  label?: string
+  type?: FormFieldType
+  required?: boolean
+  placeholder?: string
+  unit?: string
+  options?: FormFieldOption[]
+  pattern?: string
+  min?: number | string
+  max?: number | string
+  description?: string
+  order?: number
+}

@@ -140,10 +140,8 @@ const handleUpdateField = async (field: FormField) => {
   console.log('Updating field:', field)
 
   try {
-    const idx = currentForm.value.fields.findIndex(f => f.id === field.id)
-    if (idx !== -1) {
-      currentForm.value.fields[idx] = field
-    }
+    await formsApi.updateField(currentForm.value.id, field.id, field)
+    await formsStore.fetchForm(currentForm.value.id)
 
     uiStore.addNotification({
       type: 'success',
