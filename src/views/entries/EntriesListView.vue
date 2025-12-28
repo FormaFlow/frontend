@@ -59,7 +59,7 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div v-for="field in currentForm.fields" :key="field.id" class="">
                   <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ field.label }}:</span>
-                  <span class="ml-2 text-sm">{{ formatFieldValue(entry.data[field.name], field.type, field.unit) }}</span>
+                  <span class="ml-2 text-sm">{{ formatFieldValue(entry.data[field.id], field.type, field.unit) }}</span>
                 </div>
               </div>
             </div>
@@ -119,7 +119,7 @@ const formOptions = computed(() =>
 const todaySummary = computed(() => {
   if (!stats.value || !currentForm.value) return []
   return stats.value.map(stat => {
-    const field = currentForm.value?.fields.find(f => f.name === stat.field)
+    const field = currentForm.value?.fields.find(f => f.id === stat.field)
     return {
       fieldId: field?.id,
       label: field?.label,
@@ -133,7 +133,7 @@ const todaySummary = computed(() => {
 const monthSummary = computed(() => {
   if (!stats.value || !currentForm.value) return []
   return stats.value.map(stat => {
-    const field = currentForm.value?.fields.find(f => f.name === stat.field)
+    const field = currentForm.value?.fields.find(f => f.id === stat.field)
     return {
       fieldId: field?.id,
       label: field?.label,
@@ -174,12 +174,17 @@ const handleSearch = debounce(async () => {
   await fetchEntries(1, selectedFormId.value || undefined)
 }, 500)
 
-const handleFormFilter = async () => {
-  await fetchEntries(1, selectedFormId.value || undefined)
+const handleFormFilter = async (formId?: string) => {
+  const targetFormId = formId ?? selectedFormId.value
+  selectedFormId.value = targetFormId
 
-  if (selectedFormId.value) {
-    await fetchForm(selectedFormId.value)
+  await fetchEntries(1, targetFormId || undefined)
+
+  if (targetFormId) {
+    await fetchForm(targetFormId)
     await fetchStats()
+  } else {
+    currentForm.value = null
   }
 }
 

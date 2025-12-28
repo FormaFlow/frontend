@@ -18,6 +18,7 @@ export const useEntriesStore = defineStore('entries', () => {
   const fetchEntries = async (page = 1, formId?: string, limit?: number) => {
     loading.value = true
     error.value = null
+    entries.value = [] // Clear entries immediately to prevent race conditions
     try {
       const pageLimit = limit || pagination.value.per_page
       const offset = (page - 1) * pageLimit

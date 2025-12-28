@@ -19,7 +19,7 @@
             <div v-for="field in currentForm.fields" :key="field.id">
               <AppInput
                   v-if="['text', 'number', 'email', 'date', 'currency'].includes(field.type)"
-                  v-model="currentEntry.data[field.name]"
+                  v-model="currentEntry.data[field.id]"
                   :label="field.label"
                   :type="field.type"
                   :required="field.required"
@@ -27,7 +27,7 @@
               />
               <AppSelect
                   v-if="field.type === 'select'"
-                  v-model="currentEntry.data[field.name]"
+                  v-model="currentEntry.data[field.id]"
                   :label="field.label"
                   :required="field.required"
                   :options="field.options || []"

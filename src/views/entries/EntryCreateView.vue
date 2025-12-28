@@ -20,44 +20,36 @@
 
         <!-- Form Fields (Dynamic) -->
         <template v-if="selectedForm && selectedForm.fields.length">
-          <component
-              v-for="field in selectedForm.fields"
-              :key="field.id"
-              :is="getFieldComponent(field.type)"
-              v-model="formData[field.name]"
-              :field="field"
-          />
-
           <div
               v-for="field in selectedForm.fields"
               :key="field.id"
               class="form-group"
           >
-            <label :for="field.name">
+            <label :for="field.id">
               {{ field.label }} <span v-if="field.required" class="text-red-500">*</span>
             </label>
 
             <!-- примитивный рендер по типам; можно вынести в отдельный компонент -->
             <input
                 v-if="['text','email','currency','number'].includes(field.type)"
-                :id="field.name"
-                v-model="formData[field.name]"
+                :id="field.id"
+                v-model="formData[field.id]"
                 :type="field.type === 'email' ? 'email' : 'text'"
                 class="form-input"
             />
 
             <input
                 v-else-if="field.type === 'date'"
-                :id="field.name"
-                v-model="formData[field.name]"
+                :id="field.id"
+                v-model="formData[field.id]"
                 type="date"
                 class="form-input"
             />
 
             <select
                 v-else-if="field.type === 'select'"
-                :id="field.name"
-                v-model="formData[field.name]"
+                :id="field.id"
+                v-model="formData[field.id]"
                 class="form-input"
             >
               <option value="" disabled>Выберите...</option>
@@ -72,8 +64,8 @@
 
             <input
                 v-else-if="field.type === 'boolean'"
-                :id="field.name"
-                v-model="formData[field.name]"
+                :id="field.id"
+                v-model="formData[field.id]"
                 type="checkbox"
                 class="form-checkbox"
             />
@@ -158,7 +150,7 @@ watch(selectedForm, (form) => {
   if (!form) return
 
   form.fields.forEach((field: FormField) => {
-    formData[field.name] =
+    formData[field.id] =
         field.type === 'number' || field.type === 'currency' ? null : ''
   })
 })

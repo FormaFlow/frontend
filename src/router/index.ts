@@ -21,6 +21,12 @@ const routes: RouteRecordRaw[] = [
     meta: {requiresAuth: true}
   },
   {
+    path: '/reports',
+    name: 'reports',
+    component: () => import('@/views/ReportsView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
     path: '/forms',
     name: 'forms-list',
     component: () => import('@/views/forms/FormsListView.vue'),

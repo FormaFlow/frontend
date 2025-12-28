@@ -119,5 +119,53 @@
     "max": "Maximum length is {max}",
     "pattern": "Invalid format",
     "match": "Fields do not match"
+  },
+  "reports": {
+    "title": "Reports",
+    "view_reports": "View Reports",
+    "analyze_data": "Analyze your data",
+    "summary": "Summary",
+    "total_entries": "Total Entries",
+    "total_sum": "Total (Sum)",
+    "avg": "Avg",
+    "min": "Min",
+    "max": "Max",
+    "select_form_hint": "Select a form to view reports",
+    "no_data": "No data available for this period",
+    "custom": {
+      "title": "Custom Report",
+      "form": "Form",
+      "aggregation": "Aggregation",
+      "field": "Field",
+      "generate": "Generate",
+      "result": "Result",
+      "select_form": "Select a form",
+      "select_field": "Select a field"
+    },
+    "time_series": {
+      "title": "Time Series",
+      "period": "Period",
+      "visual": "Visual",
+      "show_chart": "Show Chart Data",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "aggregations": {
+      "sum": "Sum",
+      "avg": "Average",
+      "min": "Minimum",
+      "max": "Maximum",
+      "count": "Count"
+    }
+  },
+  "dashboard": {
+    "active_forms": "Active Forms",
+    "available_forms": "Available forms",
+    "new_entries_week": "New Entries (Week)",
+    "total_this_week": "Total this week",
+    "activity_trends": "Activity Trends (Last 4 Weeks)",
+    "forms_performance": "Forms Performance (Week)",
+    "entries_week": "Entries (Week)"
   }
 }

@@ -7,7 +7,6 @@ export interface FormFieldOption {
 
 export interface FormField {
   id: string
-  name: string
   label: string
   type: FormFieldType
   required: boolean
@@ -43,7 +42,6 @@ export interface UpdateFormRequest {
 }
 
 export interface AddFieldRequest {
-  name: string
   label: string
   type: FormFieldType
   required: boolean
@@ -58,7 +56,6 @@ export interface AddFieldRequest {
 }
 
 export interface UpdateFieldRequest {
-  name?: string
   label?: string
   type?: FormFieldType
   required?: boolean

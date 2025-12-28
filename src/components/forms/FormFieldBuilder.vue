@@ -37,7 +37,7 @@
               </span>
             </div>
             <p class="text-sm text-gray-600 dark:text-gray-400">
-              Тип: {{ $t(`forms.field_types.${field.type}`) }} • Имя: {{ field.name }}
+              Тип: {{ $t(`forms.field_types.${field.type}`) }}
             </p>
             <p v-if="field.description" class="text-sm text-gray-500 mt-1">
               {{ field.description }}
@@ -113,19 +113,18 @@
             placeholder="Введите название поля"
         />
 
-        <AppInput
-            v-model="fieldForm.name"
-            :label="$t('forms.field_name')"
-            :required="true"
-            placeholder="field_name"
-            hint="Используйте только латинские буквы, цифры и подчеркивание"
-        />
-
         <AppSelect
             v-model="fieldForm.type"
             :label="$t('forms.field_type')"
             :required="true"
             :options="fieldTypeOptions"
+        />
+
+        <AppInput
+            v-if="['number', 'currency'].includes(fieldForm.type)"
+            v-model="fieldForm.unit"
+            :label="$t('forms.field_unit')"
+            placeholder="kg, m, $, etc."
         />
 
         <AppInput
@@ -225,10 +224,10 @@ const editingField = ref<FormField | null>(null)
 
 const fieldForm = ref({
   label: '',
-  name: '',
   type: 'text' as any,
   required: false,
   placeholder: '',
+  unit: '',
   options: [] as FormFieldOption[]
 })
 
@@ -246,10 +245,10 @@ const editField = (field: FormField) => {
   editingField.value = field
   fieldForm.value = {
     label: field.label,
-    name: field.name,
     type: field.type,
     required: field.required,
     placeholder: field.placeholder || '',
+    unit: field.unit || '',
     options: field.options ? [...field.options] : []
   }
   showAddFieldModal.value = true
@@ -260,10 +259,10 @@ const closeFieldModal = () => {
   editingField.value = null
   fieldForm.value = {
     label: '',
-    name: '',
     type: 'text',
     required: false,
     placeholder: '',
+    unit: '',
     options: []
   }
 }
