@@ -1,10 +1,20 @@
 <template>
   <div class="space-y-6">
-    <div class="flex gap-4 items-center">
-      <router-link to="/forms" class="text-primary-500 hover:underline">
-        ← {{ $t('common.back') }}
-      </router-link>
-      <h1 class="text-3xl font-bold">{{ currentForm?.name }}</h1>
+    <div class="flex gap-4 items-center justify-between">
+      <div class="flex gap-4 items-center">
+        <router-link to="/forms" class="text-primary-500 hover:underline">
+          ← {{ $t('common.back') }}
+        </router-link>
+        <h1 class="text-3xl font-bold">{{ currentForm?.name }}</h1>
+      </div>
+      <button
+          v-if="currentForm?.published"
+          type="button"
+          class="btn-secondary"
+          @click="handleShare"
+      >
+        🔗 {{ $t('forms.share') }}
+      </button>
     </div>
 
     <div v-if="loading" class="flex justify-center py-12">
@@ -81,8 +91,12 @@ import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import AppLoader from '@/components/common/AppLoader.vue'
 import {useForms} from '@/composables/useForms'
+import {useUiStore} from "@/stores/ui"
+import {useI18n} from 'vue-i18n'
 
 const route = useRoute()
+const uiStore = useUiStore()
+const {t} = useI18n()
 const {currentForm, loading, fetchForm, publishForm} = useForms()
 const publishLoading = ref(false)
 
@@ -93,6 +107,20 @@ const handlePublish = async () => {
     await publishForm(currentForm.value.id)
   } finally {
     publishLoading.value = false
+  }
+}
+
+const handleShare = async () => {
+  if (!currentForm.value) return
+  const link = `${window.location.origin}/entries/create?form_id=${currentForm.value.id}`
+  try {
+    await navigator.clipboard.writeText(link)
+    uiStore.addNotification({
+      type: 'success',
+      message: t('forms.link_copied')
+    })
+  } catch (err) {
+    console.error('Failed to copy link', err)
   }
 }
 

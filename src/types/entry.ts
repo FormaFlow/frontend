@@ -3,6 +3,8 @@ export interface Entry {
   form_id: string
   data: Record<string, any>
   tags?: string[]
+  score?: number
+  duration?: number
   created_at: string
   updated_at: string
 }
@@ -11,6 +13,7 @@ export interface CreateEntryRequest {
   form_id: string
   data: Record<string, any>
   tags?: string[]
+  duration?: number
 }
 
 export interface UpdateEntryRequest {

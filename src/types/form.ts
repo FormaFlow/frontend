@@ -18,6 +18,8 @@ export interface FormField {
   max?: number | string
   description?: string
   order: number
+  correctAnswer?: string
+  points?: number
 }
 
 export interface Form {
@@ -25,6 +27,8 @@ export interface Form {
   name: string
   description?: string
   published: boolean
+  is_quiz: boolean
+  single_submission: boolean
   fields: FormField[]
   entries_count: number
   created_at: string
@@ -34,11 +38,15 @@ export interface Form {
 export interface CreateFormRequest {
   name: string
   description?: string
+  is_quiz?: boolean
+  single_submission?: boolean
 }
 
 export interface UpdateFormRequest {
   name?: string
   description?: string
+  is_quiz?: boolean
+  single_submission?: boolean
 }
 
 export interface AddFieldRequest {
@@ -53,6 +61,8 @@ export interface AddFieldRequest {
   max?: number | string
   description?: string
   order: number
+  correctAnswer?: string
+  points?: number
 }
 
 export interface UpdateFieldRequest {
@@ -67,4 +77,6 @@ export interface UpdateFieldRequest {
   max?: number | string
   description?: string
   order?: number
+  correctAnswer?: string
+  points?: number
 }
