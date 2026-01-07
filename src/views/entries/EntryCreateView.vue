@@ -1,10 +1,15 @@
 <template>
   <div class="max-w-2xl">
-    <div class="flex gap-4 items-center mb-6">
-      <router-link to="/entries" class="text-primary-500 hover:underline">
-        ← {{ $t('common.back') }}
-      </router-link>
-      <h1 class="text-2xl font-bold">{{ $t('entries.create_entry') }}</h1>
+    <div class="flex gap-4 items-center mb-6 justify-between">
+      <div class="flex gap-4 items-center">
+        <router-link to="/entries" class="text-primary-500 hover:underline">
+          ← {{ $t('common.back') }}
+        </router-link>
+        <h1 class="text-2xl font-bold">{{ $t('entries.create_entry') }}</h1>
+      </div>
+      <div v-if="selectedForm?.is_quiz" class="text-xl font-mono bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded">
+        ⏱ {{ formattedDuration }}
+      </div>
     </div>
 
     <div class="card">
@@ -103,20 +108,68 @@
         </div>
       </form>
     </div>
+
+    <AppModal
+        :is-open="showResultModal"
+        :title="$t('forms.quiz_result')"
+        :confirm-text="$t('common.close')"
+        :show-cancel="false"
+        max-width="max-w-lg"
+        @close="closeResultModal"
+        @confirm="closeResultModal"
+    >
+      <div class="text-center space-y-4">
+        <div class="text-4xl">🏆</div>
+        <div class="text-2xl font-bold">
+          {{ $t('forms.your_score') }}: {{ quizResult.score }} / {{ quizResult.total }}
+        </div>
+        <div class="text-gray-600">
+          {{ $t('forms.time_taken') }}: {{ formattedDuration }}
+        </div>
+
+        <div class="overflow-auto max-h-[50vh] text-left mt-6 pr-2" v-if="quizResult.results && quizResult.results.length">
+          <table class="w-full text-sm">
+            <thead>
+            <tr class="border-b dark:border-gray-700">
+              <th class="py-2 font-semibold">Question</th>
+              <th class="py-2 font-semibold">Your Answer</th>
+              <th class="py-2 font-semibold">Correct</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="(res, idx) in quizResult.results" :key="idx" class="border-b dark:border-gray-700 last:border-0">
+              <td class="py-2 pr-2">{{ res.label }}</td>
+              <td class="py-2 pr-2">
+                  <span :class="res.is_correct ? 'text-green-600 font-bold' : 'text-red-600'">
+                    {{ res.user_answer }}
+                  </span>
+              </td>
+              <td class="py-2 pr-2 text-gray-500">
+                <span v-if="!res.is_correct">{{ res.correct_answer }}</span>
+                <span v-else class="text-green-600">✓</span>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </AppModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, reactive, ref, watch} from 'vue'
-import {useRouter} from 'vue-router'
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
 import AppSelect from '@/components/common/AppSelect.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import AppModal from '@/components/common/AppModal.vue'
 import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
 import {validateForm, type ValidationRules} from '@/utils/validation'
 import type {Form, FormField} from "@/types/form";
 
 const router = useRouter()
+const route = useRoute()
 const {loading, createEntry} = useEntries()
 const {forms, fetchForms} = useForms()
 
@@ -125,8 +178,17 @@ const tags = ref<string[]>([])
 const newTag = ref('')
 const formData = reactive<Record<string, any>>({})
 
+// Quiz specific
+const duration = ref(0)
+const timerInterval = ref<number | null>(null)
+const showResultModal = ref(false)
+const quizResult = ref({score: 0, total: 0, results: [] as any[]})
+
 onMounted(async () => {
   await fetchForms()
+  if (route.query.form_id) {
+    selectedFormId.value = route.query.form_id as string
+  }
 })
 
 const errors = reactive({
@@ -147,12 +209,47 @@ const selectedForm = computed(() =>
 
 watch(selectedForm, (form) => {
   Object.keys(formData).forEach(k => delete formData[k])
-  if (!form) return
+  if (!form) {
+    stopTimer()
+    return
+  }
 
   form.fields.forEach((field: FormField) => {
     formData[field.id] =
         field.type === 'number' || field.type === 'currency' ? null : ''
   })
+
+  // Start timer if quiz
+  if (form.is_quiz) {
+    startTimer()
+  } else {
+    stopTimer()
+  }
+})
+
+const startTimer = () => {
+  stopTimer()
+  duration.value = 0
+  timerInterval.value = window.setInterval(() => {
+    duration.value++
+  }, 1000)
+}
+
+const stopTimer = () => {
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+    timerInterval.value = null
+  }
+}
+
+onUnmounted(() => {
+  stopTimer()
+})
+
+const formattedDuration = computed(() => {
+  const m = Math.floor(duration.value / 60)
+  const s = duration.value % 60
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 })
 
 const getFieldComponent = (type: string) => {
@@ -190,19 +287,38 @@ const handleSubmit = async () => {
     return
   }
 
+  stopTimer()
+
   try {
-    await createEntry({
+    const entry = await createEntry({
       form_id: selectedFormId.value,
       data: formData,
-      tags: tags.value
+      tags: tags.value,
+      duration: selectedForm.value?.is_quiz ? duration.value : undefined
     })
-    await router.push('/entries')
+
+    if (entry && selectedForm.value?.is_quiz) {
+      const totalPoints = selectedForm.value.fields.reduce((sum, f) => sum + (f.points || 0), 0)
+      
+      quizResult.value = {
+        score: entry.score || 0,
+        total: totalPoints,
+        results: (entry as any).quiz_results || []
+      }
+      showResultModal.value = true
+    } else {
+      await router.push('/entries')
+    }
   } catch (error) {
     console.error('Failed to create entry:', error)
+    if (selectedForm.value?.is_quiz) {
+      startTimer() // Resume if failed
+    }
   }
 }
 
-onMounted(async () => {
-  await fetchForms()
-})
+const closeResultModal = () => {
+  showResultModal.value = false
+  router.push('/entries')
+}
 </script>

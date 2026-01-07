@@ -25,6 +25,33 @@
             <label class="form-label">{{ $t('forms.form_description') }}</label>
             <textarea v-model="form.description" class="form-textarea" rows="4"></textarea>
           </div>
+          
+          <div class="space-y-4 border-t pt-4">
+            <div class="flex items-center gap-2">
+              <input
+                  id="is-quiz"
+                  v-model="form.is_quiz"
+                  type="checkbox"
+                  class="w-4 h-4 text-primary-600 rounded"
+              />
+              <label for="is-quiz" class="text-sm font-medium">
+                {{ $t('forms.is_quiz') }}
+              </label>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <input
+                  id="single-submission"
+                  v-model="form.single_submission"
+                  type="checkbox"
+                  class="w-4 h-4 text-primary-600 rounded"
+              />
+              <label for="single-submission" class="text-sm font-medium">
+                {{ $t('forms.single_submission') }}
+              </label>
+            </div>
+          </div>
+          
           <AppButton type="submit" :disabled="updateLoading">
             {{ updateLoading ? $t('common.loading') : $t('common.save') }}
           </AppButton>
@@ -37,6 +64,7 @@
             v-if="currentForm"
             :fields="currentForm.fields || []"
             :form-id="currentForm.id"
+            :is-quiz="form.is_quiz"
             @add-field="handleAddField"
             @update-field="handleUpdateField"
             @delete-field="handleDeleteField"
@@ -73,7 +101,9 @@ console.log(currentForm)
 
 const form = reactive({
   name: '',
-  description: ''
+  description: '',
+  is_quiz: false,
+  single_submission: false
 })
 
 const errors = reactive({
@@ -183,6 +213,8 @@ onMounted(async () => {
   if (currentForm.value) {
     form.name = currentForm.value.name
     form.description = currentForm.value.description || ''
+    form.is_quiz = currentForm.value.is_quiz || false
+    form.single_submission = currentForm.value.single_submission || false
   }
 })
 </script>

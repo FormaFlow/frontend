@@ -145,6 +145,20 @@
           </label>
         </div>
 
+        <div v-if="isQuiz" class="space-y-4 border-t pt-4 mt-4">
+          <AppInput
+              v-model="fieldForm.correctAnswer"
+              :label="$t('forms.correct_answer')"
+              :placeholder="$t('forms.correct_answer')"
+          />
+          <AppInput
+              v-model.number="fieldForm.points"
+              type="number"
+              :label="$t('forms.points')"
+              placeholder="0"
+          />
+        </div>
+
         <!-- Дополнительные поля для select -->
         <div v-if="fieldForm.type === 'select'" class="space-y-2">
           <label class="block text-sm font-medium">
@@ -201,6 +215,7 @@ const {t} = useI18n()
 interface Props {
   fields: FormField[]
   formId?: string
+  isQuiz?: boolean
 }
 
 const emit = defineEmits<{
@@ -228,7 +243,9 @@ const fieldForm = ref({
   required: false,
   placeholder: '',
   unit: '',
-  options: [] as FormFieldOption[]
+  options: [] as FormFieldOption[],
+  correctAnswer: '',
+  points: 0
 })
 
 const fieldTypeOptions = [
@@ -249,7 +266,9 @@ const editField = (field: FormField) => {
     required: field.required,
     placeholder: field.placeholder || '',
     unit: field.unit || '',
-    options: field.options ? [...field.options] : []
+    options: field.options ? [...field.options] : [],
+    correctAnswer: field.correctAnswer || '',
+    points: field.points || 0
   }
   showAddFieldModal.value = true
 }
@@ -263,7 +282,9 @@ const closeFieldModal = () => {
     required: false,
     placeholder: '',
     unit: '',
-    options: []
+    options: [],
+    correctAnswer: '',
+    points: 0
   }
 }
 

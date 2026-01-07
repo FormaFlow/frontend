@@ -22,6 +22,32 @@
           ></textarea>
         </div>
 
+        <div class="space-y-4 border-t pt-4">
+          <div class="flex items-center gap-2">
+            <input
+                id="is-quiz"
+                v-model="form.is_quiz"
+                type="checkbox"
+                class="w-4 h-4 text-primary-600 rounded"
+            />
+            <label for="is-quiz" class="text-sm font-medium">
+              {{ $t('is_quiz') }}
+            </label>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input
+                id="single-submission"
+                v-model="form.single_submission"
+                type="checkbox"
+                class="w-4 h-4 text-primary-600 rounded"
+            />
+            <label for="single-submission" class="text-sm font-medium">
+              {{ $t('single_submission') }}
+            </label>
+          </div>
+        </div>
+
         <div class="flex gap-4">
           <AppButton type="submit" :disabled="loading">
             {{ loading ? $t('common.loading') : $t('common.create') }}
@@ -48,7 +74,9 @@ const {loading, createForm} = useForms()
 
 const form = reactive({
   name: '',
-  description: ''
+  description: '',
+  is_quiz: false,
+  single_submission: false
 })
 
 const errors = reactive({

@@ -10,7 +10,7 @@
         v-if="isOpen"
         class="fixed inset-0 flex items-center justify-center z-[101] pointer-events-none"
     >
-      <div class="card m-4 max-w-md w-full dark:bg-gray-800 pointer-events-auto">
+      <div :class="['card m-4 w-full dark:bg-gray-800 pointer-events-auto shadow-2xl', maxWidth]">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold">{{ title }}</h3>
           <button
@@ -28,6 +28,7 @@
         </div>
         <div class="flex gap-4">
           <button
+              v-if="showCancel"
               type="button"
               class="btn-secondary flex-1"
               @click="$emit('close')"
@@ -53,11 +54,15 @@ interface Props {
   title: string
   confirmText?: string
   cancelText?: string
+  showCancel?: boolean
+  maxWidth?: string
 }
 
 withDefaults(defineProps<Props>(), {
   confirmText: 'Confirm',
-  cancelText: 'Cancel'
+  cancelText: 'Cancel',
+  showCancel: true,
+  maxWidth: 'max-w-md'
 })
 
 defineEmits<{

@@ -79,7 +79,18 @@
       "select": "Select",
       "currency": "Currency",
       "email": "Email"
-    }
+    },
+    "is_quiz": "Quiz Mode",
+    "single_submission": "Single Submission",
+    "correct_answer": "Correct Answer",
+    "points": "Points",
+    "share": "Share Form",
+    "copy_link": "Copy Link",
+    "link_copied": "Link copied to clipboard",
+    "quiz_result": "Quiz Result",
+    "your_score": "Your Score",
+    "time_taken": "Time Taken",
+    "seconds": "seconds"
   },
   "entries": {
     "title": "Entries",
