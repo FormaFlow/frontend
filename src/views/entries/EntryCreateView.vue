@@ -189,7 +189,7 @@ onMounted(async () => {
   await fetchForms()
   if (route.query.form_id) {
     selectedFormId.value = route.query.form_id as string
-    
+
     // Check if form is present in the list
     if (!forms.value.find((f: Form) => f.id === selectedFormId.value)) {
       try {
@@ -312,7 +312,7 @@ const handleSubmit = async () => {
 
     if (entry && selectedForm.value?.is_quiz) {
       const totalPoints = selectedForm.value.fields.reduce((sum, f) => sum + (f.points || 0), 0)
-      
+
       quizResult.value = {
         score: entry.score || 0,
         total: totalPoints,
