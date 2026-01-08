@@ -206,17 +206,32 @@ const handleSubmit = async () => {
 
 const getOptions = (options: any) => {
   if (!options) return []
-  if (typeof options === 'string') {
+  let opts = options
+  if (typeof opts === 'string') {
     try {
-      const parsed = JSON.parse(options)
-      return parsed.values ? parsed.values.map((v: string) => ({ label: v, value: v })) : []
+      opts = JSON.parse(opts)
     } catch {
       return []
     }
   }
-  return Array.isArray(options.values) 
-    ? options.values.map((v: string) => ({ label: v, value: v })) 
-    : []
+  
+  // If we have { values: [...] } structure
+  if (opts && !Array.isArray(opts) && Array.isArray(opts.values)) {
+    return opts.values.map((v: string) => ({ label: v, value: v }))
+  }
+  
+  if (Array.isArray(opts)) {
+    return opts.map((v: any) => {
+      // If it's already a label/value object
+      if (typeof v === 'object' && v !== null && 'value' in v && 'label' in v) {
+        return v
+      }
+      // If it's just a string/number
+      return { label: v, value: v }
+    })
+  }
+  
+  return []
 }
 
 const getInputType = (type: FormFieldType) => {

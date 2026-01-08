@@ -62,44 +62,31 @@
 </template>
 
 <script setup lang="ts">
-import {reactive} from 'vue'
 import {useRouter} from 'vue-router'
 import AppInput from '@/components/common/AppInput.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import {useForms} from '@/composables/useForms'
-import {validateForm, type ValidationRules} from '@/utils/validation'
+import {useForm} from '@/composables/useForm'
+import type {ValidationRules} from '@/utils/validation'
 
 const router = useRouter()
-const {loading, createForm} = useForms()
-
-const form = reactive({
-  name: '',
-  description: '',
-  is_quiz: false,
-  single_submission: false
-})
-
-const errors = reactive({
-  name: ''
-})
+const {createForm} = useForms()
 
 const rules: ValidationRules = {
   name: {required: true}
 }
 
-const handleSubmit = async () => {
-  const validation = validateForm(form, rules)
-
-  if (!validation.isValid) {
-    Object.assign(errors, validation.errors)
-    return
-  }
-
-  try {
-    await createForm(form)
+const {form, errors, loading, handleSubmit} = useForm({
+  initialState: {
+    name: '',
+    description: '',
+    is_quiz: false,
+    single_submission: false
+  },
+  rules,
+  onSubmit: async (formData) => {
+    await createForm(formData)
     await router.push('/forms')
-  } catch (error) {
-    console.error('Failed to create form:', error)
   }
-}
+})
 </script>

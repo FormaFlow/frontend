@@ -52,8 +52,9 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Entry } from '@/types/entry'
-import type { FormField, FormFieldType } from '@/types/form'
+import type { FormField } from '@/types/form'
 import { formatDateTime, formatRelativeTime } from '@/utils/helpers'
+import { formatFieldValue } from '@/utils/formatters'
 
 const props = defineProps<{
   entry: Entry
@@ -70,30 +71,4 @@ const { t } = useI18n()
 const fields = computed(() => {
   return props.entry.form?.fields || props.formFields || []
 })
-
-const formatFieldValue = (value: any, type: FormFieldType, unit?: string): string => {
-  if (value === null || value === undefined || value === '') {
-    return '-'
-  }
-
-  switch (type) {
-    case 'boolean':
-      return value ? '✓' : '✗'
-    case 'date':
-      return new Date(value).toLocaleDateString()
-    case 'number':
-      const num = typeof value === 'number' ? value : parseFloat(value)
-      return isNaN(num) ? value : `${num.toLocaleString()}${unit ? ' ' + unit : ''}`
-    case 'currency':
-      const curr = typeof value === 'number' ? value : parseFloat(value)
-      return isNaN(curr) ? value : `${curr.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}${unit ? ' ' + unit : ''}`
-    case 'email':
-      return value
-    case 'select':
-      return value
-    case 'text':
-    default:
-      return String(value)
-  }
-}
 </script>

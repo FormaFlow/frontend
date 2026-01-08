@@ -4,7 +4,7 @@ import type {AddFieldRequest, CreateFormRequest, Form, UpdateFormRequest, Update
 import {PaginatedResponse} from "@/types/api";
 
 export const formsApi = {
-  list(params?: any) {
+  list(params?: Record<string, unknown>) {
     return client.get<PaginatedResponse<Form>>('/forms', params)
   },
 

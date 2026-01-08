@@ -10,7 +10,7 @@ import type {
 import {PaginatedResponse} from "@/types/api";
 
 export const entriesApi = {
-  list(params?: any) {
+  list(params?: Record<string, unknown>) {
     return client.get<PaginatedResponse<Entry>>('/entries', params)
   },
 
@@ -34,7 +34,7 @@ export const entriesApi = {
     return client.post<BulkImportResponse>(`/forms/${formId}/entries/import`, data)
   },
 
-  listByForm(formId: string, params?: any) {
+  listByForm(formId: string, params?: Record<string, unknown>) {
     return client.get<PaginatedResponse<Entry>>(`/forms/${formId}/entries`, params)
   },
 

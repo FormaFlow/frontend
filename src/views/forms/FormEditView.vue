@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, reactive, ref} from 'vue'
+import {onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {storeToRefs} from "pinia"
 import AppInput from '@/components/common/AppInput.vue'
@@ -86,7 +86,8 @@ import {useForms} from '@/composables/useForms'
 import {useFormsStore} from "@/stores/forms"
 import {useUiStore} from "@/stores/ui"
 import {formsApi} from "@/api/forms"
-import {validateForm, type ValidationRules} from '@/utils/validation'
+import {useForm} from "@/composables/useForm"
+import type {ValidationRules} from '@/utils/validation'
 import type {FormField} from "@/types/form"
 
 const route = useRoute()
@@ -96,49 +97,36 @@ const uiStore = useUiStore()
 const {currentForm, loading} = storeToRefs(formsStore)
 const {fetchForm, updateForm} = useForms()
 
-console.log('CURRENT_FORM')
-console.log(currentForm)
-
-const form = reactive({
-  name: '',
-  description: '',
-  is_quiz: false,
-  single_submission: false
-})
-
-const errors = reactive({
-  name: ''
-})
-
-const updateLoading = ref(false)
-
 const rules: ValidationRules = {
   name: {required: true}
 }
 
-const handleUpdate = async () => {
-  const validation = validateForm(form, rules)
-  if (!validation.isValid) {
-    Object.assign(errors, validation.errors)
-    return
+const {
+  form,
+  errors,
+  loading: updateLoading,
+  handleSubmit: handleUpdate,
+  setData
+} = useForm({
+  initialState: {
+    name: '',
+    description: '',
+    is_quiz: false,
+    single_submission: false
+  },
+  rules,
+  onSubmit: async (formData) => {
+    try {
+      await updateForm(route.params.id as string, formData)
+      uiStore.addNotification({
+        type: 'success',
+        message: 'Форма обновлена'
+      })
+    } catch (error: unknown) {
+      uiStore.handleApiError(error, 'Ошибка обновления формы')
+    }
   }
-
-  updateLoading.value = true
-  try {
-    await updateForm(route.params.id as string, form)
-    uiStore.addNotification({
-      type: 'success',
-      message: 'Форма обновлена'
-    })
-  } catch (error: any) {
-    uiStore.addNotification({
-      type: 'error',
-      message: error.message || 'Ошибка обновления формы'
-    })
-  } finally {
-    updateLoading.value = false
-  }
-}
+})
 
 const handleAddField = async (fieldData: Omit<FormField, 'id'>) => {
   if (!currentForm.value) return
@@ -155,12 +143,9 @@ const handleAddField = async (fieldData: Omit<FormField, 'id'>) => {
       type: 'success',
       message: 'Поле добавлено'
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error adding field:', error)
-    uiStore.addNotification({
-      type: 'error',
-      message: error.message || 'Ошибка добавления поля'
-    })
+    uiStore.handleApiError(error, 'Ошибка добавления поля')
   }
 }
 
@@ -177,12 +162,9 @@ const handleUpdateField = async (field: FormField) => {
       type: 'success',
       message: 'Поле обновлено'
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating field:', error)
-    uiStore.addNotification({
-      type: 'error',
-      message: error.message || 'Ошибка обновления поля'
-    })
+    uiStore.handleApiError(error, 'Ошибка обновления поля')
   }
 }
 
@@ -199,22 +181,21 @@ const handleDeleteField = async (fieldId: string) => {
       type: 'success',
       message: 'Поле удалено'
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting field:', error)
-    uiStore.addNotification({
-      type: 'error',
-      message: error.message || 'Ошибка удаления поля'
-    })
+    uiStore.handleApiError(error, 'Ошибка удаления поля')
   }
 }
 
 onMounted(async () => {
   await fetchForm(route.params.id as string)
   if (currentForm.value) {
-    form.name = currentForm.value.name
-    form.description = currentForm.value.description || ''
-    form.is_quiz = currentForm.value.is_quiz || false
-    form.single_submission = currentForm.value.single_submission || false
+    setData({
+      name: currentForm.value.name,
+      description: currentForm.value.description || '',
+      is_quiz: currentForm.value.is_quiz || false,
+      single_submission: currentForm.value.single_submission || false
+    })
   }
 })
 </script>
