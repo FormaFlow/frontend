@@ -24,7 +24,8 @@
     "no": "Нет",
     "confirm": "Подтвердить",
     "view": "Просмотр",
-    "data": "Данные"
+    "data": "Данные",
+    "select": "Выбрать"
   },
   "auth": {
     "login": "Вход",
@@ -178,5 +179,15 @@
     "activity_trends": "Тренды активности (Посл. 4 недели)",
     "forms_performance": "Показатели форм (Неделя)",
     "entries_week": "Записей (Неделя)"
+  },
+  "time": {
+    "just_now": "только что",
+    "seconds_ago": "{count} сек. назад",
+    "minutes_ago": "{count} мин. назад",
+    "hours_ago": "{count} ч. назад",
+    "days_ago": "{count} дн. назад",
+    "weeks_ago": "{count} нед. назад",
+    "months_ago": "{count} мес. назад",
+    "years_ago": "{count} л. назад"
   }
 }

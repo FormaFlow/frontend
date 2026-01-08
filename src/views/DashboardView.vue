@@ -6,6 +6,8 @@
       <p class="text-primary-100">{{ $t('forms.title') }} и {{ $t('entries.title') }} в одном месте</p>
     </div>
 
+    <QuickEntryWidget class="mb-8" />
+
     <div v-if="loading" class="flex justify-center py-8">
       <AppLoader/>
     </div>
@@ -87,21 +89,6 @@
         </router-link>
       </div>
 
-      <!-- Trends -->
-      <div class="card mb-8" v-if="trends">
-        <h2 class="text-xl font-bold mb-4">{{ $t('dashboard.activity_trends') }}</h2>
-        <div class="flex items-end space-x-4 h-32">
-          <div v-for="week in trends.weekly_trends" :key="week.week" class="flex flex-col items-center flex-1">
-             <div class="w-full bg-blue-100 dark:bg-blue-900 rounded-t relative group" :style="{ height: getTrendHeight(week.count) + '%' }">
-               <div class="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 text-xs font-bold hidden group-hover:block">
-                 {{ week.count }}
-               </div>
-             </div>
-             <span class="text-xs text-gray-500 mt-2 rotate-45 origin-left">{{ week.week }}</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Forms Performance Table -->
       <div class="card">
         <h2 class="text-xl font-bold mb-4">{{ $t('dashboard.forms_performance') }}</h2>
@@ -144,6 +131,7 @@
 <script setup lang="ts">
 import {computed, onMounted} from 'vue'
 import AppLoader from '@/components/common/AppLoader.vue'
+import QuickEntryWidget from '@/components/dashboard/QuickEntryWidget.vue'
 import {useAuthStore} from '@/stores/auth'
 import {useReportsStore} from '@/stores/reports'
 
@@ -157,12 +145,6 @@ const loading = computed(() => reportsStore.loading)
 
 const activeForms = computed(() => weekSummary.value?.forms || [])
 const summaryByForm = computed(() => weekSummary.value?.summary_by_form || {})
-
-function getTrendHeight(value: number) {
-  if (!trends.value?.weekly_trends) return 0
-  const max = Math.max(...trends.value.weekly_trends.map(t => t.count))
-  return max > 0 ? (value / max) * 100 : 0
-}
 
 onMounted(async () => {
   try {

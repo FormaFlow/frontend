@@ -51,40 +51,13 @@
       <p class="text-gray-600 dark:text-gray-400">{{ $t('entries.no_entries') }}</p>
     </div>
     <div v-else class="space-y-4">
-      <div v-for="entry in entries" :key="entry.id" class="card">
-        <div class="flex items-start justify-between">
-          <div class="flex-1">
-            <!-- Entry Data Fields -->
-            <div v-if="currentForm" class="mb-4">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div v-for="field in currentForm.fields" :key="field.id" class="">
-                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ field.label }}:</span>
-                  <span class="ml-2 text-sm">{{ formatFieldValue(entry.data[field.id], field.type, field.unit) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tags -->
-            <div v-if="entry.tags && entry.tags.length > 0" class="flex gap-2 mb-2">
-              <span v-for="tag in entry.tags" :key="tag" class="badge badge-success">
-                {{ tag }}
-              </span>
-            </div>
-
-            <!-- Metadata -->
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              {{ $t('entries.created') }}: {{ formatDateTime(entry.created_at) }}
-            </p>
-          </div>
-          <div class="flex gap-2">
-            <router-link :to="`/entries/${entry.id}/edit`" class="btn-secondary btn-sm">
-              {{ $t('common.edit') }}
-            </router-link>
-            <button type="button" class="btn-danger btn-sm" @click="handleDelete(entry.id)">
-              {{ $t('common.delete') }}
-            </button>
-          </div>
-        </div>
+      <div v-for="entry in entries" :key="entry.id">
+        <EntryCard 
+          :entry="entry" 
+          :form-fields="currentForm?.fields" 
+          show-actions
+          @delete="handleDelete" 
+        />
       </div>
     </div>
   </div>
@@ -93,19 +66,23 @@
 <script setup lang="ts">
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
+import {useI18n} from 'vue-i18n'
 import AppLoader from '@/components/common/AppLoader.vue'
 import AppSelect from '@/components/common/AppSelect.vue'
+import EntryCard from '@/components/entries/EntryCard.vue'
 import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
 import {useStats} from '@/composables/useStats'
-import {debounce, formatDateTime} from '@/utils/helpers'
+import {debounce} from '@/utils/helpers'
 import type {FormFieldType} from '@/types/form'
 
+const { t } = useI18n()
 const route = useRoute()
 const {entries, loading, fetchEntries, deleteEntry} = useEntries()
 const {forms, currentForm, fetchForms, fetchForm} = useForms()
 const {showSuccess, showError} = useNotification()
+// ... existing script continues ...
 
 const searchQuery = ref('')
 const selectedFormId = ref('')

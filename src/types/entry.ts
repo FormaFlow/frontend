@@ -1,3 +1,5 @@
+import type { Form } from './form'
+
 export interface Entry {
   id: string
   form_id: string
@@ -7,6 +9,7 @@ export interface Entry {
   duration?: number
   created_at: string
   updated_at: string
+  form?: Form
 }
 
 export interface CreateEntryRequest {

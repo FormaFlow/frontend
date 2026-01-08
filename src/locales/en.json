@@ -24,7 +24,8 @@
     "no": "No",
     "confirm": "Confirm",
     "view": "View",
-    "data": "Data"
+    "data": "Data",
+    "select": "Select"
   },
   "auth": {
     "login": "Login",
@@ -178,5 +179,15 @@
     "activity_trends": "Activity Trends (Last 4 Weeks)",
     "forms_performance": "Forms Performance (Week)",
     "entries_week": "Entries (Week)"
+  },
+  "time": {
+    "just_now": "just now",
+    "seconds_ago": "{count} sec ago | {count} secs ago",
+    "minutes_ago": "{count} min ago | {count} mins ago",
+    "hours_ago": "{count} hour ago | {count} hours ago",
+    "days_ago": "{count} day ago | {count} days ago",
+    "weeks_ago": "{count} week ago | {count} weeks ago",
+    "months_ago": "{count} month ago | {count} months ago",
+    "years_ago": "{count} year ago | {count} years ago"
   }
 }
