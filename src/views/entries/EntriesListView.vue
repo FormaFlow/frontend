@@ -75,6 +75,7 @@ import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
 import {useStats} from '@/composables/useStats'
 import {debounce} from '@/utils/helpers'
+import {formatFieldValue} from '@/utils/formatters'
 import type {FormFieldType} from '@/types/form'
 
 const { t } = useI18n()
@@ -120,32 +121,6 @@ const monthSummary = computed(() => {
     }
   }).filter(s => s.sum > 0)
 })
-
-const formatFieldValue = (value: any, type: FormFieldType, unit?: string): string => {
-  if (value === null || value === undefined || value === '') {
-    return '-'
-  }
-
-  switch (type) {
-    case 'boolean':
-      return value ? '✓' : '✗'
-    case 'date':
-      return new Date(value).toLocaleDateString()
-    case 'number':
-      const num = typeof value === 'number' ? value : parseFloat(value)
-      return isNaN(num) ? value : `${num.toLocaleString()}${unit ? ' ' + unit : ''}`
-    case 'currency':
-      const curr = typeof value === 'number' ? value : parseFloat(value)
-      return isNaN(curr) ? value : `${curr.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}${unit ? ' ' + unit : ''}`
-    case 'email':
-      return value
-    case 'select':
-      return value
-    case 'text':
-    default:
-      return String(value)
-  }
-}
 
 const handleSearch = debounce(async () => {
   await fetchEntries(1, selectedFormId.value || undefined)

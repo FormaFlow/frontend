@@ -1,5 +1,6 @@
 import {defineStore} from 'pinia'
 import {computed, ref} from 'vue'
+import { ApiError } from '@/api/client'
 
 export type Theme = 'light' | 'dark' | 'system'
 
@@ -71,6 +72,24 @@ export const useUiStore = defineStore('ui', () => {
     sidebarOpen.value = !sidebarOpen.value
   }
 
+  const handleApiError = (error: unknown, defaultMessage = 'An error occurred') => {
+    console.error(error)
+    let message = defaultMessage
+
+    if (error instanceof ApiError) {
+      message = error.message
+      // If there are validation errors, we might want to show the first one or just the main message
+      // For notifications, simpler is better. Detailed validation errors usually go to the form fields.
+    } else if (error instanceof Error) {
+      message = error.message
+    }
+
+    addNotification({
+      type: 'error',
+      message
+    })
+  }
+
   return {
     theme,
     notifications,
@@ -81,6 +100,7 @@ export const useUiStore = defineStore('ui', () => {
     applyTheme,
     addNotification,
     removeNotification,
-    toggleSidebar
+    toggleSidebar,
+    handleApiError
   }
 })

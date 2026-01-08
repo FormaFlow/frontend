@@ -1,10 +1,10 @@
-export interface ApiResponse<T> extends Record<string, any> {
+export interface ApiResponse extends Record<string, unknown> {
   message?: string
   errors?: Record<string, string[]>
   status: number
 }
 
-export type ApiResult<T> = T & ApiResponse<T>
+export type ApiResult<T> = T & ApiResponse
 
 export interface ApiError {
   status: number

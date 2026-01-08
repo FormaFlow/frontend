@@ -1,8 +1,18 @@
-import axios, {type AxiosInstance, type AxiosResponse} from 'axios'
+import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
 import router from '@/router'
-import {PaginatedResponse} from "@/types/api";
+import { PaginatedResponse } from '@/types/api'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+
+export class ApiError extends Error {
+  response?: AxiosResponse
+  errors?: Record<string, string[]>
+
+  constructor(message: string) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
 
 class ApiClient {
   private client: AxiosInstance
@@ -12,7 +22,7 @@ class ApiClient {
       baseURL: API_BASE_URL,
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Accept: 'application/json'
       },
       withCredentials: true
     })
@@ -41,33 +51,33 @@ class ApiClient {
           await router.push('/login')
         }
 
-        const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+        const errorMessage = error.response?.data?.message || error.message || 'An error occurred'
 
-        const customError = new Error(errorMessage);
-        (customError as any).response = error.response;
-        (customError as any).errors = error.response?.data?.errors;
+        const customError = new ApiError(errorMessage)
+        customError.response = error.response
+        customError.errors = error.response?.data?.errors
 
         return Promise.reject(customError)
       }
     )
   }
 
-  async get<T>(url: string, params?: any): Promise<T> {
-    const response: AxiosResponse<T> = await this.client.get(url, {params})
+  async get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.get(url, { params })
     return response.data
   }
 
-  async post<T>(url: string, data?: any): Promise<T> {
+  async post<T>(url: string, data?: unknown): Promise<T> {
     const response: AxiosResponse<T> = await this.client.post(url, data)
     return response.data
   }
 
-  async patch<T>(url: string, data?: any): Promise<T> {
+  async patch<T>(url: string, data?: unknown): Promise<T> {
     const response: AxiosResponse<T> = await this.client.patch(url, data)
     return response.data
   }
 
-  async put<T>(url: string, data?: any): Promise<T> {
+  async put<T>(url: string, data?: unknown): Promise<T> {
     const response: AxiosResponse<T> = await this.client.put(url, data)
     return response.data
   }
@@ -89,27 +99,27 @@ class ApiClient {
     return this.get<T>(url)
   }
 
-  async postUser<T>(url: string, data?: any): Promise<T> {
+  async postUser<T>(url: string, data?: unknown): Promise<T> {
     return this.post<T>(url, data)
   }
 
-  async postForm<T>(url: string, data?: any): Promise<T> {
+  async postForm<T>(url: string, data?: unknown): Promise<T> {
     return this.post<T>(url, data)
   }
 
-  async postEntry<T>(url: string, data?: any): Promise<T> {
+  async postEntry<T>(url: string, data?: unknown): Promise<T> {
     return this.post<T>(url, data)
   }
 
-  async patchForm<T>(url: string, data?: any): Promise<T> {
+  async patchForm<T>(url: string, data?: unknown): Promise<T> {
     return this.patch<T>(url, data)
   }
 
-  async patchEntry<T>(url: string, data?: any): Promise<T> {
+  async patchEntry<T>(url: string, data?: unknown): Promise<T> {
     return this.patch<T>(url, data)
   }
 
-  async getPaginatedResponse<T>(url: string, params?: any): Promise<PaginatedResponse<T>> {
+  async getPaginatedResponse<T>(url: string, params?: Record<string, unknown>): Promise<PaginatedResponse<T>> {
     return this.get<PaginatedResponse<T>>(url, params)
   }
 }
