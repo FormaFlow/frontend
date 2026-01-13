@@ -6,7 +6,8 @@ import client from '@/api/client'
 vi.mock('@/api/client', () => ({
   default: {
     post: vi.fn(),
-    get: vi.fn()
+    get: vi.fn(),
+    patch: vi.fn()
   },
   ApiError: class extends Error {}
 }))
@@ -51,5 +52,21 @@ describe('useAuthStore', () => {
 
     await store.getProfile()
     expect(store.user).toEqual(mockUser)
+  })
+
+  it('updates profile successfully', async () => {
+    const store = useAuthStore()
+    const mockUser = { id: '1', name: 'User', email: 'test@test.com', timezone: 'UTC' }
+    const updatedUser = { ...mockUser, timezone: 'Europe/Moscow' }
+    
+    // Setup initial state
+    store.user = mockUser as any
+    
+    vi.mocked(client.patch).mockResolvedValue(updatedUser)
+
+    await store.updateProfile({ timezone: 'Europe/Moscow' })
+    
+    expect(client.patch).toHaveBeenCalledWith('profile', { timezone: 'Europe/Moscow' })
+    expect(store.user).toEqual(updatedUser)
   })
 })

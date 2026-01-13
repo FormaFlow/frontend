@@ -75,7 +75,8 @@ const form = reactive({
   name: '',
   email: '',
   password: '',
-  password_confirmation: ''
+  password_confirmation: '',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 })
 
 const errors = reactive({

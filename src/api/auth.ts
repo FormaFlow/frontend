@@ -16,5 +16,8 @@ export const authApi = {
   },
   getProfile: () => {
     return client.get<User>('profile')
+  },
+  updateProfile: (data: Partial<User>) => {
+    return client.patch<User>('profile', data)
   }
 }

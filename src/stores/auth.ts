@@ -107,6 +107,24 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const updateProfile = async (data: Partial<User>) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await authApi.updateProfile(data)
+      if (response) {
+        user.value = response
+        localStorage.setItem('user', JSON.stringify(response))
+        return response
+      }
+    } catch (err: unknown) {
+      error.value = (err as Error).message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   initializeAuth()
 
   return {
@@ -119,6 +137,7 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     login,
     logout,
-    getProfile
+    getProfile,
+    updateProfile
   }
 })
