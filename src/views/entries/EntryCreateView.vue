@@ -228,8 +228,9 @@ watch(selectedForm, (form) => {
   }
 
   form.fields.forEach((field: FormField) => {
-    formData[field.id] =
-        field.type === 'number' || field.type === 'currency' ? null : ''
+    if (field.type === 'boolean') {
+      formData[field.id] = false
+    }
   })
 
   // Start timer if quiz
@@ -289,10 +290,19 @@ const handleSubmit = async () => {
 
   stopTimer()
 
+  // Filter out empty values to handle optional fields correctly
+  const filteredData = { ...formData }
+  Object.keys(filteredData).forEach(key => {
+    const val = filteredData[key]
+    if (val === '' || val === null || val === undefined) {
+      delete filteredData[key]
+    }
+  })
+
   try {
     const entry = await createEntry({
       form_id: selectedFormId.value,
-      data: formData,
+      data: filteredData,
       tags: tags.value,
       duration: selectedForm.value?.is_quiz ? duration.value : undefined
     })
