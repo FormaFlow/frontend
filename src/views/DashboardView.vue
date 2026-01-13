@@ -140,7 +140,6 @@ const reportsStore = useReportsStore()
 
 const user = computed(() => authStore.user)
 const weekSummary = computed(() => reportsStore.weekSummary)
-const trends = computed(() => reportsStore.trends)
 const loading = computed(() => reportsStore.loading)
 
 const activeForms = computed(() => weekSummary.value?.forms || [])

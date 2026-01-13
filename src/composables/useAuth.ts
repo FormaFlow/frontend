@@ -10,36 +10,38 @@ export const useAuth = () => {
 
   const login = async (credentials: AuthCredentials) => {
     try {
-      await authStore.login(credentials)
-      uiStore.addNotification({
-        type: 'success',
-        message: 'Successfully logged in'
-      })
-
-      const redirect = router.currentRoute.value.query.redirect as string
-      await router.push(redirect || {name: 'dashboard'})
-    } catch (error: any) {
-      uiStore.addNotification({
-        type: 'error',
-        message: error.message || 'Login failed'
-      })
-      throw error
+      const result = await authStore.login(credentials)
+      if (result) {
+        uiStore.addNotification({
+          type: 'success',
+          message: 'Logged in successfully'
+        })
+        const redirect = router.currentRoute.value.query.redirect as string
+        await router.push(redirect || { name: 'dashboard' })
+        return true
+      }
+      return false
+    } catch (error: unknown) {
+      uiStore.handleApiError(error, 'Login failed')
+      return false
     }
   }
 
   const register = async (data: RegisterData) => {
     try {
-      await authStore.register(data)
-      uiStore.addNotification({
-        type: 'success',
-        message: 'Account created successfully'
-      })
-    } catch (error: any) {
-      uiStore.addNotification({
-        type: 'error',
-        message: error.message || 'Registration failed'
-      })
-      throw error
+      const result = await authStore.register(data)
+      if (result) {
+        uiStore.addNotification({
+          type: 'success',
+          message: 'Registration successful'
+        })
+        await router.push({ name: 'dashboard' })
+        return true
+      }
+      return false
+    } catch (error: unknown) {
+      uiStore.handleApiError(error, 'Registration failed')
+      return false
     }
   }
 

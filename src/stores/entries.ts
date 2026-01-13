@@ -43,8 +43,8 @@ export const useEntriesStore = defineStore('entries', () => {
           last_page: Math.ceil((response.total || 0) / (response.limit || 15))
         }
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -59,8 +59,8 @@ export const useEntriesStore = defineStore('entries', () => {
       if (response) {
         currentEntry.value = response
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -76,8 +76,8 @@ export const useEntriesStore = defineStore('entries', () => {
         entries.value.unshift(response)
         return response
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -99,8 +99,8 @@ export const useEntriesStore = defineStore('entries', () => {
         }
         return response
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -116,8 +116,8 @@ export const useEntriesStore = defineStore('entries', () => {
       if (currentEntry.value?.id === id) {
         currentEntry.value = null
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false

@@ -76,9 +76,7 @@ import {useNotification} from '@/composables/useNotification'
 import {useStats} from '@/composables/useStats'
 import {debounce} from '@/utils/helpers'
 import {formatFieldValue} from '@/utils/formatters'
-import type {FormFieldType} from '@/types/form'
 
-const { t } = useI18n()
 const route = useRoute()
 const {entries, loading, fetchEntries, deleteEntry} = useEntries()
 const {forms, currentForm, fetchForms, fetchForm} = useForms()
@@ -146,7 +144,7 @@ const handleDelete = async (id: string) => {
       await deleteEntry(id)
       showSuccess('Entry deleted successfully')
       await fetchEntries(1, selectedFormId.value || undefined)
-    } catch (error) {
+    } catch {
       showError('Failed to delete entry')
     }
   }

@@ -99,7 +99,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
-import reportsApi, { type SummaryResponse, type MultiTimeSeriesResponse } from '@/api/reports'
+import reportsApi, { type SummaryResponse } from '@/api/reports'
 import { useFormsStore } from '@/stores/forms'
 import TimeSeriesChart from '@/components/common/TimeSeriesChart.vue'
 import { formatPeriod } from '@/utils/date'

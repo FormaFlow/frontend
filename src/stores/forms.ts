@@ -42,8 +42,8 @@ export const useFormsStore = defineStore('forms', () => {
           last_page: Math.ceil(response.total / response.limit)
         }
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -58,8 +58,8 @@ export const useFormsStore = defineStore('forms', () => {
       if (response) {
         currentForm.value = response
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -75,8 +75,8 @@ export const useFormsStore = defineStore('forms', () => {
         forms.value.unshift(response)
         return response
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -92,8 +92,8 @@ export const useFormsStore = defineStore('forms', () => {
         await fetchForm(id)
         return response
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -109,8 +109,8 @@ export const useFormsStore = defineStore('forms', () => {
       if (currentForm.value?.id === id) {
         currentForm.value = null
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -126,8 +126,8 @@ export const useFormsStore = defineStore('forms', () => {
         await fetchForm(id)
         return response
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false

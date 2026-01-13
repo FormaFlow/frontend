@@ -91,7 +91,6 @@ import type {ValidationRules} from '@/utils/validation'
 import type {FormField} from "@/types/form"
 
 const route = useRoute()
-const router = useRouter()
 const formsStore = useFormsStore()
 const uiStore = useUiStore()
 const {currentForm, loading} = storeToRefs(formsStore)

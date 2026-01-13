@@ -115,12 +115,11 @@ const handleSearch = debounce(async () => {
 const handleDelete = async (id: string) => {
   if (confirm('Are you sure?')) {
     try {
-      await deleteForm(id)
-      showSuccess('Form deleted successfully')
-    } catch (error) {
-      showError('Failed to delete form')
-    }
-  }
+          await deleteForm(id)
+          showSuccess('Form deleted successfully')
+        } catch {
+          showError('Failed to delete form')
+        }  }
 }
 
 const goToPage = async (page: number) => {

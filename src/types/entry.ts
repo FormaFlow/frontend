@@ -3,7 +3,7 @@ import type { Form } from './form'
 export interface Entry {
   id: string
   form_id: string
-  data: Record<string, any>
+  data: Record<string, unknown>
   tags?: string[]
   score?: number
   duration?: number
@@ -14,13 +14,13 @@ export interface Entry {
 
 export interface CreateEntryRequest {
   form_id: string
-  data: Record<string, any>
+  data: Record<string, unknown>
   tags?: string[]
   duration?: number
 }
 
 export interface UpdateEntryRequest {
-  data: Record<string, any>
+  data: Record<string, unknown>
   tags?: string[]
 }
 

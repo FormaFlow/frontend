@@ -1,34 +1,39 @@
 import { defineStore } from 'pinia'
+import { ref } from 'vue'
 import reportsApi, { type DashboardSummary, type TrendsData } from '@/api/reports'
 
-export const useReportsStore = defineStore('reports', {
-  state: () => ({
-    weekSummary: null as DashboardSummary | null,
-    monthSummary: null as DashboardSummary | null,
-    trends: null as TrendsData | null,
-    loading: false,
-    error: null as string | null
-  }),
+export const useReportsStore = defineStore('reports', () => {
+  const weekSummary = ref<DashboardSummary | null>(null)
+  const monthSummary = ref<DashboardSummary | null>(null)
+  const trends = ref<TrendsData | null>(null)
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
-  actions: {
-    async fetchDashboardData() {
-      this.loading = true
-      this.error = null
-      try {
-        const [week, month, trends] = await Promise.all([
-          reportsApi.getDashboardWeek(),
-          reportsApi.getDashboardMonth(),
-          reportsApi.getDashboardTrends()
-        ])
-        this.weekSummary = week
-        this.monthSummary = month
-        this.trends = trends
-      } catch (err: any) {
-        this.error = err.message || 'Failed to fetch dashboard data'
-        console.error(err)
-      } finally {
-        this.loading = false
-      }
+  const fetchDashboardData = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      const [weekRes, trendsRes] = await Promise.all([
+        reportsApi.getDashboardWeek(),
+        reportsApi.getDashboardTrends()
+      ])
+      
+      weekSummary.value = weekRes
+      trends.value = trendsRes
+    } catch (err: unknown) {
+      error.value = (err as Error).message
+      throw err
+    } finally {
+      loading.value = false
     }
+  }
+
+  return {
+    weekSummary,
+    monthSummary,
+    trends,
+    loading,
+    error,
+    fetchDashboardData
   }
 })

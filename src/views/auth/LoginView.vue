@@ -59,7 +59,6 @@ import AppLoader from '@/components/common/AppLoader.vue'
 import {useAuth} from '@/composables/useAuth'
 import {validateForm, type ValidationRules} from '@/utils/validation'
 
-const router = useRouter()
 const {login, loading} = useAuth()
 
 const form = reactive({

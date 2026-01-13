@@ -265,19 +265,6 @@ const formattedDuration = computed(() => {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 })
 
-const getFieldComponent = (type: string) => {
-  const components: Record<string, string> = {
-    text: 'AppInput',
-    email: 'AppInput',
-    number: 'AppInput',
-    date: 'AppInput',
-    select: 'AppSelect',
-    boolean: 'div', // Would be a checkbox
-    currency: 'AppInput'
-  }
-  return components[type] || 'AppInput'
-}
-
 const addTag = () => {
   if (newTag.value && !tags.value.includes(newTag.value)) {
     tags.value.push(newTag.value)

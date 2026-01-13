@@ -36,11 +36,15 @@ interface Props {
   hint?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  type: 'text',
-  required: false,
-  disabled: false
-})
+defineProps<{
+  modelValue: string | number
+  label?: string
+  type?: string
+  placeholder?: string
+  error?: string
+  id: string
+  required?: boolean
+}>()
 
 defineEmits<{
   'update:modelValue': [value: string]

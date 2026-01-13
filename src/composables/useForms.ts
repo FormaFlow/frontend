@@ -10,18 +10,11 @@ export const useForms = () => {
 
   const createForm = async (data: CreateFormRequest) => {
     try {
-      const form = await formsStore.createForm(data)
-      uiStore.addNotification({
-        type: 'success',
-        message: 'Form created successfully'
-      })
-      return form
-    } catch (error: any) {
-      uiStore.addNotification({
-        type: 'error',
-        message: error.message || 'Failed to create form'
-      })
-      throw error
+      const result = await formsStore.createForm(data)
+      return result
+    } catch (error: unknown) {
+      uiStore.handleApiError(error, 'Failed to create form')
+      return null
     }
   }
 

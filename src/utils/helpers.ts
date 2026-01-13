@@ -19,7 +19,7 @@ export const formatDateTime = (date: string | Date, locale = 'en-CA'): string =>
   })
 }
 
-export const formatRelativeTime = (date: string | Date, t: (key: string, values?: any) => string): string => {
+export const formatRelativeTime = (date: string | Date, t: (key: string, values?: Record<string, unknown>) => string): string => {
   const d = new Date(date)
   const now = new Date()
   const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000)
@@ -72,7 +72,7 @@ export const capitalize = (text: string): string => {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void => {

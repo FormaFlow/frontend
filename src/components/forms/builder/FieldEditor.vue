@@ -105,7 +105,7 @@ import { computed, watch, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppInput from '@/components/common/AppInput.vue'
 import AppSelect from '@/components/common/AppSelect.vue'
-import type { FormField, FormFieldOption } from '@/types/form'
+import type { FormField } from '@/types/form'
 
 const { t } = useI18n()
 

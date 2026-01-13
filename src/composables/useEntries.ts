@@ -16,11 +16,8 @@ export const useEntries = () => {
         message: 'Entry created successfully'
       })
       return entry
-    } catch (error: any) {
-      uiStore.addNotification({
-        type: 'error',
-        message: error.message || 'Failed to create entry'
-      })
+    } catch (error: unknown) {
+      uiStore.handleApiError(error, 'Failed to create entry')
       throw error
     }
   }
@@ -33,11 +30,8 @@ export const useEntries = () => {
         message: 'Entry updated successfully'
       })
       return entry
-    } catch (error: any) {
-      uiStore.addNotification({
-        type: 'error',
-        message: error.message || 'Failed to update entry'
-      })
+    } catch (error: unknown) {
+      uiStore.handleApiError(error, 'Failed to update entry')
       throw error
     }
   }
@@ -49,11 +43,8 @@ export const useEntries = () => {
         type: 'success',
         message: 'Entry deleted successfully'
       })
-    } catch (error: any) {
-      uiStore.addNotification({
-        type: 'error',
-        message: error.message || 'Failed to delete entry'
-      })
+    } catch (error: unknown) {
+      uiStore.handleApiError(error, 'Failed to delete entry')
       throw error
     }
   }

@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useEntriesStore } from '../entries'
 import { entriesApi } from '@/api/entries'
+import type { PaginatedResponse } from '@/types/api'
+import type { Entry } from '@/types/entry'
 
 vi.mock('@/api/entries', () => ({
   entriesApi: {
@@ -30,7 +32,7 @@ describe('useEntriesStore', () => {
       offset: 0
     }
 
-    vi.mocked(entriesApi.list).mockResolvedValue(mockResponse as any)
+    vi.mocked(entriesApi.list).mockResolvedValue(mockResponse as unknown as PaginatedResponse<Entry>)
 
     await store.fetchEntries()
 
@@ -42,7 +44,7 @@ describe('useEntriesStore', () => {
   it('fetches entries by form id', async () => {
     const store = useEntriesStore()
     const mockResponse = { entries: [], total: 0, limit: 15, offset: 0 }
-    vi.mocked(entriesApi.list).mockResolvedValue(mockResponse as any)
+    vi.mocked(entriesApi.list).mockResolvedValue(mockResponse as unknown as PaginatedResponse<Entry>)
 
     await store.fetchEntries(1, 'form-123')
 

@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (savedUser) {
       try {
         user.value = JSON.parse(savedUser)
-      } catch (e) {
+      } catch {
         localStorage.removeItem('user')
       }
     }
@@ -40,8 +40,8 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('user', JSON.stringify(response.user))
         return response
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -68,8 +68,8 @@ export const useAuthStore = defineStore('auth', () => {
 
         return response
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
@@ -99,8 +99,8 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = response
         localStorage.setItem('user', JSON.stringify(response))
       }
-    } catch (err: any) {
-      error.value = err.message
+    } catch (err: unknown) {
+      error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false

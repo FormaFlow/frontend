@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
 import { useForm } from '../useForm'
-import { nextTick } from 'vue'
 
 describe('useForm', () => {
   it('initializes with default values', () => {

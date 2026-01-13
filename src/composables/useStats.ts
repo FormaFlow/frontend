@@ -6,18 +6,14 @@ export function useStats(formId: Ref<string>) {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchStats() {
-    if (!formId.value) {
-      stats.value = null
-      return
-    }
-
+  const fetchStats = async () => {
+    if (!formIdRef.value) return
     loading.value = true
-    error.value = null
     try {
-      stats.value = await entriesApi.stats(formId.value)
-    } catch (e: any) {
-      error.value = e.message
+      const res = await entriesApi.stats(formIdRef.value)
+      stats.value = res
+    } catch (error: unknown) {
+      uiStore.handleApiError(error, 'Failed to fetch stats')
     } finally {
       loading.value = false
     }

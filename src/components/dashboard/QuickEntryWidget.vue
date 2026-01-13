@@ -107,13 +107,13 @@ import AppSelect from '@/components/common/AppSelect.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
 import EntryCard from '@/components/entries/EntryCard.vue'
 import { useI18n } from 'vue-i18n'
-import type { FormField, FormFieldType } from '@/types/form'
+import type { FormFieldType } from '@/types/form'
 import type { Entry } from '@/types/entry'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const { forms, fetchForms, fetchForm, currentForm } = useForms()
 const { createEntry, fetchEntries } = useEntries()
-const { showSuccess, showError } = useNotification()
+const { showSuccess } = useNotification()
 
 const selectedFormId = ref('')
 const formData = ref<Record<string, any>>({})
@@ -197,8 +197,8 @@ const handleSubmit = async () => {
        }
     })
     
-  } catch (e) {
-    // Error handled in composable
+  } catch {
+    // Error handled by store
   } finally {
     submitting.value = false
   }
