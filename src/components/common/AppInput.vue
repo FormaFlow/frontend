@@ -25,30 +25,21 @@
 <script setup lang="ts">
 import {computed} from 'vue'
 
-interface Props {
+const props = defineProps<{
   modelValue: string | number
-  type?: string
   label?: string
+  type?: string
   placeholder?: string
+  error?: string
+  id?: string
   required?: boolean
   disabled?: boolean
-  error?: string
   hint?: string
-}
-
-defineProps<{
-  modelValue: string | number
-  label?: string
-  type?: string
-  placeholder?: string
-  error?: string
-  id: string
-  required?: boolean
 }>()
 
 defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const inputId = computed(() => Math.random().toString(36).substr(2, 9))
+const inputId = computed(() => props.id || Math.random().toString(36).substr(2, 9))
 </script>

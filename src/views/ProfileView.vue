@@ -104,8 +104,8 @@ const timezones = ref<TimezoneOption[]>([])
 onMounted(() => {
   try {
     // @ts-ignore
-    if (typeof Intl !== 'undefined' && typeof Intl.supportedValuesOf === 'function') {
-      const zones = Intl.supportedValuesOf('timeZone')
+    if (typeof Intl !== 'undefined' && typeof (Intl as any).supportedValuesOf === 'function') {
+      const zones = (Intl as any).supportedValuesOf('timeZone') as string[]
       const mappedZones = zones.map((tz: string) => {
         try {
           const str = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' }).format(new Date())
@@ -129,7 +129,7 @@ onMounted(() => {
         }
       })
       
-      timezones.value = mappedZones.sort((a, b) => a.offset - b.offset)
+      timezones.value = mappedZones.sort((a: TimezoneOption, b: TimezoneOption) => a.offset - b.offset)
     } else {
       throw new Error('Intl.supportedValuesOf not supported')
     }
@@ -140,7 +140,7 @@ onMounted(() => {
       { value: 'Europe/London', label: '(UTC+00:00) Europe/London', offset: 0 },
       { value: 'America/New_York', label: '(UTC-05:00) America/New_York', offset: -300 },
       { value: 'Asia/Tokyo', label: '(UTC+09:00) Asia/Tokyo', offset: 540 }
-    ].sort((a, b) => a.offset - b.offset)
+    ].sort((a: TimezoneOption, b: TimezoneOption) => a.offset - b.offset)
   }
 })
 
