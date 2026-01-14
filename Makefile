@@ -17,6 +17,6 @@ test:
 	$(YARN) test
 
 deploy:
-	ssh root@89.169.37.68 "cd /var/www/formaflow/frontend && git fetch origin && git reset --hard origin/master && yarn build"
+	ssh root@89.169.37.68 "export NVM_DIR=\"\$$HOME/.nvm\" && [ -s \"\$$NVM_DIR/nvm.sh\" ] && . \"\$$NVM_DIR/nvm.sh\" && cd /var/www/formaflow/frontend && git fetch origin && git reset --hard origin/master && yarn build"
 
 .PHONY: all build dev lint test deploy
