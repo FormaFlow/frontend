@@ -69,6 +69,11 @@
           @delete="handleDelete" 
         />
       </div>
+      
+      <!-- Infinite Scroll Trigger -->
+      <div ref="loadMoreTrigger" class="h-10 flex justify-center items-center">
+        <AppLoader v-if="loadingMore" />
+      </div>
     </div>
   </div>
 </template>
@@ -77,6 +82,7 @@
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {useI18n} from 'vue-i18n'
+import {useIntersectionObserver} from '@vueuse/core'
 import AppLoader from '@/components/common/AppLoader.vue'
 import AppSelect from '@/components/common/AppSelect.vue'
 import EntryCard from '@/components/entries/EntryCard.vue'
@@ -88,16 +94,33 @@ import {debounce} from '@/utils/helpers'
 import {formatFieldValue} from '@/utils/formatters'
 
 const route = useRoute()
-const {entries, loading, fetchEntries, deleteEntry} = useEntries()
+const {entries, loading, loadingMore, pagination, fetchEntries, deleteEntry} = useEntries()
 const {forms, currentForm, fetchForms, fetchForm} = useForms()
 const {showSuccess, showError} = useNotification()
-// ... existing script continues ...
 
 const { t } = useI18n()
 const searchQuery = ref('')
 const selectedFormId = ref('')
+const loadMoreTrigger = ref<HTMLElement | null>(null)
 
 const { stats, fetchStats } = useStats(selectedFormId)
+
+// Load more logic
+useIntersectionObserver(
+  loadMoreTrigger,
+  ([{isIntersecting}]) => {
+    if (isIntersecting && !loading.value && !loadingMore.value && pagination.value.current_page < pagination.value.last_page) {
+      loadMore()
+    }
+  },
+  {
+    rootMargin: '200px',
+  }
+)
+
+const loadMore = async () => {
+  await fetchEntries(pagination.value.current_page + 1, selectedFormId.value || undefined, undefined, true)
+}
 
 const formOptions = computed(() =>
     forms.value.map(f => ({label: f.name, value: f.id}))

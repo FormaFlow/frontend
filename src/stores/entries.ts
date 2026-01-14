@@ -7,6 +7,7 @@ export const useEntriesStore = defineStore('entries', () => {
   const entries = ref<Entry[]>([])
   const currentEntry = ref<Entry | null>(null)
   const loading = ref(false)
+  const loadingMore = ref(false)
   const error = ref<string | null>(null)
   const pagination = ref({
     total: 0,
@@ -15,10 +16,14 @@ export const useEntriesStore = defineStore('entries', () => {
     last_page: 1
   })
 
-  const fetchEntries = async (page = 1, formId?: string, limit?: number) => {
-    loading.value = true
+  const fetchEntries = async (page = 1, formId?: string, limit?: number, append = false) => {
+    if (append) {
+      loadingMore.value = true
+    } else {
+      loading.value = true
+      entries.value = []
+    }
     error.value = null
-    entries.value = [] // Clear entries immediately to prevent race conditions
     try {
       const pageLimit = limit || pagination.value.per_page
       const offset = (page - 1) * pageLimit
@@ -35,7 +40,12 @@ export const useEntriesStore = defineStore('entries', () => {
       const response = await entriesApi.list(params)
       
       if (response) {
-        entries.value = response.entries || []
+        if (append) {
+          entries.value = [...entries.value, ...(response.entries || [])]
+        } else {
+          entries.value = response.entries || []
+        }
+        
         pagination.value = {
           total: response.total || 0,
           per_page: response.limit || 15,
@@ -48,6 +58,7 @@ export const useEntriesStore = defineStore('entries', () => {
       throw err
     } finally {
       loading.value = false
+      loadingMore.value = false
     }
   }
 
@@ -128,6 +139,7 @@ export const useEntriesStore = defineStore('entries', () => {
     entries,
     currentEntry,
     loading,
+    loadingMore,
     error,
     pagination,
     fetchEntries,

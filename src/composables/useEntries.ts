@@ -6,7 +6,7 @@ import type {CreateEntryRequest, UpdateEntryRequest} from '@/types/entry'
 export const useEntries = () => {
   const entriesStore = useEntriesStore()
   const uiStore = useUiStore()
-  const {entries, currentEntry, loading, pagination} = storeToRefs(entriesStore)
+  const {entries, currentEntry, loading, loadingMore, pagination} = storeToRefs(entriesStore)
 
   const createEntry = async (data: CreateEntryRequest) => {
     try {
@@ -53,6 +53,7 @@ export const useEntries = () => {
     entries,
     currentEntry,
     loading,
+    loadingMore,
     pagination,
     fetchEntries: entriesStore.fetchEntries,
     fetchEntry: entriesStore.fetchEntry,
