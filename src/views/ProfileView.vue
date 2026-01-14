@@ -10,7 +10,7 @@
             id="name"
             v-model="form.name"
             type="text"
-            class="input"
+            class="form-input"
             required
           />
         </div>
@@ -21,7 +21,7 @@
             id="email"
             v-model="form.email"
             type="email"
-            class="input"
+            class="form-input"
             required
           />
         </div>

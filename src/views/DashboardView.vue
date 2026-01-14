@@ -2,8 +2,17 @@
   <div class="space-y-8">
     <!-- Welcome Section -->
     <div class="card bg-gradient-to-r from-primary-500 to-primary-600 text-white">
-      <h1 class="text-3xl font-bold mb-2">{{ $t('common.app_title') }}</h1>
-      <p class="text-primary-100">{{ $t('forms.title') }} и {{ $t('entries.title') }} в одном месте</p>
+      <h1 class="text-3xl font-bold mb-4">{{ $t('common.app_title') }}</h1>
+      <div class="text-primary-100 flex flex-wrap items-center gap-2">
+        <router-link to="/forms" class="px-3 py-1 border border-white/40 rounded-lg hover:bg-white/10 transition-colors text-sm font-medium">
+          {{ $t('forms.title') }}
+        </router-link>
+        <span>и</span>
+        <router-link to="/entries" class="px-3 py-1 border border-white/40 rounded-lg hover:bg-white/10 transition-colors text-sm font-medium">
+          {{ $t('entries.title') }}
+        </router-link>
+        <span>в одном месте</span>
+      </div>
     </div>
 
     <QuickEntryWidget class="mb-8" />

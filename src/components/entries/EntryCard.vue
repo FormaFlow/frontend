@@ -1,5 +1,11 @@
 <template>
-  <div class="card p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+  <div
+      :class="[
+        'card p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700',
+        opacityClass,
+        'hover:opacity-100 transition-opacity duration-300 active:opacity-100 focus-within:opacity-100'
+      ]"
+  >
     <div class="flex items-start justify-between">
       <div class="flex-1 min-w-0">
         <!-- Entry Data Fields -->
@@ -70,5 +76,17 @@ const { t } = useI18n()
 
 const fields = computed(() => {
   return props.entry.form?.fields || props.formFields || []
+})
+
+const opacityClass = computed(() => {
+  const created = new Date(props.entry.created_at).getTime()
+  const now = new Date().getTime()
+  const diffTime = now - created
+  const diffDays = diffTime / (1000 * 60 * 60 * 24)
+
+  if (diffDays < 1) return 'opacity-100'
+  if (diffDays < 7) return 'opacity-75'
+  if (diffDays < 14) return 'opacity-60'
+  return 'opacity-40'
 })
 </script>

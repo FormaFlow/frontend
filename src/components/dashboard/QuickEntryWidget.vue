@@ -1,11 +1,11 @@
 <template>
-  <div class="card bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+  <div class="card bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 quick-entry-widget">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <h2 class="text-xl font-bold">{{ $t('entries.create_entry') }}</h2>
       <AppSelect
         v-model="selectedFormId"
         :options="formOptions"
-        :placeholder="$t('forms.title')"
+        :placeholder="$t('reports.custom.select_form')"
         class="w-full sm:w-64"
         @update:modelValue="handleFormSelect"
       />
@@ -90,10 +90,6 @@
           />
         </div>
       </div>
-    </div>
-    
-    <div v-else class="text-center py-12 text-gray-500">
-      {{ $t('reports.custom.select_form') }}
     </div>
   </div>
 </template>

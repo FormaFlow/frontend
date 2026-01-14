@@ -27,18 +27,28 @@
     </div>
 
     <!-- Summary Card -->
-    <div v-if="!loading && (todaySummary.length > 0 || monthSummary.length > 0)" class="card">
-      <h3 class="text-lg font-semibold mb-4">{{ $t('entries.summary') }}</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    <div v-if="!loading && (formattedStats.today.length > 0 || formattedStats.month.length > 0)" class="card p-0 overflow-hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
         <!-- Today's Summary -->
-        <div v-for="summary in todaySummary" :key="summary.fieldId" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">{{ summary.label }} ({{ $t('entries.today') }})</p>
-          <p class="text-2xl font-bold">{{ formatFieldValue(summary.sum, summary.type, summary.unit) }}</p>
+        <div v-if="formattedStats.today.length > 0" class="p-6">
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">{{ $t('entries.today') }}</h3>
+          <div class="flex flex-wrap gap-x-8 gap-y-4">
+            <div v-for="(item, idx) in formattedStats.today" :key="idx">
+              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ item.value }}</div>
+              <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ item.label }}</div>
+            </div>
+          </div>
         </div>
+
         <!-- This Month's Summary -->
-        <div v-for="summary in monthSummary" :key="summary.fieldId" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">{{ summary.label }} ({{ $t('entries.this_month') }})</p>
-          <p class="text-2xl font-bold">{{ formatFieldValue(summary.sum, summary.type, summary.unit) }}</p>
+        <div v-if="formattedStats.month.length > 0" class="p-6">
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">{{ $t('entries.this_month') }}</h3>
+          <div class="flex flex-wrap gap-x-8 gap-y-4">
+            <div v-for="(item, idx) in formattedStats.month" :key="idx">
+              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ item.value }}</div>
+              <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ item.label }}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -83,6 +93,7 @@ const {forms, currentForm, fetchForms, fetchForm} = useForms()
 const {showSuccess, showError} = useNotification()
 // ... existing script continues ...
 
+const { t } = useI18n()
 const searchQuery = ref('')
 const selectedFormId = ref('')
 
@@ -92,32 +103,43 @@ const formOptions = computed(() =>
     forms.value.map(f => ({label: f.name, value: f.id}))
 )
 
-const todaySummary = computed(() => {
-  if (!stats.value || !currentForm.value) return []
-  return stats.value.map(stat => {
-    const field = currentForm.value?.fields.find(f => f.id === stat.field)
-    return {
-      fieldId: field?.id,
-      label: field?.label,
-      sum: stat.sum_today,
-      type: field?.type || 'text', // Provide a default type
-      unit: field?.unit
-    }
-  }).filter(s => s.sum > 0)
-})
+const formattedStats = computed(() => {
+  if (!stats.value || !currentForm.value) return { today: [], month: [] }
 
-const monthSummary = computed(() => {
-  if (!stats.value || !currentForm.value) return []
-  return stats.value.map(stat => {
+  const todayItems: { label: string, value: string | number }[] = []
+  const monthItems: { label: string, value: string | number }[] = []
+
+  // Find count stat
+  const countStat = stats.value.find(s => s.field === '_count')
+  const entriesLabel = t('forms.entries_count')
+
+  if (countStat && countStat.sum_today > 0) {
+    todayItems.push({ label: entriesLabel, value: countStat.sum_today })
+  }
+  if (countStat && countStat.sum_month > 0) {
+    monthItems.push({ label: entriesLabel, value: countStat.sum_month })
+  }
+
+  // Process other fields
+  stats.value.forEach(stat => {
+    if (stat.field === '_count') return
+
     const field = currentForm.value?.fields.find(f => f.id === stat.field)
-    return {
-      fieldId: field?.id,
-      label: field?.label,
-      sum: stat.sum_month,
-      type: field?.type || 'text', // Provide a default type
-      unit: field?.unit
+    if (!field) return
+
+    const label = field.label
+
+    if (stat.sum_today > 0) {
+      const val = formatFieldValue(stat.sum_today, field.type, field.unit)
+      todayItems.push({ label: label, value: val })
     }
-  }).filter(s => s.sum > 0)
+    if (stat.sum_month > 0) {
+      const val = formatFieldValue(stat.sum_month, field.type, field.unit)
+      monthItems.push({ label: label, value: val })
+    }
+  })
+
+  return { today: todayItems, month: monthItems }
 })
 
 const handleSearch = debounce(async () => {

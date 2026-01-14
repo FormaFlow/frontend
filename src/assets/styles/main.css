@@ -143,3 +143,6 @@
     animation: spin 1s linear infinite;
 }
 
+.quick-entry-widget .form-group {
+    margin-bottom: 0;
+}
