@@ -93,6 +93,11 @@
     "time_taken": "Time Taken",
     "seconds": "seconds"
   },
+  "quiz": {
+    "question": "Question",
+    "your_answer": "Your Answer",
+    "correct": "Correct"
+  },
   "entries": {
     "title": "Entries",
     "create_entry": "Create Entry",

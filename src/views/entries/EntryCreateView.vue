@@ -141,9 +141,9 @@
           <table class="w-full text-sm">
             <thead>
             <tr class="border-b dark:border-gray-700">
-              <th class="py-2 font-semibold">Question</th>
-              <th class="py-2 font-semibold">Your Answer</th>
-              <th class="py-2 font-semibold">Correct</th>
+              <th class="py-2 font-semibold text-left">{{ $t('quiz.question') }}</th>
+              <th class="py-2 font-semibold text-left">{{ $t('quiz.your_answer') }}</th>
+              <th class="py-2 font-semibold text-left">{{ $t('quiz.correct') }}</th>
             </tr>
             </thead>
             <tbody>

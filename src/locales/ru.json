@@ -93,6 +93,11 @@
     "time_taken": "Затраченное время",
     "seconds": "секунд"
   },
+  "quiz": {
+    "question": "Вопрос",
+    "your_answer": "Ваш ответ",
+    "correct": "Верно"
+  },
   "entries": {
     "title": "Записи",
     "create_entry": "Создать запись",
