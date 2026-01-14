@@ -130,7 +130,9 @@
     "min": "Minimum length is {min}",
     "max": "Maximum length is {max}",
     "pattern": "Invalid format",
-    "match": "Fields do not match"
+    "match": "Fields do not match",
+    "field_required": "This field is required",
+    "field_numeric": "This field must be a number"
   },
   "reports": {
     "title": "Reports",

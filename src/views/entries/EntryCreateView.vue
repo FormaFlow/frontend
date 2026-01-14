@@ -16,12 +16,18 @@
       <form @submit.prevent="handleSubmit" class="space-y-6">
         <!-- Form Selection -->
         <AppSelect
+            v-if="!route.query.form_id"
             v-model="selectedFormId"
             :label="$t('forms.title')"
             :options="formOptions"
             required
             :error="errors.form"
         />
+
+        <div v-if="selectedForm && route.query.form_id" class="mb-6">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ selectedForm.name }}</h2>
+          <p v-if="selectedForm.description" class="text-gray-600 dark:text-gray-400 mt-1">{{ selectedForm.description }}</p>
+        </div>
 
         <!-- Form Fields (Dynamic) -->
         <template v-if="selectedForm && selectedForm.fields.length">
@@ -30,17 +36,17 @@
               :key="field.id"
               class="form-group"
           >
-            <label :for="field.id">
+            <label :for="field.id" class="form-label">
               {{ field.label }} <span v-if="field.required" class="text-red-500">*</span>
             </label>
 
-            <!-- примитивный рендер по типам; можно вынести в отдельный компонент -->
             <input
                 v-if="['text','email','currency','number'].includes(field.type)"
                 :id="field.id"
                 v-model="formData[field.id]"
-                :type="field.type === 'email' ? 'email' : 'text'"
-                class="form-input"
+                :type="['number', 'currency'].includes(field.type) ? 'number' : (field.type === 'email' ? 'email' : 'text')"
+                :class="['form-input', fieldErrors[field.id] ? 'border-red-500 focus:ring-red-500' : '']"
+                :step="['number', 'currency'].includes(field.type) ? 'any' : undefined"
             />
 
             <input
@@ -48,14 +54,14 @@
                 :id="field.id"
                 v-model="formData[field.id]"
                 type="date"
-                class="form-input"
+                :class="['form-input', fieldErrors[field.id] ? 'border-red-500 focus:ring-red-500' : '']"
             />
 
             <select
                 v-else-if="field.type === 'select'"
                 :id="field.id"
                 v-model="formData[field.id]"
-                class="form-input"
+                :class="['form-input', fieldErrors[field.id] ? 'border-red-500 focus:ring-red-500' : '']"
             >
               <option value="" disabled>Выберите...</option>
               <option
@@ -72,13 +78,17 @@
                 :id="field.id"
                 v-model="formData[field.id]"
                 type="checkbox"
-                class="form-checkbox"
+                :class="['form-checkbox', fieldErrors[field.id] ? 'border-red-500' : '']"
             />
+
+            <p v-if="fieldErrors[field.id]" class="text-red-500 text-xs mt-1">
+              {{ fieldErrors[field.id] }}
+            </p>
           </div>
         </template>
 
         <!-- Tags -->
-        <div class="form-group">
+        <div v-if="!selectedForm?.is_quiz" class="form-group">
           <label class="form-label">{{ $t('entries.tags') }}</label>
           <div class="flex gap-2 mb-2">
             <input
@@ -160,6 +170,7 @@
 <script setup lang="ts">
 import {computed, onMounted, onUnmounted, reactive, ref, watch} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
+import {useI18n} from 'vue-i18n'
 import AppSelect from '@/components/common/AppSelect.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppModal from '@/components/common/AppModal.vue'
@@ -169,6 +180,7 @@ import {formsApi} from "@/api/forms";
 import {validateForm, type ValidationRules} from '@/utils/validation'
 import type {Form, FormField} from "@/types/form";
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const {loading, createEntry} = useEntries()
@@ -178,12 +190,42 @@ const selectedFormId = ref('')
 const tags = ref<string[]>([])
 const newTag = ref('')
 const formData = reactive<Record<string, any>>({})
+const fieldErrors = reactive<Record<string, string>>({})
 
 // Quiz specific
 const duration = ref(0)
 const timerInterval = ref<number | null>(null)
 const showResultModal = ref(false)
 const quizResult = ref({score: 0, total: 0, results: [] as any[]})
+
+const getLocalizedError = (msg: string) => {
+  if (typeof msg !== 'string') return msg
+  
+  // Laravel error often looks like: "The <label> field is required."
+  // or with UUID: "The data.uuid field is required."
+  
+  // 1. Remove "The " prefix
+  let cleanMsg = msg.replace(/^The\s/i, '')
+  
+  // 2. Remove " field " part (Laravel inserts it between attribute and rule message)
+  cleanMsg = cleanMsg.replace(/\sfield\s/i, ' ')
+  
+  // 3. Remove trailing dot
+  cleanMsg = cleanMsg.replace(/\.$/, '')
+
+  // Now cleanMsg is something like "Amount is required" or "data.uuid must be numeric"
+  
+  if (cleanMsg.toLowerCase().includes('is required')) {
+    return t('validation.field_required')
+  }
+  if (cleanMsg.toLowerCase().includes('must be a number') || cleanMsg.toLowerCase().includes('must be numeric')) {
+    return t('validation.field_numeric')
+  }
+  
+  // For other errors (like max, min), try to remove the field name from the start if it matches a known pattern
+  // but for now, just return capitalized cleaned message
+  return cleanMsg.charAt(0).toUpperCase() + cleanMsg.slice(1)
+}
 
 onMounted(async () => {
   await fetchForms()
@@ -222,6 +264,7 @@ const selectedForm = computed(() =>
 
 watch(selectedForm, (form) => {
   Object.keys(formData).forEach(k => delete formData[k])
+  Object.keys(fieldErrors).forEach(k => delete fieldErrors[k])
   if (!form) {
     stopTimer()
     return
@@ -289,6 +332,7 @@ const handleSubmit = async () => {
   }
 
   stopTimer()
+  Object.keys(fieldErrors).forEach(k => delete fieldErrors[k])
 
   // Filter out empty values to handle optional fields correctly
   const filteredData = { ...formData }
@@ -319,8 +363,17 @@ const handleSubmit = async () => {
     } else {
       await router.push('/entries')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to create entry:', error)
+    
+    if (error.errors) {
+      Object.entries(error.errors).forEach(([key, messages]: [string, any]) => {
+        const fieldId = key.replace('data.', '')
+        const msg = Array.isArray(messages) ? messages[0] : messages
+        fieldErrors[fieldId] = getLocalizedError(msg)
+      })
+    }
+
     if (selectedForm.value?.is_quiz) {
       startTimer() // Resume if failed
     }
