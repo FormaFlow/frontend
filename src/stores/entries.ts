@@ -79,6 +79,22 @@ export const useEntriesStore = defineStore('entries', () => {
     }
   }
 
+  const fetchPublicEntry = async (id: string) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await entriesApi.getPublic(id)
+      if (response) {
+        currentEntry.value = response
+      }
+    } catch (err: unknown) {
+      error.value = (err as Error).message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const createEntry = async (data: CreateEntryRequest) => {
     loading.value = true
     error.value = null
@@ -182,6 +198,7 @@ export const useEntriesStore = defineStore('entries', () => {
     pagination,
     fetchEntries,
     fetchEntry,
+    fetchPublicEntry,
     createEntry,
     syncPendingEntries,
     updateEntry,

@@ -106,6 +106,22 @@ export const useFormsStore = defineStore('forms', () => {
     }
   }
 
+  const fetchPublicForm = async (id: string) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await formsApi.getPublic(id)
+      if (response) {
+        currentForm.value = response
+      }
+    } catch (err: unknown) {
+      error.value = (err as Error).message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const createForm = async (data: CreateFormRequest) => {
     loading.value = true
     error.value = null
@@ -182,6 +198,7 @@ export const useFormsStore = defineStore('forms', () => {
     pagination,
     fetchForms,
     fetchForm,
+    fetchPublicForm,
     createForm,
     updateForm,
     deleteForm,

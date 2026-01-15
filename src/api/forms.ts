@@ -12,6 +12,10 @@ export const formsApi = {
     return client.get<Form>(`/forms/${id}`)
   },
 
+  getPublic(id: string) {
+    return client.get<Form>(`/public/forms/${id}`)
+  },
+
   create(data: CreateFormRequest) {
     return client.post<Form>('/forms', data)
   },

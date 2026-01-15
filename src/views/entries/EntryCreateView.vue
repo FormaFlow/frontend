@@ -183,6 +183,12 @@
             </tbody>
           </table>
         </div>
+
+        <div class="flex justify-center pt-4">
+          <button type="button" class="btn-primary flex items-center gap-2" @click="handleShareResult">
+            <span>🔗 {{ $t('forms.share') }}</span>
+          </button>
+        </div>
       </div>
     </AppModal>
   </div>
@@ -202,7 +208,7 @@ import {formsApi} from "@/api/forms";
 import {validateForm, type ValidationRules} from '@/utils/validation'
 import type {Form, FormField} from "@/types/form";
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const {loading, createEntry} = useEntries()
@@ -210,6 +216,7 @@ const {forms, fetchForms, fetchForm, currentForm} = useForms()
 const {showSuccess} = useNotification()
 
 const selectedFormId = ref('')
+const createdEntryId = ref('')
 const tags = ref<string[]>([])
 const newTag = ref('')
 const formData = reactive<Record<string, any>>({})
@@ -385,6 +392,7 @@ const handleSubmit = async () => {
     if (entry && selectedForm.value?.is_quiz) {
       const totalPoints = selectedForm.value.fields.reduce((sum, f) => sum + (f.points || 0), 0)
 
+      createdEntryId.value = entry.id
       quizResult.value = {
         score: entry.score || 0,
         total: totalPoints,
@@ -414,6 +422,23 @@ const handleSubmit = async () => {
 
 const closeResultModal = () => {
   showResultModal.value = false
-  router.push('/entries')
+  // Don't redirect, let user see the form or share result.
+  // Optionally reset the form?
+  // For now, just close modal.
+}
+
+const handleShareResult = async () => {
+  if (!createdEntryId.value) return
+  
+  const apiBase = import.meta.env.VITE_API_BASE_URL || ''
+  const backendBase = apiBase.replace(/\/api(\/v1)?\/?$/, '')
+  const link = `${backendBase}/shared/result/${createdEntryId.value}?lang=${locale.value}`
+  
+  try {
+    await navigator.clipboard.writeText(link)
+    showSuccess(t('forms.link_copied'))
+  } catch (err) {
+    console.error('Failed to copy link', err)
+  }
 }
 </script>

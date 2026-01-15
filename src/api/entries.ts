@@ -18,6 +18,10 @@ export const entriesApi = {
     return client.get<Entry>(`/entries/${id}`)
   },
 
+  getPublic(id: string) {
+    return client.get<Entry>(`/public/entries/${id}`)
+  },
+
   create(data: CreateEntryRequest) {
     return client.post<Entry>('/entries', data)
   },

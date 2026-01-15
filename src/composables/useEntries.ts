@@ -45,6 +45,7 @@ export const useEntries = () => {
     pagination,
     fetchEntries: entriesStore.fetchEntries,
     fetchEntry: entriesStore.fetchEntry,
+    fetchPublicEntry: entriesStore.fetchPublicEntry,
     createEntry,
     updateEntry,
     deleteEntry
