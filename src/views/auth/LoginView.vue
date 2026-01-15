@@ -53,13 +53,17 @@
 <script setup lang="ts">
 import {reactive} from 'vue'
 import {useRouter} from 'vue-router'
+import {useI18n} from 'vue-i18n'
 import AppInput from '@/components/common/AppInput.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
 import {useAuth} from '@/composables/useAuth'
+import {useNotification} from '@/composables/useNotification'
 import {validateForm, type ValidationRules} from '@/utils/validation'
 
+const { t } = useI18n()
 const {login, loading} = useAuth()
+const {showSuccess} = useNotification()
 
 const form = reactive({
   email: '',
@@ -85,10 +89,14 @@ const handleLogin = async () => {
   }
 
   try {
-    await login({
+    const success = await login({
       email: form.email,
       password: form.password
     })
+    
+    if (success) {
+      showSuccess(t('auth.login_success'))
+    }
 
   } catch (error) {
     console.error('Login error:', error)

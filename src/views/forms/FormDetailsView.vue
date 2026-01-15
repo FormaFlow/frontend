@@ -92,11 +92,13 @@ import {useRoute} from 'vue-router'
 import AppLoader from '@/components/common/AppLoader.vue'
 import {useForms} from '@/composables/useForms'
 import {useUiStore} from "@/stores/ui"
+import {useNotification} from '@/composables/useNotification'
 import {useI18n} from 'vue-i18n'
 
 const route = useRoute()
 const uiStore = useUiStore()
 const {t} = useI18n()
+const {showSuccess} = useNotification()
 const {currentForm, loading, fetchForm, publishForm} = useForms()
 const publishLoading = ref(false)
 
@@ -105,6 +107,7 @@ const handlePublish = async () => {
   publishLoading.value = true
   try {
     await publishForm(currentForm.value.id)
+    showSuccess(t('forms.form_published'))
   } finally {
     publishLoading.value = false
   }
@@ -115,10 +118,7 @@ const handleShare = async () => {
   const link = `${window.location.origin}/entries/create?form_id=${currentForm.value.id}`
   try {
     await navigator.clipboard.writeText(link)
-    uiStore.addNotification({
-      type: 'success',
-      message: t('forms.link_copied')
-    })
+    showSuccess(t('forms.link_copied'))
   } catch (err) {
     console.error('Failed to copy link', err)
   }

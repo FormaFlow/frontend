@@ -77,6 +77,7 @@
 <script setup lang="ts">
 import {onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
+import {useI18n} from 'vue-i18n'
 import {storeToRefs} from "pinia"
 import AppInput from '@/components/common/AppInput.vue'
 import AppButton from '@/components/common/AppButton.vue'
@@ -85,14 +86,17 @@ import FormFieldBuilder from '@/components/forms/FormFieldBuilder.vue'
 import {useForms} from '@/composables/useForms'
 import {useFormsStore} from "@/stores/forms"
 import {useUiStore} from "@/stores/ui"
+import {useNotification} from '@/composables/useNotification'
 import {formsApi} from "@/api/forms"
 import {useForm} from "@/composables/useForm"
 import type {ValidationRules} from '@/utils/validation'
 import type {FormField} from "@/types/form"
 
 const route = useRoute()
+const { t } = useI18n()
 const formsStore = useFormsStore()
 const uiStore = useUiStore()
+const {showSuccess} = useNotification()
 const {currentForm, loading} = storeToRefs(formsStore)
 const {fetchForm, updateForm} = useForms()
 
@@ -117,12 +121,9 @@ const {
   onSubmit: async (formData) => {
     try {
       await updateForm(route.params.id as string, formData)
-      uiStore.addNotification({
-        type: 'success',
-        message: 'Форма обновлена'
-      })
+      showSuccess(t('forms.form_updated'))
     } catch (error: unknown) {
-      uiStore.handleApiError(error, 'Ошибка обновления формы')
+      uiStore.handleApiError(error)
     }
   }
 })
@@ -130,59 +131,36 @@ const {
 const handleAddField = async (fieldData: Omit<FormField, 'id'>) => {
   if (!currentForm.value) return
 
-  console.log('Adding field:', fieldData)
-
   try {
-    const response = await formsApi.addField(currentForm.value.id, fieldData)
-    console.log('Field added response:', response)
-
+    await formsApi.addField(currentForm.value.id, fieldData)
     await formsStore.fetchForm(currentForm.value.id)
-
-    uiStore.addNotification({
-      type: 'success',
-      message: 'Поле добавлено'
-    })
+    showSuccess(t('forms.field_added'))
   } catch (error: unknown) {
-    console.error('Error adding field:', error)
-    uiStore.handleApiError(error, 'Ошибка добавления поля')
+    uiStore.handleApiError(error)
   }
 }
 
 const handleUpdateField = async (field: FormField) => {
   if (!currentForm.value) return
 
-  console.log('Updating field:', field)
-
   try {
     await formsApi.updateField(currentForm.value.id, field.id, field)
     await formsStore.fetchForm(currentForm.value.id)
-
-    uiStore.addNotification({
-      type: 'success',
-      message: 'Поле обновлено'
-    })
+    showSuccess(t('forms.form_updated'))
   } catch (error: unknown) {
-    console.error('Error updating field:', error)
-    uiStore.handleApiError(error, 'Ошибка обновления поля')
+    uiStore.handleApiError(error)
   }
 }
 
 const handleDeleteField = async (fieldId: string) => {
   if (!currentForm.value) return
 
-  console.log('Deleting field:', fieldId)
-
   try {
     await formsApi.removeField(currentForm.value.id, fieldId)
     await formsStore.fetchForm(currentForm.value.id)
-
-    uiStore.addNotification({
-      type: 'success',
-      message: 'Поле удалено'
-    })
+    showSuccess(t('forms.field_removed'))
   } catch (error: unknown) {
-    console.error('Error deleting field:', error)
-    uiStore.handleApiError(error, 'Ошибка удаления поля')
+    uiStore.handleApiError(error)
   }
 }
 

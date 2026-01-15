@@ -12,10 +12,6 @@ export const useAuth = () => {
     try {
       const result = await authStore.login(credentials)
       if (result) {
-        uiStore.addNotification({
-          type: 'success',
-          message: 'Logged in successfully'
-        })
         const redirect = router.currentRoute.value.query.redirect as string
         await router.push(redirect || { name: 'dashboard' })
         return true
@@ -31,10 +27,6 @@ export const useAuth = () => {
     try {
       const result = await authStore.register(data)
       if (result) {
-        uiStore.addNotification({
-          type: 'success',
-          message: 'Registration successful'
-        })
         await router.push({ name: 'dashboard' })
         return true
       }
@@ -47,10 +39,6 @@ export const useAuth = () => {
 
   const logout = async () => {
     await authStore.logout()
-    uiStore.addNotification({
-      type: 'success',
-      message: 'You have been logged out'
-    })
   }
 
   return {

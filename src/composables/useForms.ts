@@ -22,11 +22,6 @@ export const useForms = () => {
     try {
       const response = await formsStore.updateForm(id, data)
       if (response) {
-        uiStore.addNotification({
-          type: 'success',
-          message: 'Form updated successfully'
-        })
-
         await formsStore.fetchForm(id)
 
         const index = formsStore.forms.findIndex(f => f.id === id)
@@ -37,10 +32,7 @@ export const useForms = () => {
         return formsStore.currentForm
       }
     } catch (error: any) {
-      uiStore.addNotification({
-        type: 'error',
-        message: error.message || 'Failed to update form'
-      })
+      uiStore.handleApiError(error, 'Failed to update form')
       throw error
     }
   }
@@ -48,15 +40,8 @@ export const useForms = () => {
   const deleteForm = async (id: string) => {
     try {
       await formsStore.deleteForm(id)
-      uiStore.addNotification({
-        type: 'success',
-        message: 'Form deleted successfully'
-      })
     } catch (error: any) {
-      uiStore.addNotification({
-        type: 'error',
-        message: error.message || 'Failed to delete form'
-      })
+      uiStore.handleApiError(error, 'Failed to delete form')
       throw error
     }
   }
@@ -64,16 +49,9 @@ export const useForms = () => {
   const publishForm = async (id: string) => {
     try {
       const form = await formsStore.publishForm(id)
-      uiStore.addNotification({
-        type: 'success',
-        message: 'Form published successfully'
-      })
       return form
     } catch (error: any) {
-      uiStore.addNotification({
-        type: 'error',
-        message: error.message || 'Failed to publish form'
-      })
+      uiStore.handleApiError(error, 'Failed to publish form')
       throw error
     }
   }

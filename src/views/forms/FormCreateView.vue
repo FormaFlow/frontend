@@ -31,7 +31,7 @@
                 class="w-4 h-4 text-primary-600 rounded"
             />
             <label for="is-quiz" class="text-sm font-medium">
-              {{ $t('is_quiz') }}
+              {{ $t('forms.is_quiz') }}
             </label>
           </div>
 
@@ -43,7 +43,7 @@
                 class="w-4 h-4 text-primary-600 rounded"
             />
             <label for="single-submission" class="text-sm font-medium">
-              {{ $t('single_submission') }}
+              {{ $t('forms.single_submission') }}
             </label>
           </div>
         </div>
@@ -63,14 +63,18 @@
 
 <script setup lang="ts">
 import {useRouter} from 'vue-router'
+import {useI18n} from 'vue-i18n'
 import AppInput from '@/components/common/AppInput.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import {useForms} from '@/composables/useForms'
 import {useForm} from '@/composables/useForm'
+import {useNotification} from '@/composables/useNotification'
 import type {ValidationRules} from '@/utils/validation'
 
 const router = useRouter()
+const { t } = useI18n()
 const {createForm} = useForms()
+const {showSuccess} = useNotification()
 
 const rules: ValidationRules = {
   name: {required: true}
@@ -86,6 +90,7 @@ const {form, errors, loading, handleSubmit} = useForm({
   rules,
   onSubmit: async (formData) => {
     await createForm(formData)
+    showSuccess(t('forms.form_created'))
     await router.push('/forms')
   }
 })

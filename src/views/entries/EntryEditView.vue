@@ -63,15 +63,19 @@
 <script setup lang="ts">
 import {onMounted, onUnmounted, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
+import {useI18n} from 'vue-i18n'
 import AppLoader from '@/components/common/AppLoader.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppInput from '@/components/common/AppInput.vue'
 import AppSelect from '@/components/common/AppSelect.vue'
 import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
+import {useNotification} from '@/composables/useNotification'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
+const {showSuccess} = useNotification()
 const {currentEntry, loading, fetchEntry, updateEntry} = useEntries()
 const {currentForm, fetchForm} = useForms()
 const updateLoading = ref(false)
@@ -86,6 +90,7 @@ const handleUpdate = async () => {
       data: currentEntry.value.data,
       tags: currentEntry.value.tags
     })
+    showSuccess(t('entries.entry_updated'))
     await router.push('/entries')
   } finally {
     updateLoading.value = false

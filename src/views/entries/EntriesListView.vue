@@ -184,13 +184,13 @@ const handleFormFilter = async (formId?: string) => {
 }
 
 const handleDelete = async (id: string) => {
-  if (confirm('Are you sure?')) {
+  if (confirm(t('common.confirm_delete'))) {
     try {
       await deleteEntry(id)
-      showSuccess('Entry deleted successfully')
+      showSuccess(t('entries.entry_deleted'))
       await fetchEntries(1, selectedFormId.value || undefined)
     } catch {
-      showError('Failed to delete entry')
+      // Error handled by composable
     }
   }
 }

@@ -62,14 +62,18 @@
 <script setup lang="ts">
 import {reactive} from 'vue'
 import {useRouter} from 'vue-router'
+import {useI18n} from 'vue-i18n'
 import AppInput from '@/components/common/AppInput.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
 import {useAuth} from '@/composables/useAuth'
+import {useNotification} from '@/composables/useNotification'
 import {validateForm, type ValidationRules} from '@/utils/validation'
 
 const router = useRouter()
+const { t } = useI18n()
 const {register, loading} = useAuth()
+const {showSuccess} = useNotification()
 
 const form = reactive({
   name: '',
@@ -102,13 +106,15 @@ const handleRegister = async () => {
   }
 
   if (form.password !== form.password_confirmation) {
-    errors.password_confirmation = 'Passwords do not match'
+    errors.password_confirmation = t('validation.match')
     return
   }
 
   try {
-    await register(form)
-    await router.push('/')
+    const success = await register(form)
+    if (success) {
+      showSuccess(t('auth.register_success'))
+    }
   } catch (error) {
     console.error('Registration error:', error)
   }

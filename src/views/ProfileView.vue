@@ -48,7 +48,7 @@
             class="btn btn-primary"
             :disabled="authStore.loading"
           >
-            {{ authStore.loading ? 'Saving...' : 'Save Changes' }}
+            {{ authStore.loading ? $t('common.loading') : $t('common.save') }}
           </button>
         </div>
       </form>
@@ -79,12 +79,16 @@
 
 <script setup lang="ts">
 import { computed, ref, watchEffect, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useTheme } from '@/composables/useTheme'
+import { useNotification } from '@/composables/useNotification'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
+const { showSuccess } = useNotification()
 const { theme, setTheme } = useTheme()
 
 const form = ref({
@@ -166,12 +170,9 @@ watchEffect(() => {
 const updateProfile = async () => {
   try {
     await authStore.updateProfile(form.value)
-    uiStore.addNotification({
-      type: 'success',
-      message: 'Profile updated successfully'
-    })
+    showSuccess(t('settings.settings_saved'))
   } catch (error) {
-    uiStore.handleApiError(error, 'Failed to update profile')
+    uiStore.handleApiError(error)
   }
 }
 </script>

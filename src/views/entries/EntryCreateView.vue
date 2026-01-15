@@ -197,6 +197,7 @@ import AppButton from '@/components/common/AppButton.vue'
 import AppModal from '@/components/common/AppModal.vue'
 import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
+import {useNotification} from '@/composables/useNotification'
 import {formsApi} from "@/api/forms";
 import {validateForm, type ValidationRules} from '@/utils/validation'
 import type {Form, FormField} from "@/types/form";
@@ -206,6 +207,7 @@ const router = useRouter()
 const route = useRoute()
 const {loading, createEntry} = useEntries()
 const {forms, fetchForms} = useForms()
+const {showSuccess} = useNotification()
 
 const selectedFormId = ref('')
 const tags = ref<string[]>([])
@@ -382,6 +384,7 @@ const handleSubmit = async () => {
       }
       showResultModal.value = true
     } else {
+      showSuccess(t('entries.entry_created'))
       await router.push('/entries')
     }
   } catch (error: any) {

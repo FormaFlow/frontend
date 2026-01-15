@@ -111,12 +111,14 @@ import {useI18n} from 'vue-i18n'
 import {useAuthStore} from '@/stores/auth'
 import {useTheme} from '@/composables/useTheme'
 import {useAuth} from '@/composables/useAuth'
+import {useNotification} from '@/composables/useNotification'
 
 const router = useRouter()
-const {locale} = useI18n()
+const {locale, t} = useI18n()
 const {isDark, setTheme, theme} = useTheme()
 const authStore = useAuthStore()
 const {logout} = useAuth()
+const {showSuccess} = useNotification()
 
 const showUserMenu = ref(false)
 const showLangMenu = ref(false)
@@ -139,6 +141,7 @@ const setLocale = (lang: string) => {
 const handleLogout = async () => {
   try {
     await logout()
+    showSuccess(t('auth.logout_success'))
     await router.push('/login')
   } catch (error) {
     console.error('Logout failed:', error)

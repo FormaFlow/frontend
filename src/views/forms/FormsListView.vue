@@ -85,12 +85,14 @@
 <script setup lang="ts">
 import {computed, onMounted, ref} from 'vue'
 import AppLoader from '@/components/common/AppLoader.vue'
+import {useI18n} from 'vue-i18n'
 import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
 import {debounce} from '@/utils/helpers'
 import {storeToRefs} from "pinia";
 import {useFormsStore} from "@/stores/forms";
 
+const { t } = useI18n()
 const {
   forms,
   loading,
@@ -113,13 +115,14 @@ const handleSearch = debounce(async () => {
 }, 500)
 
 const handleDelete = async (id: string) => {
-  if (confirm('Are you sure?')) {
+  if (confirm(t('common.confirm_delete'))) {
     try {
-          await deleteForm(id)
-          showSuccess('Form deleted successfully')
-        } catch {
-          showError('Failed to delete form')
-        }  }
+      await deleteForm(id)
+      showSuccess(t('forms.form_deleted'))
+    } catch {
+      // Error handled by composable
+    }
+  }
 }
 
 const goToPage = async (page: number) => {
