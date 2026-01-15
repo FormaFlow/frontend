@@ -115,7 +115,13 @@ const handlePublish = async () => {
 
 const handleShare = async () => {
   if (!currentForm.value) return
-  const link = `${window.location.origin}/entries/create?form_id=${currentForm.value.id}`
+  
+  // Derive backend base URL from API URL (e.g., https://api.../api/v1 -> https://api...)
+  const apiBase = import.meta.env.VITE_API_BASE_URL || ''
+  const backendBase = apiBase.replace(/\/api(\/v1)?\/?$/, '')
+  
+  const link = `${backendBase}/shared/${currentForm.value.id}`
+  
   try {
     await navigator.clipboard.writeText(link)
     showSuccess(t('forms.link_copied'))
