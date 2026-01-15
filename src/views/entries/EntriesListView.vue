@@ -204,7 +204,7 @@ watch(() => route.query.form_id, async (newFormId) => {
 }, { immediate: true })
 
 onMounted(async () => {
-  await fetchForms()
+  await fetchForms(1, undefined, undefined, false)
 
   const formId = route.query.form_id
   if (formId && typeof formId === 'string') {

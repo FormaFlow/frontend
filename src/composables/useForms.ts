@@ -61,7 +61,8 @@ export const useForms = () => {
     currentForm,
     loading,
     pagination,
-    fetchForms: formsStore.fetchForms,
+    fetchForms: (page?: number, search?: string, limit?: number, isQuiz?: boolean) => 
+      formsStore.fetchForms(page, search, limit, isQuiz),
     fetchForm: formsStore.fetchForm,
     createForm,
     updateForm,

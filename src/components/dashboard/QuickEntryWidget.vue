@@ -246,7 +246,7 @@ const getInputType = (type: FormFieldType) => {
 }
 
 onMounted(async () => {
-  await fetchForms()
+  await fetchForms(1, undefined, undefined, false)
 })
 </script>
 

@@ -16,7 +16,7 @@ export const useFormsStore = defineStore('forms', () => {
     last_page: 1
   })
 
-  const fetchForms = async (page = 1, search?: string, limit?: number) => {
+  const fetchForms = async (page = 1, search?: string, limit?: number, isQuiz?: boolean) => {
     loading.value = true
     error.value = null
 
@@ -31,13 +31,17 @@ export const useFormsStore = defineStore('forms', () => {
       const pageLimit = limit || pagination.value.per_page
       const offset = (page - 1) * pageLimit
       
-      const params: { limit: number; offset: number; search?: string } = {
+      const params: { limit: number; offset: number; search?: string; is_quiz?: number } = {
         limit: pageLimit,
         offset
       }
       
       if (search) {
         params.search = search
+      }
+
+      if (isQuiz !== undefined) {
+        params.is_quiz = isQuiz ? 1 : 0
       }
       
       const response = await formsApi.list(params)

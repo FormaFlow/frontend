@@ -206,7 +206,7 @@ const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const {loading, createEntry} = useEntries()
-const {forms, fetchForms} = useForms()
+const {forms, fetchForms, fetchForm, currentForm} = useForms()
 const {showSuccess} = useNotification()
 
 const selectedFormId = ref('')
@@ -251,21 +251,20 @@ const getLocalizedError = (msg: string) => {
 }
 
 onMounted(async () => {
-  await fetchForms()
-  if (route.query.form_id) {
-    selectedFormId.value = route.query.form_id as string
-
-    // Check if form is present in the list
-    if (!forms.value.find((f: Form) => f.id === selectedFormId.value)) {
-      try {
-        const form = await formsApi.get(selectedFormId.value)
-        if (form) {
-          forms.value.push(form)
-        }
-      } catch (e) {
-        console.error('Failed to fetch specific form:', e)
-      }
+  const formIdFromQuery = route.query.form_id as string
+  
+  if (formIdFromQuery) {
+    selectedFormId.value = formIdFromQuery
+    // Fetch only the specific form we need
+    try {
+      await fetchForm(formIdFromQuery)
+    } catch (e) {
+      console.error('Failed to fetch specific form:', e)
     }
+  } else {
+    // Only fetch the full list if we need to show the selection dropdown
+    // Filter by is_quiz=0 to show only regular forms
+    await fetchForms(1, undefined, undefined, false)
   }
 })
 
@@ -281,9 +280,12 @@ const formOptions = computed(() =>
     forms.value.map((f: Form) => ({label: f.name, value: f.id}))
 )
 
-const selectedForm = computed(() =>
-    forms.value.find((f: Form) => f.id === selectedFormId.value)
-)
+const selectedForm = computed(() => {
+  if (currentForm.value && currentForm.value.id === selectedFormId.value) {
+    return currentForm.value
+  }
+  return forms.value.find((f: Form) => f.id === selectedFormId.value)
+})
 
 watch(selectedForm, (form) => {
   Object.keys(formData).forEach(k => delete formData[k])

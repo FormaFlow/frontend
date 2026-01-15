@@ -49,4 +49,25 @@ describe('useEntriesStore Offline', () => {
     const pending = await db.getPendingEntries()
     expect(pending).toHaveLength(1)
   })
+
+  it('syncs pending entries when online', async () => {
+    const store = useEntriesStore()
+    
+    // 1. Add some pending entries
+    await db.savePendingEntry({ form_id: 'f1', data: { val: 1 }, created_at: 'now' })
+    await db.savePendingEntry({ form_id: 'f2', data: { val: 2 }, created_at: 'now' })
+    
+    // 2. Mock API success
+    vi.mocked(entriesApi.create).mockResolvedValue({ id: 'new-id', form_id: 'f1', data: {}, created_at: '' } as any)
+    
+    // 3. Trigger sync
+    await store.syncPendingEntries()
+    
+    // 4. Verify API was called twice
+    expect(entriesApi.create).toHaveBeenCalledTimes(2)
+    
+    // 5. Verify local DB is empty
+    const pending = await db.getPendingEntries()
+    expect(pending).toHaveLength(0)
+  })
 })

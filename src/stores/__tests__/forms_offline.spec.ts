@@ -47,4 +47,17 @@ describe('useFormsStore Offline', () => {
     expect(store.forms[0].name).toBe('Cached Form')
     expect(formsApi.list).not.toHaveBeenCalled()
   })
+
+  it('passes is_quiz parameter to API', async () => {
+    const store = useFormsStore()
+    vi.mocked(formsApi.list).mockResolvedValue({ forms: [], total: 0, limit: 15, offset: 0 })
+    
+    // Test with isQuiz = true
+    await store.fetchForms(1, undefined, undefined, true)
+    expect(formsApi.list).toHaveBeenCalledWith(expect.objectContaining({ is_quiz: 1 }))
+    
+    // Test with isQuiz = false
+    await store.fetchForms(1, undefined, undefined, false)
+    expect(formsApi.list).toHaveBeenCalledWith(expect.objectContaining({ is_quiz: 0 }))
+  })
 })
