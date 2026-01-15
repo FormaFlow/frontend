@@ -57,6 +57,27 @@
                 :class="['form-input', fieldErrors[field.id] ? 'border-red-500 focus:ring-red-500' : '']"
             />
 
+            <!-- Quiz Choice Style (Radio group as buttons) -->
+            <div
+                v-else-if="field.type === 'select' && selectedForm?.is_quiz"
+                class="flex flex-wrap gap-2"
+            >
+              <button
+                  v-for="(opt, idx) in (field.options || [])"
+                  :key="String(opt.value ?? idx)"
+                  type="button"
+                  :class="[
+                    'px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-medium',
+                    formData[field.id] === opt.value
+                      ? 'bg-primary-500 border-primary-500 text-white shadow-md'
+                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary-400'
+                  ]"
+                  @click="formData[field.id] = opt.value"
+              >
+                {{ opt.label }}
+              </button>
+            </div>
+
             <select
                 v-else-if="field.type === 'select'"
                 :id="field.id"
