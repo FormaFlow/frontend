@@ -186,7 +186,7 @@
 
         <div class="flex justify-center pt-4">
           <button type="button" class="btn-primary flex items-center gap-2" @click="handleShareResult">
-            <span>🔗 {{ $t('forms.share') }}</span>
+            <span>🔗 {{ $t('forms.share_result') }}</span>
           </button>
         </div>
       </div>
