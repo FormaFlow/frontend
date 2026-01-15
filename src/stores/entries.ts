@@ -1,6 +1,7 @@
 import {defineStore} from 'pinia'
 import {ref} from 'vue'
 import {entriesApi} from '@/api/entries'
+import {db} from '@/db'
 import type {CreateEntryRequest, Entry, UpdateEntryRequest} from '@/types/entry'
 
 export const useEntriesStore = defineStore('entries', () => {
@@ -81,6 +82,17 @@ export const useEntriesStore = defineStore('entries', () => {
   const createEntry = async (data: CreateEntryRequest) => {
     loading.value = true
     error.value = null
+    
+    // Check if offline
+    if (!navigator.onLine) {
+      await db.savePendingEntry(JSON.parse(JSON.stringify({
+        ...data,
+        created_at: new Date().toISOString()
+      })))
+      loading.value = false
+      return null
+    }
+
     try {
       const response = await entriesApi.create(data)
       if (response) {
@@ -88,10 +100,36 @@ export const useEntriesStore = defineStore('entries', () => {
         return response
       }
     } catch (err: unknown) {
+      // If network error, save to local DB
+      if (err instanceof Error && (err.message.includes('Network Error') || !navigator.onLine)) {
+        await db.savePendingEntry(JSON.parse(JSON.stringify({
+          ...data,
+          created_at: new Date().toISOString()
+        })))
+        return null
+      }
       error.value = (err as Error).message
       throw err
     } finally {
       loading.value = false
+    }
+  }
+
+  const syncPendingEntries = async () => {
+    const pending = await db.getPendingEntries()
+    if (pending.length === 0) return
+
+    for (const entry of pending) {
+      try {
+        const { id, ...data } = entry
+        const response = await entriesApi.create(data)
+        if (response && id) {
+          await db.removePendingEntry(id)
+        }
+      } catch (err) {
+        console.error('Failed to sync entry:', err)
+        // Keep in DB for next attempt
+      }
     }
   }
 
@@ -145,6 +183,7 @@ export const useEntriesStore = defineStore('entries', () => {
     fetchEntries,
     fetchEntry,
     createEntry,
+    syncPendingEntries,
     updateEntry,
     deleteEntry
   }

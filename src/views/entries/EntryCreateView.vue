@@ -374,6 +374,12 @@ const handleSubmit = async () => {
       duration: selectedForm.value?.is_quiz ? duration.value : undefined
     })
 
+    if (!entry) {
+      showSuccess(t('entries.entry_saved_offline'))
+      await router.push('/entries')
+      return
+    }
+
     if (entry && selectedForm.value?.is_quiz) {
       const totalPoints = selectedForm.value.fields.reduce((sum, f) => sum + (f.points || 0), 0)
 

@@ -170,20 +170,21 @@ const handleSubmit = async () => {
       data: formData.value
     })
     
-    // Update Cache
-    if (!cachedEntries[selectedFormId.value]) {
-      cachedEntries[selectedFormId.value] = []
-    }
-    // Prepend new entry
-    if (newEntry) {
+    if (!newEntry) {
+      showSuccess(t('entries.entry_saved_offline'))
+    } else {
+      // Update Cache
+      if (!cachedEntries[selectedFormId.value]) {
+        cachedEntries[selectedFormId.value] = []
+      }
+      // Prepend new entry
       cachedEntries[selectedFormId.value].unshift(newEntry)
+      // Keep only 5
+      if (cachedEntries[selectedFormId.value].length > 5) {
+        cachedEntries[selectedFormId.value] = cachedEntries[selectedFormId.value].slice(0, 5)
+      }
+      showSuccess(t('entries.entry_created'))
     }
-    // Keep only 5
-    if (cachedEntries[selectedFormId.value].length > 5) {
-      cachedEntries[selectedFormId.value] = cachedEntries[selectedFormId.value].slice(0, 5)
-    }
-    
-    showSuccess(t('entries.entry_created'))
     
     // Reset form data but keep boolean defaults
     formData.value = {}

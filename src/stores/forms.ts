@@ -1,6 +1,7 @@
 import {defineStore} from 'pinia'
 import {ref} from 'vue'
 import {formsApi} from '@/api/forms'
+import {db} from '@/db'
 import type {CreateFormRequest, Form, UpdateFormRequest} from '@/types/form'
 
 export const useFormsStore = defineStore('forms', () => {
@@ -18,6 +19,14 @@ export const useFormsStore = defineStore('forms', () => {
   const fetchForms = async (page = 1, search?: string, limit?: number) => {
     loading.value = true
     error.value = null
+
+    if (!navigator.onLine) {
+      const cachedForms = await db.getForms()
+      forms.value = cachedForms
+      loading.value = false
+      return
+    }
+
     try {
       const pageLimit = limit || pagination.value.per_page
       const offset = (page - 1) * pageLimit
@@ -41,10 +50,18 @@ export const useFormsStore = defineStore('forms', () => {
           current_page: page,
           last_page: Math.ceil(response.total / response.limit)
         }
+        // Cache forms
+        await db.saveForms(JSON.parse(JSON.stringify(forms.value)))
       }
     } catch (err: unknown) {
-      error.value = (err as Error).message
-      throw err
+      // Fallback to cache on network error
+      if (err instanceof Error && (err.message.includes('Network Error') || !navigator.onLine)) {
+        const cachedForms = await db.getForms()
+        forms.value = cachedForms
+      } else {
+        error.value = (err as Error).message
+        throw err
+      }
     } finally {
       loading.value = false
     }
@@ -53,14 +70,33 @@ export const useFormsStore = defineStore('forms', () => {
   const fetchForm = async (id: string) => {
     loading.value = true
     error.value = null
+
+    if (!navigator.onLine) {
+      const cached = await db.forms.get(id)
+      if (cached) {
+        currentForm.value = cached
+      }
+      loading.value = false
+      return
+    }
+
     try {
       const response = await formsApi.get(id)
       if (response) {
         currentForm.value = response
+        // Cache single form
+        await db.saveForms([JSON.parse(JSON.stringify(response))])
       }
     } catch (err: unknown) {
-      error.value = (err as Error).message
-      throw err
+      if (err instanceof Error && (err.message.includes('Network Error') || !navigator.onLine)) {
+        const cached = await db.forms.get(id)
+        if (cached) {
+          currentForm.value = cached
+        }
+      } else {
+        error.value = (err as Error).message
+        throw err
+      }
     } finally {
       loading.value = false
     }

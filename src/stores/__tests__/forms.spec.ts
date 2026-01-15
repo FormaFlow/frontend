@@ -1,3 +1,4 @@
+import 'fake-indexeddb/auto'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useFormsStore } from '../forms'
