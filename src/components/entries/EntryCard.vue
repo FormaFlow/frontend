@@ -79,14 +79,23 @@ const fields = computed(() => {
 })
 
 const opacityClass = computed(() => {
-  const created = new Date(props.entry.created_at).getTime()
-  const now = new Date().getTime()
-  const diffTime = now - created
-  const diffDays = diffTime / (1000 * 60 * 60 * 24)
+  const created = new Date(props.entry.created_at)
+  const now = new Date()
 
-  if (diffDays < 1) return 'opacity-100'
-  if (diffDays < 7) return 'opacity-75'
-  if (diffDays < 14) return 'opacity-60'
+  // Start of today (00:00:00)
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  if (created >= startOfToday) return 'opacity-100'
+
+  // Start of this week (Monday)
+  const dayOfWeek = now.getDay() // 0 is Sunday
+  const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+  const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday)
+  if (created >= startOfThisWeek) return 'opacity-75'
+
+  // Start of this month
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  if (created >= startOfThisMonth) return 'opacity-60'
+
   return 'opacity-40'
 })
 </script>
