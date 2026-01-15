@@ -3,15 +3,15 @@
     <!-- Welcome Section -->
     <div class="card bg-gradient-to-r from-primary-500 to-primary-600 text-white">
       <h1 class="text-3xl font-bold mb-4">{{ $t('common.app_title') }}</h1>
-      <div class="text-primary-100 flex flex-wrap items-center gap-2">
+      <div class="text-primary-100 flex flex-wrap items-center gap-2 text-xs">
         <router-link to="/forms" class="px-3 py-1 border border-white/40 rounded-lg hover:bg-white/10 transition-colors text-sm font-medium">
           {{ $t('forms.title') }}
         </router-link>
-        <span>и</span>
+        <span>{{ $t('common.and') }}</span>
         <router-link to="/entries" class="px-3 py-1 border border-white/40 rounded-lg hover:bg-white/10 transition-colors text-sm font-medium">
           {{ $t('entries.title') }}
         </router-link>
-        <span>в одном месте</span>
+        <span>{{ $t('common.in_one_place') }}</span>
       </div>
     </div>
 
