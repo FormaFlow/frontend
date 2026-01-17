@@ -35,8 +35,9 @@
               v-for="field in selectedForm.fields"
               :key="field.id"
               class="form-group"
+              :class="{'p-4 bg-gray-50 dark:bg-gray-800 rounded-xl mb-6 border border-gray-100 dark:border-gray-700': selectedForm.is_quiz}"
           >
-            <label :for="field.id" class="form-label">
+            <label :for="field.id" class="form-label mb-3 block" :class="{'text-lg font-medium': selectedForm.is_quiz}">
               {{ field.label }} <span v-if="field.required" class="text-red-500">*</span>
             </label>
 
@@ -57,25 +58,26 @@
                 :class="['form-input', fieldErrors[field.id] ? 'border-red-500 focus:ring-red-500' : '']"
             />
 
-            <!-- Quiz Choice Style (Radio group as buttons) -->
+            <!-- Quiz Choice Style (Radio group) -->
             <div
                 v-else-if="field.type === 'select' && selectedForm?.is_quiz"
-                class="flex flex-wrap gap-2"
+                class="flex flex-col gap-3"
             >
-              <button
+              <label
                   v-for="(opt, idx) in (field.options || [])"
                   :key="String(opt.value ?? idx)"
-                  type="button"
-                  :class="[
-                    'px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-medium',
-                    formData[field.id] === opt.value
-                      ? 'bg-primary-500 border-primary-500 text-white shadow-md'
-                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary-400'
-                  ]"
-                  @click="formData[field.id] = opt.value"
+                  class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  :class="{'ring-2 ring-primary-500 border-primary-500': formData[field.id] === opt.value}"
               >
-                {{ opt.label }}
-              </button>
+                <input
+                    type="radio"
+                    :name="field.id"
+                    :value="opt.value"
+                    v-model="formData[field.id]"
+                    class="w-5 h-5 text-primary-600 focus:ring-primary-500 border-gray-300"
+                />
+                <span class="text-gray-900 dark:text-gray-100">{{ opt.label }}</span>
+              </label>
             </div>
 
             <select
