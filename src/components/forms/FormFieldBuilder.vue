@@ -30,7 +30,8 @@
       @confirm="saveField"
     >
       <FieldEditor
-        v-model="currentField"
+        ref="editorRef"
+        :model-value="currentField"
         :is-quiz="isQuiz"
       />
     </AppModal>
@@ -67,6 +68,7 @@ const sortedFields = computed(() => {
 
 const showModal = ref(false)
 const editingFieldId = ref<string | null>(null)
+const editorRef = ref<InstanceType<typeof FieldEditor> | null>(null)
 
 // Initial state for a new field
 const defaultFieldState = {
@@ -85,7 +87,7 @@ const currentField = ref<Omit<FormField, 'id' | 'order'> & { id?: string, order?
 
 const openAddModal = () => {
   editingFieldId.value = null
-  currentField.value = { ...defaultFieldState }
+  currentField.value = { ...defaultFieldState, id: 'new-' + Date.now() } // Temp ID to trigger reset in editor
   showModal.value = true
 }
 
@@ -110,21 +112,27 @@ defineExpose({
 })
 
 const saveField = () => {
+  const editorValue = editorRef.value?.getValue()
+  if (!editorValue) return
+
   if (editingFieldId.value) {
     // Updating existing field
     const fieldToUpdate = {
-      ...currentField.value,
+      ...editorValue,
       id: editingFieldId.value,
-      order: currentField.value.order ?? 0 // Preserve order
+      order: editorValue.order ?? 0 // Preserve order
     } as FormField
     emit('update-field', fieldToUpdate)
   } else {
     // Adding new field
     const newField = {
-      ...currentField.value,
+      ...editorValue,
       order: props.fields?.length ?? 0
     }
-    emit('add-field', newField)
+    // Remove temp ID if any
+    if (newField.id?.startsWith('new-')) delete newField.id
+    
+    emit('add-field', newField as Omit<FormField, 'id'>)
   }
 }
 

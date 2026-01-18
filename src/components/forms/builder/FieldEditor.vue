@@ -110,14 +110,16 @@ import type { FormField } from '@/types/form'
 const { t } = useI18n()
 
 // We use a subset of FormField for the editing state
-type EditableField = Omit<FormField, 'id' | 'order'> & { id?: string }
+type EditableField = Omit<FormField, 'id' | 'order'> & { id?: string, order?: number }
 
 // Internal state needs strict types for v-model binding
-interface LocalEditableField extends Omit<EditableField, 'unit' | 'placeholder' | 'correctAnswer' | 'points'> {
+interface LocalEditableField extends Omit<EditableField, 'unit' | 'placeholder' | 'correctAnswer' | 'points' | 'order'> {
+  id?: string
   unit: string
   placeholder: string
   correctAnswer: string
   points: number
+  order: number
 }
 
 const props = defineProps<{
@@ -135,24 +137,32 @@ const fieldForm = ref<LocalEditableField>({
   unit: props.modelValue.unit ?? '',
   placeholder: props.modelValue.placeholder ?? '',
   correctAnswer: props.modelValue.correctAnswer ?? '',
-  points: props.modelValue.points ?? 0
+  points: props.modelValue.points ?? 0,
+  order: props.modelValue.order ?? 0,
+  options: props.modelValue.options ? JSON.parse(JSON.stringify(props.modelValue.options)) : []
 })
 
-// Sync prop changes to local state
-watch(() => props.modelValue, (newVal) => {
+// We watch the prop ONLY to reset the local state when the modal is opened/switched
+watch(() => props.modelValue.id, () => {
   fieldForm.value = {
-    ...newVal,
-    unit: newVal.unit ?? '',
-    placeholder: newVal.placeholder ?? '',
-    correctAnswer: newVal.correctAnswer ?? '',
-    points: newVal.points ?? 0
+    ...props.modelValue,
+    unit: props.modelValue.unit ?? '',
+    placeholder: props.modelValue.placeholder ?? '',
+    correctAnswer: props.modelValue.correctAnswer ?? '',
+    points: props.modelValue.points ?? 0,
+    order: props.modelValue.order ?? 0,
+    options: props.modelValue.options ? JSON.parse(JSON.stringify(props.modelValue.options)) : []
   }
-}, { deep: true })
+})
 
-// Sync local state changes to parent
-watch(fieldForm, (newVal) => {
-  emit('update:modelValue', newVal)
-}, { deep: true })
+// We expose the current state so the parent can read it when saving
+defineExpose({
+  getValue: () => ({ ...fieldForm.value })
+})
+
+// Remove all watchers that emit update:modelValue
+// ... rest of the component ...
+
 
 const fieldTypeOptions = computed(() => [
   { label: t('forms.field_types.text'), value: 'text' },
