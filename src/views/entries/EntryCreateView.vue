@@ -37,7 +37,7 @@
               class="form-group"
               :class="{'p-4 bg-gray-50 dark:bg-gray-800 rounded-xl mb-6 border border-gray-100 dark:border-gray-700': selectedForm.is_quiz}"
           >
-            <label :for="field.id" class="form-label mb-3 block" :class="{'text-lg font-medium': selectedForm.is_quiz}">
+            <label :for="field.id" class="form-label mb-3 block" :class="{'text-base font-medium': selectedForm.is_quiz}">
               {{ field.label }} <span v-if="field.required" class="text-red-500">*</span>
             </label>
 
@@ -66,7 +66,7 @@
               <label
                   v-for="(opt, idx) in (field.options || [])"
                   :key="String(opt.value ?? idx)"
-                  class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  class="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   :class="{'ring-2 ring-primary-500 border-primary-500': formData[field.id] === opt.value}"
               >
                 <input
@@ -76,7 +76,7 @@
                     v-model="formData[field.id]"
                     class="w-5 h-5 text-primary-600 focus:ring-primary-500 border-gray-300"
                 />
-                <span class="text-gray-900 dark:text-gray-100">{{ opt.label }}</span>
+                <span class="text-sm text-gray-900 dark:text-gray-100">{{ opt.label }}</span>
               </label>
             </div>
 
