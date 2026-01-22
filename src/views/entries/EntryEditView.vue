@@ -32,6 +32,12 @@
                   :required="field.required"
                   :options="field.options || []"
               />
+              <AppCheckbox
+                  v-if="field.type === 'boolean'"
+                  v-model="(currentEntry.data[field.id] as boolean)"
+                  :label="field.label"
+                  :required="field.required"
+              />
               <!-- TODO: Add support for other field types -->
             </div>
           </div>
@@ -68,6 +74,7 @@ import AppLoader from '@/components/common/AppLoader.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppInput from '@/components/common/AppInput.vue'
 import AppSelect from '@/components/common/AppSelect.vue'
+import AppCheckbox from '@/components/common/AppCheckbox.vue'
 import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
