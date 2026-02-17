@@ -16,6 +16,35 @@
     </div>
 
     <div v-else class="space-y-8 animate-fade-in">
+      <!-- Filters -->
+      <section class="card p-4">
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $t('reports.time_series.period') }}:</label>
+            <div class="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
+              <button 
+                v-for="r in rangeOptions" 
+                :key="r.value"
+                @click="selectedRange = r.value"
+                :class="[
+                  'px-3 py-1 text-sm rounded-md transition-all',
+                  selectedRange === r.value 
+                    ? 'bg-white dark:bg-gray-700 shadow text-primary-600 font-medium' 
+                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                ]"
+              >
+                {{ r.label }}
+              </button>
+            </div>
+          </div>
+          <div v-if="selectedRange === 'custom'" class="flex items-center gap-2">
+            <input type="date" v-model="customDateFrom" class="form-input text-sm py-1" />
+            <span class="text-gray-400">-</span>
+            <input type="date" v-model="customDateTo" class="form-input text-sm py-1" />
+          </div>
+        </div>
+      </section>
+
       <!-- Summary Cards -->
       <section>
         <h2 class="text-xl font-bold mb-4">{{ $t('reports.summary') }}</h2>
@@ -29,30 +58,31 @@
           </div>
 
           <!-- Numeric Field Summaries -->
-          <div v-for="stat in summaryData?.stats" :key="stat.field" class="card p-6 flex flex-col text-center">
-            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider truncate" :title="stat.label">
-              {{ stat.label }}
-            </p>
-            <div class="mt-2">
-              <span class="text-2xl font-bold text-primary-600">{{ stat.sum }}</span>
-              <span class="text-xs text-gray-400 block mt-1">{{ $t('reports.total_sum') }}</span>
+          <template v-for="stat in summaryData?.stats" :key="stat.field">
+            <div v-if="stat.field !== '_count'" class="card p-6 flex flex-col text-center">
+              <p class="text-sm text-gray-500 font-medium uppercase tracking-wider truncate" :title="stat.label">
+                {{ stat.label }}
+              </p>
+              <div class="mt-2">
+                <span class="text-2xl font-bold text-primary-600">{{ stat.sum }}</span>
+                <span class="text-xs text-gray-400 block mt-1">{{ $t('reports.total_sum') }}</span>
+              </div>
+              <div class="mt-4 grid grid-cols-3 gap-2 text-xs text-gray-500 border-t border-gray-100 dark:border-gray-700 pt-3">
+                <div>
+                  <span class="block font-bold">{{ typeof stat.avg === 'number' ? stat.avg.toFixed(1) : '0.0' }}</span>
+                  <span class="text-[10px]">{{ $t('reports.avg') }}</span>
+                </div>
+                <div>
+                  <span class="block font-bold">{{ stat.min }}</span>
+                  <span class="text-[10px]">{{ $t('reports.min') }}</span>
+                </div>
+                <div>
+                  <span class="block font-bold">{{ stat.max }}</span>
+                  <span class="text-[10px]">{{ $t('reports.max') }}</span>
+                </div>
+              </div>
             </div>
-            <!-- Optional: Show Avg/Min/Max on hover or as small text -->
-             <div class="mt-4 grid grid-cols-3 gap-2 text-xs text-gray-500 border-t border-gray-100 dark:border-gray-700 pt-3">
-               <div>
-                 <span class="block font-bold">{{ stat.avg.toFixed(1) }}</span>
-                 <span class="text-[10px]">{{ $t('reports.avg') }}</span>
-               </div>
-               <div>
-                 <span class="block font-bold">{{ stat.min }}</span>
-                 <span class="text-[10px]">{{ $t('reports.min') }}</span>
-               </div>
-               <div>
-                 <span class="block font-bold">{{ stat.max }}</span>
-                 <span class="text-[10px]">{{ $t('reports.max') }}</span>
-               </div>
-             </div>
-          </div>
+          </template>
         </div>
       </section>
 
@@ -109,17 +139,46 @@ const forms = computed(() => formsStore.forms)
 
 const selectedFormId = ref('')
 const period = ref<'daily' | 'weekly' | 'monthly'>('daily')
+const selectedRange = ref('7d')
+const customDateFrom = ref('')
+const customDateTo = ref('')
+
+const rangeOptions = [
+  { label: '7d', value: '7d' },
+  { label: '30d', value: '30d' },
+  { label: 'Month', value: 'month' },
+  { label: 'All', value: 'all' },
+  { label: 'Custom', value: 'custom' },
+]
 
 const summaryData = ref<SummaryResponse | null>(null)
 const timeSeriesData = ref<{ labels: string[], datasets: Record<string, number>[] }>({ labels: [], datasets: [] })
 const timeSeriesFields = ref<{name: string, label: string}[]>([])
 const loadingChart = ref(false)
 
+const dateRange = computed(() => {
+  const now = new Date()
+  let from: Date | null = null
+  let to: Date | null = null
+
+  if (selectedRange.value === '7d') {
+    from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  } else if (selectedRange.value === '30d') {
+    from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+  } else if (selectedRange.value === 'month') {
+    from = new Date(now.getFullYear(), now.getMonth(), 1)
+  } else if (selectedRange.value === 'custom') {
+    if (customDateFrom.value) from = new Date(customDateFrom.value)
+    if (customDateTo.value) to = new Date(customDateTo.value)
+  }
+
+  return {
+    from: from ? from.toISOString().split('T')[0] : undefined,
+    to: to ? to.toISOString().split('T')[0] : undefined
+  }
+})
+
 const chartDatasets = computed(() => {
-  // Convert backend data structure to ChartJS datasets
-  // Backend returns: data: [{date: '...', field1: 10, field2: 20}, ...], fields: [...]
-  // We need: [{label: 'Field 1', data: [10, ...]}, ...]
-  
   return timeSeriesFields.value.map(field => {
     return {
       label: field.label,
@@ -133,7 +192,7 @@ const formattedLabels = computed(() => {
 })
 
 // Watchers
-watch(selectedFormId, async (newId) => {
+watch([selectedFormId, dateRange], async ([newId]) => {
   if (newId) {
     await fetchSummary()
     await fetchTimeSeries()
@@ -152,7 +211,11 @@ watch(period, async () => {
 async function fetchSummary() {
   if (!selectedFormId.value) return
   try {
-    const res = await reportsApi.summary({ form_id: selectedFormId.value })
+    const res = await reportsApi.summary({ 
+      form_id: selectedFormId.value,
+      date_from: dateRange.value.from,
+      date_to: dateRange.value.to
+    })
     summaryData.value = res
   } catch (e) {
     console.error(e)
@@ -165,7 +228,9 @@ async function fetchTimeSeries() {
   try {
     const res = await reportsApi.multiTimeSeries({
       form_id: selectedFormId.value,
-      period: period.value
+      period: period.value,
+      date_from: dateRange.value.from,
+      date_to: dateRange.value.to
     })
     
     // Process response
