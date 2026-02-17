@@ -31,7 +31,26 @@
       <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
         <!-- Today's Summary -->
         <div v-if="formattedStats.today.length > 0" class="p-6">
-          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">{{ $t('entries.today') }}</h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              {{ isToday ? $t('entries.today') : formattedStatsDate }}
+            </h3>
+            <div class="flex gap-1">
+              <button
+                class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                @click="changeDate(-1)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <button
+                class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                :disabled="isToday"
+                @click="changeDate(1)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+          </div>
           <div class="flex flex-wrap gap-x-8 gap-y-4">
             <div v-for="(item, idx) in formattedStats.today" :key="idx">
               <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ item.value }}</div>
@@ -42,7 +61,9 @@
 
         <!-- This Month's Summary -->
         <div v-if="formattedStats.month.length > 0" class="p-6">
-          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">{{ $t('entries.this_month') }}</h3>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
+            {{ isThisMonth ? $t('entries.this_month') : formattedStatsMonth }}
+          </h3>
           <div class="flex flex-wrap gap-x-8 gap-y-4">
             <div v-for="(item, idx) in formattedStats.month" :key="idx">
               <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ item.value }}</div>
@@ -98,12 +119,37 @@ const {entries, loading, loadingMore, pagination, fetchEntries, deleteEntry} = u
 const {forms, currentForm, fetchForms, fetchForm} = useForms()
 const {showSuccess, showError} = useNotification()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const searchQuery = ref('')
 const selectedFormId = ref('')
 const loadMoreTrigger = ref<HTMLElement | null>(null)
+const statsDate = ref(new Date().toISOString().split('T')[0])
 
-const { stats, fetchStats } = useStats(selectedFormId)
+const { stats, fetchStats } = useStats(selectedFormId, statsDate)
+
+const changeDate = (days: number) => {
+  const date = new Date(statsDate.value)
+  date.setDate(date.getDate() + days)
+  statsDate.value = date.toISOString().split('T')[0]
+}
+
+const formattedStatsDate = computed(() => {
+  return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(statsDate.value))
+})
+
+const formattedStatsMonth = computed(() => {
+  return new Intl.DateTimeFormat(locale.value, { month: 'long', year: 'numeric' }).format(new Date(statsDate.value))
+})
+
+const isToday = computed(() => {
+  return statsDate.value === new Date().toISOString().split('T')[0]
+})
+
+const isThisMonth = computed(() => {
+  const now = new Date()
+  const d = new Date(statsDate.value)
+  return now.getMonth() === d.getMonth() && now.getFullYear() === d.getFullYear()
+})
 
 // Load more logic
 useIntersectionObserver(

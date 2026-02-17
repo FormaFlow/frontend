@@ -42,8 +42,8 @@ export const entriesApi = {
     return client.get<PaginatedResponse<Entry>>(`/forms/${formId}/entries`, params)
   },
 
-  stats(formId: string) {
-    return client.get<{ stats: EntryStats }>(`/entries/stats`, { form_id: formId }).then(res => res.stats)
+  stats(formId: string, date?: string) {
+    return client.get<{ stats: EntryStats }>(`/entries/stats`, { form_id: formId, date }).then(res => res.stats)
   }
 }
 
