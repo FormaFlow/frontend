@@ -55,6 +55,18 @@
             </div>
           </div>
 
+          <div class="form-group mt-4">
+            <label for="quick-entry-created-at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ $t('entries.created_at') }}
+            </label>
+            <input
+                id="quick-entry-created-at"
+                v-model="createdAt"
+                type="datetime-local"
+                class="form-input w-full"
+            />
+          </div>
+
           <div class="mt-6 flex justify-end">
             <button type="submit" class="btn-primary" :disabled="submitting">
               <span v-if="submitting">{{ $t('common.loading') }}</span>
@@ -113,6 +125,7 @@ const { showSuccess } = useNotification()
 
 const selectedFormId = ref('')
 const formData = ref<Record<string, any>>({})
+const createdAt = ref(getCurrentDateTimeForInput())
 const submitting = ref(false)
 const entriesLoading = ref(false)
 
@@ -132,6 +145,7 @@ const handleFormSelect = async (formId: string) => {
   }
   
   formData.value = {}
+  createdAt.value = getCurrentDateTimeForInput()
   
   // Load Form Definition
   await fetchForm(formId)
@@ -167,7 +181,8 @@ const handleSubmit = async () => {
   try {
     const newEntry = await createEntry({
       form_id: selectedFormId.value,
-      data: formData.value
+      data: formData.value,
+      created_at: toIsoDateTime(createdAt.value),
     })
     
     if (!newEntry) {
@@ -188,6 +203,7 @@ const handleSubmit = async () => {
     
     // Reset form data but keep boolean defaults
     formData.value = {}
+    createdAt.value = getCurrentDateTimeForInput()
     currentForm.value.fields.forEach(field => {
        if (field.type === 'boolean') {
          formData.value[field.id] = false
@@ -243,6 +259,23 @@ const getInputType = (type: FormFieldType) => {
     default:
       return 'text'
   }
+}
+
+function getCurrentDateTimeForInput(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+function toIsoDateTime(value: string): string | undefined {
+  if (!value) return undefined
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return undefined
+  return date.toISOString()
 }
 
 onMounted(async () => {

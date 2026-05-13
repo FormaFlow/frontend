@@ -47,6 +47,16 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label for="entry-created-at" class="form-label">{{ $t('entries.created_at') }}</label>
+          <input
+              id="entry-created-at"
+              v-model="createdAt"
+              type="datetime-local"
+              class="form-input"
+          />
+        </div>
+
         <div class="flex gap-4">
           <AppButton type="submit" :disabled="updateLoading">
             {{ updateLoading ? $t('common.loading') : $t('common.save') }}
@@ -79,6 +89,25 @@ const {showSuccess} = useNotification()
 const {currentEntry, loading, fetchEntry, updateEntry} = useEntries()
 const {currentForm, fetchForm} = useForms()
 const updateLoading = ref(false)
+const createdAt = ref('')
+
+const toLocalDateTimeInput = (value: string): string => {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+const toIsoDateTime = (value: string): string | undefined => {
+  if (!value) return undefined
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return undefined
+  return date.toISOString()
+}
 
 const handleUpdate = async () => {
   if (!currentEntry.value) return
@@ -88,7 +117,8 @@ const handleUpdate = async () => {
     await updateEntry(
         currentEntry.value.id, {
       data: currentEntry.value.data,
-      tags: currentEntry.value.tags
+      tags: currentEntry.value.tags,
+      created_at: toIsoDateTime(createdAt.value),
     })
     showSuccess(t('entries.entry_updated'))
     await router.push('/entries')
@@ -100,6 +130,7 @@ const handleUpdate = async () => {
 onMounted(async () => {
   await fetchEntry(route.params.id as string)
   if (currentEntry.value) {
+    createdAt.value = toLocalDateTimeInput(currentEntry.value.created_at)
     await fetchForm(currentEntry.value.form_id)
   }
 })

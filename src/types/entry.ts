@@ -23,6 +23,7 @@ export interface CreateEntryRequest {
 export interface UpdateEntryRequest {
   data: Record<string, unknown>
   tags?: string[]
+  created_at?: string
 }
 
 export interface BulkImportRequest {
