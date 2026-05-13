@@ -29,6 +29,16 @@
           <p v-if="selectedForm.description" class="text-gray-600 dark:text-gray-400 mt-1">{{ selectedForm.description }}</p>
         </div>
 
+        <div class="form-group">
+          <label for="entry-created-at" class="form-label">{{ $t('entries.created_at') }}</label>
+          <input
+              id="entry-created-at"
+              v-model="createdAt"
+              type="date"
+              class="form-input"
+          />
+        </div>
+
         <!-- Form Fields (Dynamic) -->
         <template v-if="selectedForm && selectedForm.fields.length">
           <div
@@ -218,6 +228,7 @@ const {forms, fetchForms, fetchForm, currentForm} = useForms()
 const {showSuccess} = useNotification()
 
 const selectedFormId = ref('')
+const createdAt = ref(getCurrentDateForInput())
 const createdEntryId = ref('')
 const tags = ref<string[]>([])
 const newTag = ref('')
@@ -229,6 +240,14 @@ const duration = ref(0)
 const timerInterval = ref<number | null>(null)
 const showResultModal = ref(false)
 const quizResult = ref({score: 0, total: 0, results: [] as any[]})
+
+function getCurrentDateForInput(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const getLocalizedError = (msg: string) => {
   if (typeof msg !== 'string') return msg
@@ -382,7 +401,8 @@ const handleSubmit = async () => {
       form_id: selectedFormId.value,
       data: filteredData,
       tags: tags.value,
-      duration: selectedForm.value?.is_quiz ? duration.value : undefined
+      duration: selectedForm.value?.is_quiz ? duration.value : undefined,
+      created_at: createdAt.value || undefined,
     })
 
     if (!entry) {

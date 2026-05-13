@@ -129,6 +129,7 @@
     "summary": "Summary",
     "records": "records",
     "created": "Created",
+    "created_at": "Entry creation date",
     "today": "Today",
     "this_month": "This month"
   },

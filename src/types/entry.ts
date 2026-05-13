@@ -17,6 +17,7 @@ export interface CreateEntryRequest {
   data: Record<string, unknown>
   tags?: string[]
   duration?: number
+  created_at?: string
 }
 
 export interface UpdateEntryRequest {
