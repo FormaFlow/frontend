@@ -9,14 +9,14 @@
     <div class="flex items-start justify-between">
       <div class="flex-1 min-w-0">
         <!-- Entry Data Fields -->
-        <div class="mb-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-            <template v-if="fields">
-              <div v-for="field in fields" :key="field.id" class="flex items-baseline gap-2 text-sm overflow-hidden">
-                <span class="font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ field.label }}:</span>
-                <span class="text-gray-900 dark:text-gray-100 truncate">{{ formatFieldValue(entry.data[field.id], field.type, field.unit) }}</span>
-              </div>
-            </template>
+        <div v-if="fieldBadges.length > 0" class="mb-3 flex flex-wrap gap-2">
+          <div
+              v-for="badge in fieldBadges"
+              :key="badge.id"
+              class="inline-flex max-w-full items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-100"
+          >
+            <span class="font-medium text-gray-500 dark:text-gray-300">{{ badge.label }}:</span>
+            <span class="truncate">{{ badge.value }}</span>
           </div>
         </div>
 
@@ -31,7 +31,7 @@
         <p class="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-1">
           <span>{{ $t('entries.created') }}:</span>
           <span>{{ formatDateTime(entry.created_at) }}</span>
-          <span class="text-gray-400">({{ formatRelativeTime(entry.created_at, t) }})</span>
+          <span v-if="relativeCreatedAt" class="text-gray-400">({{ relativeCreatedAt }})</span>
         </p>
       </div>
 
@@ -57,6 +57,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useNowTicker } from '@/composables/useNowTicker'
 import type { Entry } from '@/types/entry'
 import type { FormField } from '@/types/form'
 import { formatDateTime, formatRelativeTime } from '@/utils/helpers'
@@ -73,27 +74,49 @@ defineEmits<{
 }>()
 
 const { t } = useI18n()
+const now = useNowTicker()
 
 const fields = computed(() => {
   return props.entry.form?.fields || props.formFields || []
 })
 
+const fieldBadges = computed(() => {
+  return fields.value
+    .map(field => {
+      const rawValue = props.entry.data[field.id]
+      if (rawValue === null || rawValue === undefined || rawValue === '') {
+        return null
+      }
+
+      return {
+        id: field.id,
+        label: field.label,
+        value: formatFieldValue(rawValue, field.type, field.unit)
+      }
+    })
+    .filter((badge): badge is { id: string; label: string; value: string } => badge !== null)
+})
+
+const relativeCreatedAt = computed(() => {
+  return formatRelativeTime(props.entry.created_at, t, now.value)
+})
+
 const opacityClass = computed(() => {
   const created = new Date(props.entry.created_at)
-  const now = new Date()
+  const currentTime = new Date(now.value)
 
   // Start of today (00:00:00)
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfToday = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate())
   if (created >= startOfToday) return 'opacity-100'
 
   // Start of this week (Monday)
-  const dayOfWeek = now.getDay() // 0 is Sunday
+  const dayOfWeek = currentTime.getDay() // 0 is Sunday
   const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-  const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday)
+  const startOfThisWeek = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate() - diffToMonday)
   if (created >= startOfThisWeek) return 'opacity-75'
 
   // Start of this month
-  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const startOfThisMonth = new Date(currentTime.getFullYear(), currentTime.getMonth(), 1)
   if (created >= startOfThisMonth) return 'opacity-60'
 
   return 'opacity-40'

@@ -103,7 +103,7 @@ export const useEntriesStore = defineStore('entries', () => {
     if (!navigator.onLine) {
       await db.savePendingEntry(JSON.parse(JSON.stringify({
         ...data,
-        created_at: new Date().toISOString()
+        created_at: data.created_at || new Date().toISOString()
       })))
       loading.value = false
       return null
@@ -120,7 +120,7 @@ export const useEntriesStore = defineStore('entries', () => {
       if (err instanceof Error && (err.message.includes('Network Error') || !navigator.onLine)) {
         await db.savePendingEntry(JSON.parse(JSON.stringify({
           ...data,
-          created_at: new Date().toISOString()
+          created_at: data.created_at || new Date().toISOString()
         })))
         return null
       }

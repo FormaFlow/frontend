@@ -16,7 +16,7 @@
       <div class="lg:col-span-2 space-y-4">
         <form @submit.prevent="handleSubmit" v-if="currentForm">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div v-for="field in currentForm.fields" :key="field.id" class="form-group">
+            <div v-for="field in requiredFields" :key="field.id" class="form-group">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {{ field.label }}
                 <span v-if="field.required" class="text-red-500">*</span>
@@ -55,11 +55,55 @@
             </div>
           </div>
 
-          <div class="form-group mt-4">
-            <label for="quick-entry-created-at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ $t('entries.created_at') }}
+          <!-- TODO: Replace this temporary optional-fields block with attribute-based rendering at the end of the form. -->
+          <div v-if="optionalFields.length > 0" class="mt-4 flex flex-wrap items-end gap-3">
+            <div v-for="field in optionalFields" :key="field.id" class="min-w-[5rem]">
+              <label
+                  v-if="field.type === 'boolean'"
+                  class="inline-flex h-12 items-center gap-2 rounded-lg border border-gray-200 px-3 text-sm text-gray-700 dark:border-gray-600 dark:text-gray-200"
+              >
+                <input
+                    v-model="formData[field.id]"
+                    type="checkbox"
+                    class="form-checkbox h-4 w-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                />
+                <span>{{ field.label }}</span>
+              </label>
+
+              <div v-else-if="field.type === 'select'" class="min-w-[10rem]">
+                <AppSelect
+                    v-model="formData[field.id]"
+                    :options="getOptions(field.options)"
+                    :placeholder="field.placeholder || field.label"
+                />
+              </div>
+
+              <div v-else class="min-w-[10rem]">
+                <input
+                    v-model="formData[field.id]"
+                    :type="getInputType(field.type)"
+                    :placeholder="field.placeholder || field.label"
+                    class="form-input w-full"
+                    :step="field.type === 'number' || field.type === 'currency' ? 'any' : undefined"
+                />
+                <p v-if="field.unit" class="text-xs text-gray-500 mt-1">{{ field.unit }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input
+                  v-model="useCustomCreatedAt"
+                  type="checkbox"
+                  class="form-checkbox h-4 w-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                  @change="handleCustomCreatedAtToggle"
+              />
+              <span>{{ $t('entries.custom_created_at') }}</span>
             </label>
+
             <input
+                v-if="useCustomCreatedAt"
                 id="quick-entry-created-at"
                 v-model="createdAt"
                 type="datetime-local"
@@ -115,7 +159,7 @@ import AppSelect from '@/components/common/AppSelect.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
 import EntryCard from '@/components/entries/EntryCard.vue'
 import { useI18n } from 'vue-i18n'
-import type { FormFieldType } from '@/types/form'
+import type { FormField, FormFieldType } from '@/types/form'
 import type { Entry } from '@/types/entry'
 
 const { t } = useI18n()
@@ -126,6 +170,7 @@ const { showSuccess } = useNotification()
 const selectedFormId = ref('')
 const formData = ref<Record<string, any>>({})
 const createdAt = ref(getCurrentDateTimeForInput())
+const useCustomCreatedAt = ref(false)
 const submitting = ref(false)
 const entriesLoading = ref(false)
 
@@ -138,6 +183,14 @@ const formOptions = computed(() =>
     .map(f => ({ label: f.name, value: f.id }))
 )
 
+const requiredFields = computed<FormField[]>(() => {
+  return currentForm.value?.fields.filter(field => field.required) || []
+})
+
+const optionalFields = computed<FormField[]>(() => {
+  return currentForm.value?.fields.filter(field => !field.required) || []
+})
+
 const handleFormSelect = async (formId: string) => {
   if (!formId) {
     currentForm.value = null
@@ -146,6 +199,7 @@ const handleFormSelect = async (formId: string) => {
   
   formData.value = {}
   createdAt.value = getCurrentDateTimeForInput()
+  useCustomCreatedAt.value = false
   
   // Load Form Definition
   await fetchForm(formId)
@@ -164,14 +218,7 @@ const handleFormSelect = async (formId: string) => {
     }
   }
   
-  // Initialize form defaults
-  if (currentForm.value) {
-    currentForm.value.fields.forEach(field => {
-       if (field.type === 'boolean') {
-         formData.value[field.id] = false
-       }
-    })
-  }
+  initializeFormDefaults()
 }
 
 const handleSubmit = async () => {
@@ -182,7 +229,7 @@ const handleSubmit = async () => {
     const newEntry = await createEntry({
       form_id: selectedFormId.value,
       data: formData.value,
-      created_at: toIsoDateTime(createdAt.value),
+      created_at: useCustomCreatedAt.value ? toIsoDateTime(createdAt.value) : undefined,
     })
     
     if (!newEntry) {
@@ -204,16 +251,19 @@ const handleSubmit = async () => {
     // Reset form data but keep boolean defaults
     formData.value = {}
     createdAt.value = getCurrentDateTimeForInput()
-    currentForm.value.fields.forEach(field => {
-       if (field.type === 'boolean') {
-         formData.value[field.id] = false
-       }
-    })
+    useCustomCreatedAt.value = false
+    initializeFormDefaults()
     
   } catch {
     // Error handled by store
   } finally {
     submitting.value = false
+  }
+}
+
+const handleCustomCreatedAtToggle = () => {
+  if (useCustomCreatedAt.value) {
+    createdAt.value = getCurrentDateTimeForInput()
   }
 }
 
@@ -276,6 +326,18 @@ function toIsoDateTime(value: string): string | undefined {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return undefined
   return date.toISOString()
+}
+
+function initializeFormDefaults(): void {
+  if (!currentForm.value) {
+    return
+  }
+
+  currentForm.value.fields.forEach(field => {
+    if (field.type === 'boolean') {
+      formData.value[field.id] = false
+    }
+  })
 }
 
 onMounted(async () => {

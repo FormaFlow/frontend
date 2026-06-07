@@ -130,6 +130,7 @@
     "records": "записей",
     "created": "Создано",
     "created_at": "Дата и время создания",
+    "custom_created_at": "Указать дату и время создания",
     "today": "Сегодня",
     "this_month": "За месяц"
   },
@@ -208,6 +209,7 @@
     "seconds_ago": "{count} сек. назад",
     "minutes_ago": "{count} мин. назад",
     "hours_ago": "{count} ч. назад",
+    "hours_minutes_ago": "{hours} ч. {minutes} мин. назад",
     "days_ago": "{count} дн. назад",
     "weeks_ago": "{count} нед. назад",
     "months_ago": "{count} мес. назад",

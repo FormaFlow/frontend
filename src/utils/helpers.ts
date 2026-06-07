@@ -19,42 +19,46 @@ export const formatDateTime = (date: string | Date, locale = 'en-CA'): string =>
   })
 }
 
-export const formatRelativeTime = (date: string | Date, t: (key: string, values?: Record<string, unknown>) => string): string => {
+export const formatRelativeTime = (
+  date: string | Date,
+  t: (key: string, values?: Record<string, unknown>) => string,
+  nowTimestamp: number = Date.now()
+): string | null => {
   const d = new Date(date)
-  const now = new Date()
-  const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000)
-
-  if (diffInSeconds < 60) {
-    return t('time.seconds_ago', { count: diffInSeconds < 0 ? 0 : diffInSeconds })
+  if (Number.isNaN(d.getTime())) {
+    return null
   }
 
-  const diffInMinutes = Math.floor(diffInSeconds / 60)
+  const diffInSeconds = Math.floor((nowTimestamp - d.getTime()) / 1000)
+  const safeDiffInSeconds = diffInSeconds < 0 ? 0 : diffInSeconds
+
+  if (safeDiffInSeconds < 5) {
+    return t('time.just_now')
+  }
+
+  if (safeDiffInSeconds < 60) {
+    return t('time.seconds_ago', { count: safeDiffInSeconds })
+  }
+
+  const diffInMinutes = Math.floor(safeDiffInSeconds / 60)
   if (diffInMinutes < 60) {
     return t('time.minutes_ago', { count: diffInMinutes })
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60)
   if (diffInHours < 24) {
+    const remainingMinutes = diffInMinutes % 60
+    if (remainingMinutes > 0) {
+      return t('time.hours_minutes_ago', {
+        hours: diffInHours,
+        minutes: remainingMinutes
+      })
+    }
+
     return t('time.hours_ago', { count: diffInHours })
   }
 
-  const diffInDays = Math.floor(diffInHours / 24)
-  if (diffInDays < 7) {
-    return t('time.days_ago', { count: diffInDays })
-  }
-
-  const diffInWeeks = Math.floor(diffInDays / 7)
-  if (diffInWeeks < 4) {
-    return t('time.weeks_ago', { count: diffInWeeks })
-  }
-
-  const diffInMonths = Math.floor(diffInDays / 30)
-  if (diffInMonths < 12) {
-    return t('time.months_ago', { count: diffInMonths })
-  }
-
-  const diffInYears = Math.floor(diffInDays / 365)
-  return t('time.years_ago', { count: diffInYears })
+  return null
 }
 
 export const formatCurrency = (value: number, currency = 'USD'): string => {

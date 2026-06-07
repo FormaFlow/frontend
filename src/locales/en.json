@@ -130,6 +130,7 @@
     "records": "records",
     "created": "Created",
     "created_at": "Entry creation date and time",
+    "custom_created_at": "Set entry creation date and time",
     "today": "Today",
     "this_month": "This month"
   },
@@ -208,6 +209,7 @@
     "seconds_ago": "{count} sec ago | {count} secs ago",
     "minutes_ago": "{count} min ago | {count} mins ago",
     "hours_ago": "{count} hour ago | {count} hours ago",
+    "hours_minutes_ago": "{hours} hr {minutes} min ago",
     "days_ago": "{count} day ago | {count} days ago",
     "weeks_ago": "{count} week ago | {count} weeks ago",
     "months_ago": "{count} month ago | {count} months ago",
