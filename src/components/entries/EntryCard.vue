@@ -29,6 +29,10 @@
 
         <!-- Metadata -->
         <p class="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-1">
+          <template v-if="showFormName && entry.form?.name">
+            <span class="font-medium text-gray-600 dark:text-gray-300">{{ entry.form.name }}</span>
+            <span class="text-gray-400">-</span>
+          </template>
           <span>{{ $t('entries.created') }}:</span>
           <span>{{ formatDateTime(entry.created_at) }}</span>
           <span v-if="relativeCreatedAt" class="text-gray-400">({{ relativeCreatedAt }})</span>
@@ -67,6 +71,7 @@ const props = defineProps<{
   entry: Entry
   formFields?: FormField[]
   showActions?: boolean
+  showFormName?: boolean
 }>()
 
 defineEmits<{

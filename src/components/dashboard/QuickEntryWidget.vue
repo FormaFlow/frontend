@@ -11,9 +11,9 @@
       />
     </div>
 
-    <div v-if="selectedFormId" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 gap-8" :class="{ 'lg:grid-cols-3': selectedFormId }">
       <!-- Form Fields (Left 2/3) -->
-      <div class="lg:col-span-2 space-y-4">
+      <div v-if="selectedFormId" class="lg:col-span-2 space-y-4">
         <form @submit.prevent="handleSubmit" v-if="currentForm">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div v-for="field in requiredFields" :key="field.id" class="form-group">
@@ -123,24 +123,33 @@
         </div>
       </div>
 
-      <!-- Recent Entries (Right 1/3) -->
-      <div class="lg:col-span-1 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-700 pt-6 lg:pt-0 lg:pl-6">
-        <h3 class="text-lg font-semibold mb-4">{{ $t('entries.title') }}</h3>
+      <!-- Recent Entries -->
+      <div
+          class="border-gray-200 dark:border-gray-700"
+          :class="selectedFormId ? 'lg:col-span-1 border-t lg:border-t-0 lg:border-l pt-6 lg:pt-0 lg:pl-6' : ''"
+      >
+        <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+          <h3 class="text-lg font-semibold">{{ selectedFormId ? $t('entries.form_recent_entries') : $t('entries.recent_entries') }}</h3>
+          <span v-if="!selectedFormId" class="text-sm text-gray-500 dark:text-gray-400">
+            {{ $t('entries.sorted_by_created_at') }}
+          </span>
+        </div>
         
         <div v-if="entriesLoading" class="flex justify-center py-4">
           <AppLoader />
         </div>
         
-        <div v-else-if="cachedEntries[selectedFormId]?.length === 0" class="text-center text-gray-500 py-4">
+        <div v-else-if="visibleEntries.length === 0" class="text-center text-gray-500 py-4">
           {{ $t('entries.no_entries') }}
         </div>
         
-        <div v-else class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+        <div v-else class="space-y-3 overflow-y-auto pr-2 custom-scrollbar" :class="selectedFormId ? 'max-h-[400px]' : 'max-h-[520px]'">
           <EntryCard 
-            v-for="entry in cachedEntries[selectedFormId]" 
+            v-for="entry in visibleEntries"
             :key="entry.id" 
             :entry="entry" 
             :form-fields="entry.form?.fields || currentForm?.fields" 
+            :show-form-name="!selectedFormId"
             :show-actions="false" 
             class="bg-gray-50 dark:bg-gray-700 !shadow-none border border-gray-200 dark:border-gray-600"
           />
@@ -164,7 +173,7 @@ import type { Entry } from '@/types/entry'
 
 const { t } = useI18n()
 const { forms, fetchForms, fetchForm, currentForm } = useForms()
-const { createEntry, fetchEntries } = useEntries()
+const { entries, createEntry, fetchEntries } = useEntries()
 const { showSuccess } = useNotification()
 
 const selectedFormId = ref('')
@@ -173,9 +182,12 @@ const createdAt = ref(getCurrentDateTimeForInput())
 const useCustomCreatedAt = ref(false)
 const submitting = ref(false)
 const entriesLoading = ref(false)
+const recentEntries = ref<Entry[]>([])
 
 // In-memory cache for recent entries: { formId: Entry[] }
 const cachedEntries = reactive<Record<string, Entry[]>>({})
+const RECENT_ENTRIES_LIMIT = 10
+const FORM_ENTRIES_LIMIT = 5
 
 const formOptions = computed(() => 
   forms.value
@@ -191,9 +203,18 @@ const optionalFields = computed<FormField[]>(() => {
   return currentForm.value?.fields.filter(field => !field.required) || []
 })
 
+const visibleEntries = computed<Entry[]>(() => {
+  if (!selectedFormId.value) {
+    return recentEntries.value
+  }
+
+  return cachedEntries[selectedFormId.value] || []
+})
+
 const handleFormSelect = async (formId: string) => {
   if (!formId) {
     currentForm.value = null
+    await loadRecentEntries()
     return
   }
   
@@ -208,9 +229,8 @@ const handleFormSelect = async (formId: string) => {
   if (!cachedEntries[formId]) {
     entriesLoading.value = true
     try {
-      await fetchEntries(1, formId, 5) // Limit 5 for recent
-      const { entries: globalEntries } = useEntries() 
-      cachedEntries[formId] = [...globalEntries.value] // Copy to cache
+      await fetchEntries(1, formId, FORM_ENTRIES_LIMIT)
+      cachedEntries[formId] = sortEntriesByCreatedAt([...entries.value]).slice(0, FORM_ENTRIES_LIMIT)
     } catch (e) {
       console.error(e)
     } finally {
@@ -235,16 +255,16 @@ const handleSubmit = async () => {
     if (!newEntry) {
       showSuccess(t('entries.entry_saved_offline'))
     } else {
-      // Update Cache
       if (!cachedEntries[selectedFormId.value]) {
         cachedEntries[selectedFormId.value] = []
       }
-      // Prepend new entry
-      cachedEntries[selectedFormId.value].unshift(newEntry)
-      // Keep only 5
-      if (cachedEntries[selectedFormId.value].length > 5) {
-        cachedEntries[selectedFormId.value] = cachedEntries[selectedFormId.value].slice(0, 5)
-      }
+
+      cachedEntries[selectedFormId.value] = withRecentEntry(
+        cachedEntries[selectedFormId.value],
+        newEntry,
+        FORM_ENTRIES_LIMIT
+      )
+      recentEntries.value = withRecentEntry(recentEntries.value, newEntry, RECENT_ENTRIES_LIMIT)
       showSuccess(t('entries.entry_created'))
     }
     
@@ -340,8 +360,30 @@ function initializeFormDefaults(): void {
   })
 }
 
+async function loadRecentEntries(): Promise<void> {
+  entriesLoading.value = true
+  try {
+    await fetchEntries(1, undefined, RECENT_ENTRIES_LIMIT)
+    recentEntries.value = sortEntriesByCreatedAt([...entries.value]).slice(0, RECENT_ENTRIES_LIMIT)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    entriesLoading.value = false
+  }
+}
+
+function withRecentEntry(list: Entry[], entry: Entry, limit: number): Entry[] {
+  const withoutDuplicate = list.filter(item => item.id !== entry.id)
+  return sortEntriesByCreatedAt([entry, ...withoutDuplicate]).slice(0, limit)
+}
+
+function sortEntriesByCreatedAt(list: Entry[]): Entry[] {
+  return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+}
+
 onMounted(async () => {
   await fetchForms(1, undefined, undefined, false)
+  await loadRecentEntries()
 })
 </script>
 
