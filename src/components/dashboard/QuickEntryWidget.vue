@@ -252,19 +252,24 @@ const handleSubmit = async () => {
       created_at: useCustomCreatedAt.value ? toIsoDateTime(createdAt.value) : undefined,
     })
     
-    if (!newEntry) {
-      showSuccess(t('entries.entry_saved_offline'))
-    } else {
+    const visibleEntry = newEntry || entries.value[0]
+
+    if (visibleEntry?.form_id === selectedFormId.value) {
       if (!cachedEntries[selectedFormId.value]) {
         cachedEntries[selectedFormId.value] = []
       }
 
       cachedEntries[selectedFormId.value] = withRecentEntry(
         cachedEntries[selectedFormId.value],
-        newEntry,
+        visibleEntry,
         FORM_ENTRIES_LIMIT
       )
-      recentEntries.value = withRecentEntry(recentEntries.value, newEntry, RECENT_ENTRIES_LIMIT)
+      recentEntries.value = withRecentEntry(recentEntries.value, visibleEntry, RECENT_ENTRIES_LIMIT)
+    }
+
+    if (!newEntry) {
+      showSuccess(t('entries.entry_saved_offline'))
+    } else {
       showSuccess(t('entries.entry_created'))
     }
     

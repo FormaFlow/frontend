@@ -2,6 +2,7 @@ import {defineStore} from 'pinia'
 import {ref} from 'vue'
 import {formsApi} from '@/api/forms'
 import {db} from '@/db'
+import {isNetworkError} from '@/utils/network'
 import type {CreateFormRequest, Form, UpdateFormRequest} from '@/types/form'
 
 export const useFormsStore = defineStore('forms', () => {
@@ -19,18 +20,27 @@ export const useFormsStore = defineStore('forms', () => {
   const fetchForms = async (page = 1, search?: string, limit?: number, isQuiz?: boolean) => {
     loading.value = true
     error.value = null
+    const pageLimit = limit || pagination.value.per_page
+    const offset = (page - 1) * pageLimit
+
+    const applyCachedForms = async () => {
+      const cached = await db.getForms({ search, isQuiz, limit: pageLimit, offset })
+      forms.value = cached.forms
+      pagination.value = {
+        total: cached.total,
+        per_page: pageLimit,
+        current_page: page,
+        last_page: Math.max(1, Math.ceil(cached.total / pageLimit))
+      }
+    }
 
     if (!navigator.onLine) {
-      const cachedForms = await db.getForms()
-      forms.value = cachedForms
+      await applyCachedForms()
       loading.value = false
       return
     }
 
     try {
-      const pageLimit = limit || pagination.value.per_page
-      const offset = (page - 1) * pageLimit
-      
       const params: { limit: number; offset: number; search?: string; is_quiz?: number } = {
         limit: pageLimit,
         offset
@@ -58,10 +68,8 @@ export const useFormsStore = defineStore('forms', () => {
         await db.saveForms(JSON.parse(JSON.stringify(forms.value)))
       }
     } catch (err: unknown) {
-      // Fallback to cache on network error
-      if (err instanceof Error && (err.message.includes('Network Error') || !navigator.onLine)) {
-        const cachedForms = await db.getForms()
-        forms.value = cachedForms
+      if (isNetworkError(err)) {
+        await applyCachedForms()
       } else {
         error.value = (err as Error).message
         throw err
@@ -92,7 +100,7 @@ export const useFormsStore = defineStore('forms', () => {
         await db.saveForms([JSON.parse(JSON.stringify(response))])
       }
     } catch (err: unknown) {
-      if (err instanceof Error && (err.message.includes('Network Error') || !navigator.onLine)) {
+      if (isNetworkError(err)) {
         const cached = await db.forms.get(id)
         if (cached) {
           currentForm.value = cached

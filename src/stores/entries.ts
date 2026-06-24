@@ -2,6 +2,7 @@ import {defineStore} from 'pinia'
 import {ref} from 'vue'
 import {entriesApi} from '@/api/entries'
 import {db} from '@/db'
+import {createLocalId, isNetworkError} from '@/utils/network'
 import type {CreateEntryRequest, Entry, UpdateEntryRequest} from '@/types/entry'
 
 export const useEntriesStore = defineStore('entries', () => {
@@ -10,6 +11,7 @@ export const useEntriesStore = defineStore('entries', () => {
   const loading = ref(false)
   const loadingMore = ref(false)
   const error = ref<string | null>(null)
+  const syncing = ref(false)
   const pagination = ref({
     total: 0,
     per_page: 15,
@@ -25,10 +27,36 @@ export const useEntriesStore = defineStore('entries', () => {
       entries.value = []
     }
     error.value = null
+    const pageLimit = limit || pagination.value.per_page
+    const offset = (page - 1) * pageLimit
+
+    const applyEntries = (nextEntries: Entry[], total: number, responseLimit = pageLimit) => {
+      if (append) {
+        entries.value = [...entries.value, ...nextEntries]
+      } else {
+        entries.value = nextEntries
+      }
+
+      pagination.value = {
+        total,
+        per_page: responseLimit,
+        current_page: page,
+        last_page: Math.max(1, Math.ceil(total / responseLimit))
+      }
+    }
+
+    if (!navigator.onLine) {
+      try {
+        const cached = await db.getCachedEntries({ formId, limit: pageLimit, offset })
+        applyEntries(cached.entries, cached.total)
+        return
+      } finally {
+        loading.value = false
+        loadingMore.value = false
+      }
+    }
+
     try {
-      const pageLimit = limit || pagination.value.per_page
-      const offset = (page - 1) * pageLimit
-      
       const params: { limit: number; offset: number; form_id?: string } = {
         limit: pageLimit,
         offset
@@ -41,20 +69,18 @@ export const useEntriesStore = defineStore('entries', () => {
       const response = await entriesApi.list(params)
       
       if (response) {
-        if (append) {
-          entries.value = [...entries.value, ...(response.entries || [])]
-        } else {
-          entries.value = response.entries || []
-        }
-        
-        pagination.value = {
-          total: response.total || 0,
-          per_page: response.limit || 15,
-          current_page: page,
-          last_page: Math.ceil((response.total || 0) / (response.limit || 15))
-        }
+        const responseEntries = response.entries || []
+        applyEntries(responseEntries, response.total || responseEntries.length, response.limit || pageLimit)
+        await db.saveEntries(responseEntries)
+        await db.pruneCachedEntries()
       }
     } catch (err: unknown) {
+      if (isNetworkError(err)) {
+        const cached = await db.getCachedEntries({ formId, limit: pageLimit, offset })
+        applyEntries(cached.entries, cached.total)
+        return
+      }
+
       error.value = (err as Error).message
       throw err
     } finally {
@@ -66,12 +92,31 @@ export const useEntriesStore = defineStore('entries', () => {
   const fetchEntry = async (id: string) => {
     loading.value = true
     error.value = null
+
+    if (!navigator.onLine) {
+      const cached = await db.getCachedEntry(id)
+      if (cached) {
+        currentEntry.value = cached
+      }
+      loading.value = false
+      return
+    }
+
     try {
       const response = await entriesApi.get(id)
       if (response) {
         currentEntry.value = response
+        await db.saveEntries([response])
       }
     } catch (err: unknown) {
+      if (isNetworkError(err)) {
+        const cached = await db.getCachedEntry(id)
+        if (cached) {
+          currentEntry.value = cached
+          return
+        }
+      }
+
       error.value = (err as Error).message
       throw err
     } finally {
@@ -95,34 +140,55 @@ export const useEntriesStore = defineStore('entries', () => {
     }
   }
 
+  const queuePendingEntry = async (data: CreateEntryRequest) => {
+    const createdAt = data.created_at || new Date().toISOString()
+    const localEntryId = createLocalId('pending')
+    const pendingEntry = JSON.parse(JSON.stringify({
+      ...data,
+      created_at: createdAt,
+      local_entry_id: localEntryId,
+      queued_at: new Date().toISOString()
+    }))
+
+    await db.savePendingEntry(pendingEntry)
+
+    const optimisticEntry: Entry = {
+      id: localEntryId,
+      form_id: data.form_id,
+      data: data.data,
+      tags: data.tags,
+      duration: data.duration,
+      created_at: createdAt,
+      updated_at: createdAt
+    }
+
+    entries.value.unshift(optimisticEntry)
+    await db.saveEntries([{ ...optimisticEntry, pending: true }])
+    return null
+  }
+
   const createEntry = async (data: CreateEntryRequest) => {
     loading.value = true
     error.value = null
-    
-    // Check if offline
+
     if (!navigator.onLine) {
-      await db.savePendingEntry(JSON.parse(JSON.stringify({
-        ...data,
-        created_at: data.created_at || new Date().toISOString()
-      })))
-      loading.value = false
-      return null
+      try {
+        return await queuePendingEntry(data)
+      } finally {
+        loading.value = false
+      }
     }
 
     try {
       const response = await entriesApi.create(data)
       if (response) {
         entries.value.unshift(response)
+        await db.saveEntries([response])
         return response
       }
     } catch (err: unknown) {
-      // If network error, save to local DB
-      if (err instanceof Error && (err.message.includes('Network Error') || !navigator.onLine)) {
-        await db.savePendingEntry(JSON.parse(JSON.stringify({
-          ...data,
-          created_at: data.created_at || new Date().toISOString()
-        })))
-        return null
+      if (isNetworkError(err)) {
+        return queuePendingEntry(data)
       }
       error.value = (err as Error).message
       throw err
@@ -132,20 +198,42 @@ export const useEntriesStore = defineStore('entries', () => {
   }
 
   const syncPendingEntries = async () => {
-    const pending = await db.getPendingEntries()
-    if (pending.length === 0) return
+    if (!navigator.onLine || syncing.value) return
 
-    for (const entry of pending) {
-      try {
-        const { id, ...data } = entry
-        const response = await entriesApi.create(data)
-        if (response && id) {
-          await db.removePendingEntry(id)
+    syncing.value = true
+    const pending = await db.getPendingEntries()
+    try {
+      for (const entry of pending) {
+        try {
+          const { id, local_entry_id: localEntryId, queued_at, ...data } = entry
+          void queued_at
+          const response = await entriesApi.create(data)
+          if (response && id) {
+            await db.removePendingEntry(id)
+            if (localEntryId) {
+              await db.deleteCachedEntry(localEntryId)
+              entries.value = entries.value.filter(item => item.id !== localEntryId)
+            }
+            await db.saveEntries([response])
+            entries.value = [response, ...entries.value.filter(item => item.id !== response.id)]
+          }
+        } catch (err) {
+          console.error('Failed to sync entry:', err)
         }
-      } catch (err) {
-        console.error('Failed to sync entry:', err)
-        // Keep in DB for next attempt
       }
+    } finally {
+      syncing.value = false
+    }
+  }
+
+  const loadCachedEntries = async (formId?: string, limit = pagination.value.per_page) => {
+    const cached = await db.getCachedEntries({ formId, limit, offset: 0 })
+    entries.value = cached.entries
+    pagination.value = {
+      total: cached.total,
+      per_page: limit,
+      current_page: 1,
+      last_page: Math.max(1, Math.ceil(cached.total / limit))
     }
   }
 
@@ -162,6 +250,7 @@ export const useEntriesStore = defineStore('entries', () => {
         if (currentEntry.value?.id === id) {
           currentEntry.value = response
         }
+        await db.saveEntries([response])
         return response
       }
     } catch (err: unknown) {
@@ -178,6 +267,7 @@ export const useEntriesStore = defineStore('entries', () => {
     try {
       await entriesApi.delete(id)
       entries.value = entries.value.filter(e => e.id !== id)
+      await db.deleteCachedEntry(id)
       if (currentEntry.value?.id === id) {
         currentEntry.value = null
       }
@@ -196,11 +286,13 @@ export const useEntriesStore = defineStore('entries', () => {
     loadingMore,
     error,
     pagination,
+    syncing,
     fetchEntries,
     fetchEntry,
     fetchPublicEntry,
     createEntry,
     syncPendingEntries,
+    loadCachedEntries,
     updateEntry,
     deleteEntry
   }

@@ -32,7 +32,9 @@ const handleOnline = async () => {
 onMounted(() => {
   initializeTheme()
   authStore.initializeAuth()
-  entriesStore.syncPendingEntries()
+  if (navigator.onLine) {
+    entriesStore.syncPendingEntries()
+  }
   window.addEventListener('online', handleOnline)
 })
 

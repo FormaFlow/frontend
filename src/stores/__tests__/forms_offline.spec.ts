@@ -30,8 +30,8 @@ describe('useFormsStore Offline', () => {
     await store.fetchForms()
     
     const cached = await db.getForms()
-    expect(cached).toHaveLength(1)
-    expect(cached[0].name).toBe('Form 1')
+    expect(cached.forms).toHaveLength(1)
+    expect(cached.forms[0].name).toBe('Form 1')
   })
 
   it('loads from indexedDB when offline', async () => {

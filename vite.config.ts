@@ -36,6 +36,22 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
+            urlPattern: ({ url, request }) =>
+              request.method === 'GET' && url.pathname.startsWith('/api/v1/'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-get-cache',
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 150,
+                maxAgeSeconds: 60 * 60 * 24 * 14
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
             urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,
             handler: 'CacheFirst',
             options: {

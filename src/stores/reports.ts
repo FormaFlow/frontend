@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import reportsApi, { type DashboardSummary, type TrendsData } from '@/api/reports'
+import { db } from '@/db'
+import { isNetworkError } from '@/utils/network'
 
 export const useReportsStore = defineStore('reports', () => {
   const weekSummary = ref<DashboardSummary | null>(null)
@@ -20,7 +22,22 @@ export const useReportsStore = defineStore('reports', () => {
       
       weekSummary.value = weekRes
       trends.value = trendsRes
+      await Promise.all([
+        db.setCacheItem('dashboard-week', weekRes),
+        db.setCacheItem('dashboard-trends', trendsRes)
+      ])
     } catch (err: unknown) {
+      if (isNetworkError(err)) {
+        const [cachedWeek, cachedTrends] = await Promise.all([
+          db.getCacheItem<DashboardSummary>('dashboard-week'),
+          db.getCacheItem<TrendsData>('dashboard-trends')
+        ])
+
+        weekSummary.value = cachedWeek
+        trends.value = cachedTrends
+        return
+      }
+
       error.value = (err as Error).message
       throw err
     } finally {

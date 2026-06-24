@@ -7,7 +7,11 @@ import { db } from '@/db'
 
 vi.mock('@/api/entries', () => ({
   entriesApi: {
+    list: vi.fn(),
+    get: vi.fn(),
     create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
   }
 }))
 
@@ -19,6 +23,7 @@ describe('useEntriesStore Offline', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     await db.pendingEntries.clear()
+    await db.entries.clear()
     mockOnLine.mockReturnValue(true)
   })
 
@@ -34,7 +39,8 @@ describe('useEntriesStore Offline', () => {
     const pending = await db.getPendingEntries()
     expect(pending).toHaveLength(1)
     expect(pending[0].form_id).toBe('form-1')
-    expect(entriesApi.create).not.toHaveBeenCalled()
+    expect(store.entries).toHaveLength(1)
+    expect(store.entries[0].id).toMatch(/^pending-/)
   })
 
   it('saves to indexedDB when API fails with network error', async () => {
@@ -48,6 +54,30 @@ describe('useEntriesStore Offline', () => {
     
     const pending = await db.getPendingEntries()
     expect(pending).toHaveLength(1)
+  })
+
+  it('caches fetched entries for offline pagination', async () => {
+    const store = useEntriesStore()
+    vi.mocked(entriesApi.list).mockResolvedValue({
+      entries: [
+        { id: 'e1', form_id: 'form-1', data: {}, created_at: '2026-06-21T10:00:00Z', updated_at: '2026-06-21T10:00:00Z' },
+        { id: 'e2', form_id: 'form-1', data: {}, created_at: '2026-06-20T10:00:00Z', updated_at: '2026-06-20T10:00:00Z' }
+      ],
+      total: 2,
+      limit: 2,
+      offset: 0
+    })
+
+    await store.fetchEntries(1, 'form-1', 2)
+    mockOnLine.mockReturnValue(false)
+    vi.mocked(entriesApi.list).mockClear()
+
+    await store.fetchEntries(1, 'form-1', 1)
+
+    expect(entriesApi.list).not.toHaveBeenCalled()
+    expect(store.entries).toHaveLength(1)
+    expect(store.entries[0].id).toBe('e1')
+    expect(store.pagination.total).toBe(2)
   })
 
   it('syncs pending entries when online', async () => {
