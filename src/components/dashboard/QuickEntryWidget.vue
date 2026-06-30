@@ -150,6 +150,7 @@
             :entry="entry" 
             :form-fields="entry.form?.fields || currentForm?.fields" 
             :show-form-name="!selectedFormId"
+            show-edit-action
             :show-actions="false" 
             class="bg-gray-50 dark:bg-gray-700 !shadow-none border border-gray-200 dark:border-gray-600"
           />
