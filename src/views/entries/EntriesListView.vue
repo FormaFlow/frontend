@@ -113,6 +113,7 @@ import {useNotification} from '@/composables/useNotification'
 import {useStats} from '@/composables/useStats'
 import {debounce} from '@/utils/helpers'
 import {formatFieldValue} from '@/utils/formatters'
+import {addDaysToLocalDateString, parseLocalDate, toLocalDateString} from '@/utils/date'
 
 const route = useRoute()
 const {entries, loading, loadingMore, pagination, fetchEntries, deleteEntry} = useEntries()
@@ -123,31 +124,29 @@ const { t, locale } = useI18n()
 const searchQuery = ref('')
 const selectedFormId = ref('')
 const loadMoreTrigger = ref<HTMLElement | null>(null)
-const statsDate = ref(new Date().toISOString().split('T')[0])
+const statsDate = ref(toLocalDateString())
 
 const { stats, fetchStats } = useStats(selectedFormId, statsDate)
 
 const changeDate = (days: number) => {
-  const date = new Date(statsDate.value)
-  date.setDate(date.getDate() + days)
-  statsDate.value = date.toISOString().split('T')[0]
+  statsDate.value = addDaysToLocalDateString(statsDate.value, days)
 }
 
 const formattedStatsDate = computed(() => {
-  return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(statsDate.value))
+  return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long', year: 'numeric' }).format(parseLocalDate(statsDate.value))
 })
 
 const formattedStatsMonth = computed(() => {
-  return new Intl.DateTimeFormat(locale.value, { month: 'long', year: 'numeric' }).format(new Date(statsDate.value))
+  return new Intl.DateTimeFormat(locale.value, { month: 'long', year: 'numeric' }).format(parseLocalDate(statsDate.value))
 })
 
 const isToday = computed(() => {
-  return statsDate.value === new Date().toISOString().split('T')[0]
+  return statsDate.value === toLocalDateString()
 })
 
 const isThisMonth = computed(() => {
   const now = new Date()
-  const d = new Date(statsDate.value)
+  const d = parseLocalDate(statsDate.value)
   return now.getMonth() === d.getMonth() && now.getFullYear() === d.getFullYear()
 })
 
