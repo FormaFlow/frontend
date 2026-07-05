@@ -2,13 +2,39 @@
   <div class="card bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 quick-entry-widget">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <h2 class="text-xl font-bold">{{ $t('entries.create_entry') }}</h2>
-      <AppSelect
-        v-model="selectedFormId"
-        :options="formOptions"
-        :placeholder="$t('reports.custom.select_form')"
-        class="w-full sm:w-64"
-        @update:modelValue="handleFormSelect"
-      />
+      <div class="flex w-full items-center gap-2 sm:w-auto">
+        <button
+            type="button"
+            class="btn-secondary flex h-10 w-10 shrink-0 items-center justify-center p-0"
+            :disabled="formOptions.length <= 1"
+            :title="$t('common.previous')"
+            :aria-label="$t('common.previous')"
+            @click="selectAdjacentForm(-1)"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <AppSelect
+          v-model="selectedFormId"
+          :options="formOptions"
+          :placeholder="$t('reports.custom.select_form')"
+          class="min-w-0 flex-1 sm:w-64"
+          @update:modelValue="handleFormSelect"
+        />
+        <button
+            type="button"
+            class="btn-secondary flex h-10 w-10 shrink-0 items-center justify-center p-0"
+            :disabled="formOptions.length <= 1"
+            :title="$t('common.next')"
+            :aria-label="$t('common.next')"
+            @click="selectAdjacentForm(1)"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 gap-8" :class="{ 'lg:grid-cols-3': selectedFormId }">
@@ -189,6 +215,7 @@ const recentEntries = ref<Entry[]>([])
 const cachedEntries = reactive<Record<string, Entry[]>>({})
 const RECENT_ENTRIES_LIMIT = 10
 const FORM_ENTRIES_LIMIT = 5
+const LAST_QUICK_FORM_KEY = 'formaflow:last-quick-form-id'
 
 const formOptions = computed(() => 
   forms.value
@@ -212,12 +239,30 @@ const visibleEntries = computed<Entry[]>(() => {
   return cachedEntries[selectedFormId.value] || []
 })
 
+const selectedFormIndex = computed(() => {
+  return formOptions.value.findIndex(option => option.value === selectedFormId.value)
+})
+
+const selectAdjacentForm = async (direction: -1 | 1) => {
+  if (formOptions.value.length === 0) return
+
+  const currentIndex = selectedFormIndex.value === -1 ? 0 : selectedFormIndex.value
+  const nextIndex = (currentIndex + direction + formOptions.value.length) % formOptions.value.length
+  const nextFormId = String(formOptions.value[nextIndex].value)
+
+  selectedFormId.value = nextFormId
+  await handleFormSelect(nextFormId)
+}
+
 const handleFormSelect = async (formId: string) => {
   if (!formId) {
     currentForm.value = null
+    localStorage.removeItem(LAST_QUICK_FORM_KEY)
     await loadRecentEntries()
     return
   }
+
+  localStorage.setItem(LAST_QUICK_FORM_KEY, formId)
   
   formData.value = {}
   createdAt.value = getCurrentDateTimeForInput()
@@ -389,6 +434,14 @@ function sortEntriesByCreatedAt(list: Entry[]): Entry[] {
 
 onMounted(async () => {
   await fetchForms(1, undefined, undefined, false)
+
+  const lastFormId = localStorage.getItem(LAST_QUICK_FORM_KEY)
+  if (lastFormId && formOptions.value.some(option => option.value === lastFormId)) {
+    selectedFormId.value = lastFormId
+    await handleFormSelect(lastFormId)
+    return
+  }
+
   await loadRecentEntries()
 })
 </script>

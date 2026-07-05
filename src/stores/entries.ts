@@ -24,7 +24,6 @@ export const useEntriesStore = defineStore('entries', () => {
       loadingMore.value = true
     } else {
       loading.value = true
-      entries.value = []
     }
     error.value = null
     const pageLimit = limit || pagination.value.per_page
@@ -45,10 +44,17 @@ export const useEntriesStore = defineStore('entries', () => {
       }
     }
 
+    const applyCachedEntries = async () => {
+      const cached = await db.getCachedEntries({ formId, limit: pageLimit, offset })
+      if (cached.total > 0 || !append) {
+        applyEntries(cached.entries, cached.total)
+      }
+      return cached.total > 0
+    }
+
     if (!navigator.onLine) {
       try {
-        const cached = await db.getCachedEntries({ formId, limit: pageLimit, offset })
-        applyEntries(cached.entries, cached.total)
+        await applyCachedEntries()
         return
       } finally {
         loading.value = false
@@ -56,7 +62,7 @@ export const useEntriesStore = defineStore('entries', () => {
       }
     }
 
-    try {
+    const refreshFromApi = async () => {
       const params: { limit: number; offset: number; form_id?: string } = {
         limit: pageLimit,
         offset
@@ -74,10 +80,30 @@ export const useEntriesStore = defineStore('entries', () => {
         await db.saveEntries(responseEntries)
         await db.pruneCachedEntries()
       }
+    }
+
+    if (!append) {
+      const hasCachedEntries = await applyCachedEntries()
+      if (hasCachedEntries) {
+        loading.value = false
+        void refreshFromApi().catch(async (err: unknown) => {
+          if (!isNetworkError(err)) {
+            error.value = (err as Error).message
+          }
+        })
+        return
+      }
+    }
+
+    if (!append) {
+      entries.value = []
+    }
+
+    try {
+      await refreshFromApi()
     } catch (err: unknown) {
       if (isNetworkError(err)) {
-        const cached = await db.getCachedEntries({ formId, limit: pageLimit, offset })
-        applyEntries(cached.entries, cached.total)
+        await applyCachedEntries()
         return
       }
 

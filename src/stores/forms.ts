@@ -25,13 +25,16 @@ export const useFormsStore = defineStore('forms', () => {
 
     const applyCachedForms = async () => {
       const cached = await db.getForms({ search, isQuiz, limit: pageLimit, offset })
-      forms.value = cached.forms
-      pagination.value = {
-        total: cached.total,
-        per_page: pageLimit,
-        current_page: page,
-        last_page: Math.max(1, Math.ceil(cached.total / pageLimit))
+      if (cached.total > 0) {
+        forms.value = cached.forms
+        pagination.value = {
+          total: cached.total,
+          per_page: pageLimit,
+          current_page: page,
+          last_page: Math.max(1, Math.ceil(cached.total / pageLimit))
+        }
       }
+      return cached.total > 0
     }
 
     if (!navigator.onLine) {
@@ -40,7 +43,7 @@ export const useFormsStore = defineStore('forms', () => {
       return
     }
 
-    try {
+    const refreshFromApi = async () => {
       const params: { limit: number; offset: number; search?: string; is_quiz?: number } = {
         limit: pageLimit,
         offset
@@ -67,6 +70,21 @@ export const useFormsStore = defineStore('forms', () => {
         // Cache forms
         await db.saveForms(JSON.parse(JSON.stringify(forms.value)))
       }
+    }
+
+    const hasCachedForms = await applyCachedForms()
+    if (hasCachedForms) {
+      loading.value = false
+      void refreshFromApi().catch(async (err: unknown) => {
+        if (!isNetworkError(err)) {
+          error.value = (err as Error).message
+        }
+      })
+      return
+    }
+
+    try {
+      await refreshFromApi()
     } catch (err: unknown) {
       if (isNetworkError(err)) {
         await applyCachedForms()
@@ -83,11 +101,13 @@ export const useFormsStore = defineStore('forms', () => {
     loading.value = true
     error.value = null
 
+    const cached = await db.forms.get(id)
+    if (cached) {
+      currentForm.value = cached
+      loading.value = false
+    }
+
     if (!navigator.onLine) {
-      const cached = await db.forms.get(id)
-      if (cached) {
-        currentForm.value = cached
-      }
       loading.value = false
       return
     }

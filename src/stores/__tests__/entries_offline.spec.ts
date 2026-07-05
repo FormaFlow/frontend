@@ -58,10 +58,14 @@ describe('useEntriesStore Offline', () => {
 
   it('caches fetched entries for offline pagination', async () => {
     const store = useEntriesStore()
+    const today = new Date()
+    const yesterday = new Date(today)
+    yesterday.setDate(today.getDate() - 1)
+
     vi.mocked(entriesApi.list).mockResolvedValue({
       entries: [
-        { id: 'e1', form_id: 'form-1', data: {}, created_at: '2026-06-21T10:00:00Z', updated_at: '2026-06-21T10:00:00Z' },
-        { id: 'e2', form_id: 'form-1', data: {}, created_at: '2026-06-20T10:00:00Z', updated_at: '2026-06-20T10:00:00Z' }
+        { id: 'e1', form_id: 'form-1', data: {}, created_at: today.toISOString(), updated_at: today.toISOString() },
+        { id: 'e2', form_id: 'form-1', data: {}, created_at: yesterday.toISOString(), updated_at: yesterday.toISOString() }
       ],
       total: 2,
       limit: 2,
@@ -78,6 +82,21 @@ describe('useEntriesStore Offline', () => {
     expect(store.entries).toHaveLength(1)
     expect(store.entries[0].id).toBe('e1')
     expect(store.pagination.total).toBe(2)
+  })
+
+  it('serves cached entries immediately while refreshing online', async () => {
+    const store = useEntriesStore()
+    await db.saveEntries([
+      { id: 'cached-1', form_id: 'form-1', data: {}, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+    ])
+    vi.mocked(entriesApi.list).mockImplementation(() => new Promise(() => {}))
+
+    await store.fetchEntries(1, 'form-1', 5)
+
+    expect(store.loading).toBe(false)
+    expect(store.entries).toHaveLength(1)
+    expect(store.entries[0].id).toBe('cached-1')
+    expect(entriesApi.list).toHaveBeenCalled()
   })
 
   it('syncs pending entries when online', async () => {
