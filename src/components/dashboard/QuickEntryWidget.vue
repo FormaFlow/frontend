@@ -281,17 +281,14 @@ const handleFormSelect = async (formId: string) => {
   // Load Form Definition
   await fetchForm(formId)
   
-  // Load Recent Entries (with Cache check)
-  if (!cachedEntries[formId]) {
-    entriesLoading.value = true
-    try {
-      await fetchEntries(1, formId, FORM_ENTRIES_LIMIT)
-      cachedEntries[formId] = sortEntriesByCreatedAt([...entries.value]).slice(0, FORM_ENTRIES_LIMIT)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      entriesLoading.value = false
-    }
+  entriesLoading.value = !cachedEntries[formId]
+  try {
+    await fetchEntries(1, formId, FORM_ENTRIES_LIMIT)
+    cachedEntries[formId] = sortEntriesByCreatedAt([...entries.value]).slice(0, FORM_ENTRIES_LIMIT)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    entriesLoading.value = false
   }
   
   initializeFormDefaults()
