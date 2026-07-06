@@ -5,11 +5,19 @@ import {db} from '@/db'
 import {isNetworkError} from '@/utils/network'
 import type {CreateFormRequest, Form, UpdateFormRequest} from '@/types/form'
 
+type FormsListRequest = {
+  page: number
+  search?: string
+  limit?: number
+  isQuiz?: boolean
+}
+
 export const useFormsStore = defineStore('forms', () => {
   const forms = ref<Form[]>([])
   const currentForm = ref<Form | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const lastListRequest = ref<FormsListRequest>({ page: 1 })
   const pagination = ref({
     total: 0,
     per_page: 10,
@@ -18,6 +26,7 @@ export const useFormsStore = defineStore('forms', () => {
   })
 
   const fetchForms = async (page = 1, search?: string, limit?: number, isQuiz?: boolean) => {
+    lastListRequest.value = { page, search, limit, isQuiz }
     loading.value = true
     error.value = null
     const pageLimit = limit || pagination.value.per_page
@@ -94,6 +103,44 @@ export const useFormsStore = defineStore('forms', () => {
       }
     } finally {
       loading.value = false
+    }
+  }
+
+  const refreshCurrentForms = async () => {
+    if (!navigator.onLine) return
+
+    const request = lastListRequest.value
+    const pageLimit = request.limit || pagination.value.per_page
+    const offset = (request.page - 1) * pageLimit
+    const params: { limit: number; offset: number; search?: string; is_quiz?: number } = {
+      limit: pageLimit,
+      offset
+    }
+
+    if (request.search) {
+      params.search = request.search
+    }
+
+    if (request.isQuiz !== undefined) {
+      params.is_quiz = request.isQuiz ? 1 : 0
+    }
+
+    try {
+      const response = await formsApi.list(params)
+      if (!response) return
+
+      forms.value = response.forms || []
+      pagination.value = {
+        total: response.total,
+        per_page: response.limit,
+        current_page: request.page,
+        last_page: Math.max(1, Math.ceil(response.total / response.limit))
+      }
+      await db.saveForms(JSON.parse(JSON.stringify(forms.value)))
+    } catch (err: unknown) {
+      if (!isNetworkError(err)) {
+        error.value = (err as Error).message
+      }
     }
   }
 
@@ -225,6 +272,7 @@ export const useFormsStore = defineStore('forms', () => {
     error,
     pagination,
     fetchForms,
+    refreshCurrentForms,
     fetchForm,
     fetchPublicForm,
     createForm,

@@ -17,12 +17,14 @@ import {useAuthStore} from '@/stores/auth'
 import {useEntriesStore} from '@/stores/entries'
 import {useNotification} from '@/composables/useNotification'
 import {useI18n} from 'vue-i18n'
+import {useBackgroundRefresh} from '@/composables/useBackgroundRefresh'
 
 const {initializeTheme} = useTheme()
 const authStore = useAuthStore()
 const entriesStore = useEntriesStore()
 const {showInfo} = useNotification()
 const {t} = useI18n()
+useBackgroundRefresh()
 
 const handleOnline = async () => {
   showInfo(t('common.online_sync'))

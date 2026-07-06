@@ -5,6 +5,12 @@ import {db} from '@/db'
 import {createLocalId, isNetworkError} from '@/utils/network'
 import type {CreateEntryRequest, Entry, UpdateEntryRequest} from '@/types/entry'
 
+type EntriesListRequest = {
+  page: number
+  formId?: string
+  limit?: number
+}
+
 export const useEntriesStore = defineStore('entries', () => {
   const entries = ref<Entry[]>([])
   const currentEntry = ref<Entry | null>(null)
@@ -12,6 +18,7 @@ export const useEntriesStore = defineStore('entries', () => {
   const loadingMore = ref(false)
   const error = ref<string | null>(null)
   const syncing = ref(false)
+  const lastListRequest = ref<EntriesListRequest>({ page: 1 })
   const pagination = ref({
     total: 0,
     per_page: 15,
@@ -20,6 +27,10 @@ export const useEntriesStore = defineStore('entries', () => {
   })
 
   const fetchEntries = async (page = 1, formId?: string, limit?: number, append = false) => {
+    if (!append) {
+      lastListRequest.value = { page, formId, limit }
+    }
+
     if (append) {
       loadingMore.value = true
     } else {
@@ -112,6 +123,42 @@ export const useEntriesStore = defineStore('entries', () => {
     } finally {
       loading.value = false
       loadingMore.value = false
+    }
+  }
+
+  const refreshCurrentEntries = async () => {
+    if (!navigator.onLine) return
+
+    const request = lastListRequest.value
+    const pageLimit = request.limit || pagination.value.per_page
+    const offset = (request.page - 1) * pageLimit
+    const params: { limit: number; offset: number; form_id?: string } = {
+      limit: pageLimit,
+      offset
+    }
+
+    if (request.formId) {
+      params.form_id = request.formId
+    }
+
+    try {
+      const response = await entriesApi.list(params)
+      if (!response) return
+
+      const responseEntries = response.entries || []
+      entries.value = responseEntries
+      pagination.value = {
+        total: response.total || responseEntries.length,
+        per_page: response.limit || pageLimit,
+        current_page: request.page,
+        last_page: Math.max(1, Math.ceil((response.total || responseEntries.length) / (response.limit || pageLimit)))
+      }
+      await db.saveEntries(responseEntries)
+      await db.pruneCachedEntries()
+    } catch (err: unknown) {
+      if (!isNetworkError(err)) {
+        error.value = (err as Error).message
+      }
     }
   }
 
@@ -314,6 +361,7 @@ export const useEntriesStore = defineStore('entries', () => {
     pagination,
     syncing,
     fetchEntries,
+    refreshCurrentEntries,
     fetchEntry,
     fetchPublicEntry,
     createEntry,

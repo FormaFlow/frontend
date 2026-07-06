@@ -99,6 +99,24 @@ describe('useEntriesStore Offline', () => {
     expect(entriesApi.list).toHaveBeenCalled()
   })
 
+  it('refreshes current entries from API and updates cache', async () => {
+    const store = useEntriesStore()
+    vi.mocked(entriesApi.list).mockResolvedValueOnce({
+      entries: [
+        { id: 'fresh-1', form_id: 'form-1', data: {}, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+      ],
+      total: 1,
+      limit: 15,
+      offset: 0
+    })
+
+    await store.refreshCurrentEntries()
+
+    const cached = await db.getCachedEntries({ formId: 'form-1', limit: 5, offset: 0 })
+    expect(store.entries[0].id).toBe('fresh-1')
+    expect(cached.entries[0].id).toBe('fresh-1')
+  })
+
   it('syncs pending entries when online', async () => {
     const store = useEntriesStore()
     

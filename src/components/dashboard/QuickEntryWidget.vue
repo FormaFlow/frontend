@@ -187,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useForms } from '@/composables/useForms'
 import { useEntries } from '@/composables/useEntries'
 import { useNotification } from '@/composables/useNotification'
@@ -237,6 +237,16 @@ const visibleEntries = computed<Entry[]>(() => {
   }
 
   return cachedEntries[selectedFormId.value] || []
+})
+
+watch(entries, nextEntries => {
+  if (selectedFormId.value) {
+    const matchingEntries = nextEntries.filter(entry => entry.form_id === selectedFormId.value)
+    cachedEntries[selectedFormId.value] = sortEntriesByCreatedAt([...matchingEntries]).slice(0, FORM_ENTRIES_LIMIT)
+    return
+  }
+
+  recentEntries.value = sortEntriesByCreatedAt([...nextEntries]).slice(0, RECENT_ENTRIES_LIMIT)
 })
 
 const selectedFormIndex = computed(() => {

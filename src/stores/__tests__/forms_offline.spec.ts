@@ -62,6 +62,22 @@ describe('useFormsStore Offline', () => {
     expect(formsApi.list).toHaveBeenCalled()
   })
 
+  it('refreshes current forms from API and updates cache', async () => {
+    const store = useFormsStore()
+    vi.mocked(formsApi.list).mockResolvedValueOnce({
+      forms: [{ id: 'f1', name: 'Fresh Form', fields: [], published: true, created_at: '2026-07-06' }],
+      total: 1,
+      limit: 10,
+      offset: 0
+    })
+
+    await store.refreshCurrentForms()
+
+    const cached = await db.getForms()
+    expect(store.forms[0].name).toBe('Fresh Form')
+    expect(cached.forms[0].name).toBe('Fresh Form')
+  })
+
   it('passes is_quiz parameter to API', async () => {
     const store = useFormsStore()
     vi.mocked(formsApi.list).mockResolvedValue({ forms: [], total: 0, limit: 15, offset: 0 })
