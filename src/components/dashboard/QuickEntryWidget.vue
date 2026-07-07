@@ -217,9 +217,15 @@ const RECENT_ENTRIES_LIMIT = 10
 const FORM_ENTRIES_LIMIT = 5
 const LAST_QUICK_FORM_KEY = 'formaflow:last-quick-form-id'
 
+const quickEntryForms = computed(() => {
+  const publishedForms = forms.value.filter(form => form.published)
+  const favoriteForms = publishedForms.filter(form => form.quick_entry_favorite)
+
+  return favoriteForms.length > 0 ? favoriteForms : publishedForms
+})
+
 const formOptions = computed(() => 
-  forms.value
-    .filter(f => f.published)
+  quickEntryForms.value
     .map(f => ({ label: f.name, value: f.id }))
 )
 

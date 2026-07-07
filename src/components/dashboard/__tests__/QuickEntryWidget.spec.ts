@@ -41,6 +41,7 @@ const forms: Form[] = [
       { id: 'value', name: 'value', label: 'Value', type: 'text', required: true }
     ],
     published: true,
+    quick_entry_favorite: false,
     created_at: '2026-07-07T00:00:00.000Z',
     updated_at: '2026-07-07T00:00:00.000Z',
   } as Form,
@@ -52,6 +53,7 @@ const forms: Form[] = [
       { id: 'value', name: 'value', label: 'Value', type: 'text', required: true }
     ],
     published: true,
+    quick_entry_favorite: false,
     created_at: '2026-07-07T00:00:00.000Z',
     updated_at: '2026-07-07T00:00:00.000Z',
   } as Form
@@ -162,6 +164,27 @@ describe('QuickEntryWidget cache refresh', () => {
 
     expect(formOneCalls).toBeGreaterThan(callsBeforeRemoteUpdate)
     expect(wrapper.text()).toContain('fresh from server')
+  })
+
+  it('lists only published favorite forms when favorites exist', async () => {
+    vi.mocked(formsApi.list).mockResolvedValue({
+      forms: [
+        { ...forms[0], quick_entry_favorite: true },
+        { ...forms[1], quick_entry_favorite: false },
+        { ...forms[1], id: 'form-3', name: 'Draft favorite', published: false, quick_entry_favorite: true },
+      ],
+      total: 3,
+      limit: 10,
+      offset: 0
+    })
+
+    const wrapper = mountWidget()
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as { formOptions: Array<{ label: string; value: string }> }
+    expect(vm.formOptions).toEqual([
+      { label: 'Daily form', value: 'form-1' }
+    ])
   })
 })
 

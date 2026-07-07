@@ -29,6 +29,7 @@ export interface Form {
   published: boolean
   is_quiz: boolean
   single_submission: boolean
+  quick_entry_favorite: boolean
   fields: FormField[]
   entries_count: number
   created_at: string
@@ -40,6 +41,7 @@ export interface CreateFormRequest {
   description?: string
   is_quiz?: boolean
   single_submission?: boolean
+  quick_entry_favorite?: boolean
 }
 
 export interface UpdateFormRequest {
@@ -47,6 +49,7 @@ export interface UpdateFormRequest {
   description?: string
   is_quiz?: boolean
   single_submission?: boolean
+  quick_entry_favorite?: boolean
 }
 
 export interface AddFieldRequest {

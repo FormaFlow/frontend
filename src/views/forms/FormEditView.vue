@@ -50,6 +50,18 @@
                 {{ $t('forms.single_submission') }}
               </label>
             </div>
+
+            <div class="flex items-center gap-2">
+              <input
+                  id="quick-entry-favorite"
+                  v-model="form.quick_entry_favorite"
+                  type="checkbox"
+                  class="w-4 h-4 text-primary-600 rounded"
+              />
+              <label for="quick-entry-favorite" class="text-sm font-medium">
+                {{ $t('forms.quick_entry_favorite') }}
+              </label>
+            </div>
           </div>
           
           <AppButton type="submit" :disabled="updateLoading">
@@ -115,7 +127,8 @@ const {
     name: '',
     description: '',
     is_quiz: false,
-    single_submission: false
+    single_submission: false,
+    quick_entry_favorite: false
   },
   rules,
   onSubmit: async (formData) => {
@@ -171,7 +184,8 @@ onMounted(async () => {
       name: currentForm.value.name,
       description: currentForm.value.description || '',
       is_quiz: currentForm.value.is_quiz || false,
-      single_submission: currentForm.value.single_submission || false
+      single_submission: currentForm.value.single_submission || false,
+      quick_entry_favorite: currentForm.value.quick_entry_favorite || false
     })
   }
 })

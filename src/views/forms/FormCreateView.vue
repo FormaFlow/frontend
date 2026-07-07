@@ -46,6 +46,18 @@
               {{ $t('forms.single_submission') }}
             </label>
           </div>
+
+          <div class="flex items-center gap-2">
+            <input
+                id="quick-entry-favorite"
+                v-model="form.quick_entry_favorite"
+                type="checkbox"
+                class="w-4 h-4 text-primary-600 rounded"
+            />
+            <label for="quick-entry-favorite" class="text-sm font-medium">
+              {{ $t('forms.quick_entry_favorite') }}
+            </label>
+          </div>
         </div>
 
         <div class="flex gap-4">
@@ -85,7 +97,8 @@ const {form, errors, loading, handleSubmit} = useForm({
     name: '',
     description: '',
     is_quiz: false,
-    single_submission: false
+    single_submission: false,
+    quick_entry_favorite: false
   },
   rules,
   onSubmit: async (formData) => {
