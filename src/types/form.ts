@@ -30,6 +30,7 @@ interface FormMetadata {
   is_quiz: boolean
   single_submission: boolean
   quick_entry_favorite: boolean
+  reminder_interval_minutes?: number | null
 }
 
 export interface FormSummary extends FormMetadata {
@@ -57,6 +58,7 @@ export interface CreateFormRequest {
   is_quiz?: boolean
   single_submission?: boolean
   quick_entry_favorite?: boolean
+  reminder_interval_minutes?: number | null
 }
 
 export interface UpdateFormRequest {
@@ -65,6 +67,7 @@ export interface UpdateFormRequest {
   is_quiz?: boolean
   single_submission?: boolean
   quick_entry_favorite?: boolean
+  reminder_interval_minutes?: number | null
 }
 
 export interface AddFieldRequest {

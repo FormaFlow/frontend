@@ -83,8 +83,8 @@ class ApiClient {
     return response.data
   }
 
-  async delete<T = void>(url: string): Promise<T> {
-    const response: AxiosResponse<T> = await this.client.delete(url)
+  async delete<T = void>(url: string, data?: unknown): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.delete(url, { data })
     return response.data
   }
 

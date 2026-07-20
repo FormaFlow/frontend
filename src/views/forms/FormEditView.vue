@@ -39,6 +39,26 @@
               </label>
             </div>
 
+            <div v-if="form.is_quiz" class="form-group max-w-sm">
+              <label for="reminder-interval" class="form-label">
+                {{ $t('forms.reminder_interval') }}
+              </label>
+              <select
+                  id="reminder-interval"
+                  v-model="form.reminder_interval_minutes"
+                  class="form-select"
+              >
+                <option :value="null">{{ $t('forms.reminder_disabled') }}</option>
+                <option :value="120">{{ $t('forms.every_hours', { count: 2 }) }}</option>
+                <option :value="360">{{ $t('forms.every_hours', { count: 6 }) }}</option>
+                <option :value="720">{{ $t('forms.every_hours', { count: 12 }) }}</option>
+                <option :value="1440">{{ $t('forms.every_days', { count: 1 }) }}</option>
+                <option :value="2880">{{ $t('forms.every_days', { count: 2 }) }}</option>
+                <option :value="4320">{{ $t('forms.every_days', { count: 3 }) }}</option>
+                <option :value="10080">{{ $t('forms.every_days', { count: 7 }) }}</option>
+              </select>
+            </div>
+
             <div class="flex items-center gap-2">
               <input
                   id="single-submission"
@@ -88,7 +108,7 @@
 
 <script setup lang="ts">
 import {onMounted} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
+import {useRoute} from 'vue-router'
 import {useI18n} from 'vue-i18n'
 import {storeToRefs} from "pinia"
 import AppInput from '@/components/common/AppInput.vue'
@@ -128,7 +148,8 @@ const {
     description: '',
     is_quiz: false,
     single_submission: false,
-    quick_entry_favorite: false
+    quick_entry_favorite: false,
+    reminder_interval_minutes: null as number | null
   },
   rules,
   onSubmit: async (formData) => {
@@ -185,7 +206,8 @@ onMounted(async () => {
       description: currentForm.value.description || '',
       is_quiz: currentForm.value.is_quiz || false,
       single_submission: currentForm.value.single_submission || false,
-      quick_entry_favorite: currentForm.value.quick_entry_favorite || false
+      quick_entry_favorite: currentForm.value.quick_entry_favorite || false,
+      reminder_interval_minutes: currentForm.value.reminder_interval_minutes ?? null
     })
   }
 })

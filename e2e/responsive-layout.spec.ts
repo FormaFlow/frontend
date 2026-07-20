@@ -50,6 +50,22 @@ const fullForm = {
   ]
 }
 
+const quizForm = {
+  id: 'form-quiz',
+  name: 'School test',
+  description: 'Assigned quiz',
+  published: true,
+  is_quiz: true,
+  single_submission: true,
+  quick_entry_favorite: false,
+  reminder_interval_minutes: 120,
+  fields_count: 0,
+  entries_count: 0,
+  created_at: '2026-07-20T10:00:00+00:00',
+  updated_at: '2026-07-20T10:00:00+00:00',
+  fields: []
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('auth_token', 'e2e-token')
@@ -68,6 +84,41 @@ test.beforeEach(async ({ page }) => {
 
     if (url.pathname === '/api/v1/forms/form-1') {
       await route.fulfill({ status: 200, headers, json: fullForm })
+      return
+    }
+
+    if (url.pathname === '/api/v1/forms/form-quiz') {
+      await route.fulfill({ status: 200, headers, json: quizForm })
+      return
+    }
+
+    if (url.pathname === '/api/v1/forms/form-quiz/assignments') {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({
+          status: 201,
+          headers,
+          json: {
+            assignments: [{
+              id: 'assignment-1',
+              recipient: { id: 'child-1', name: 'Child User', email: 'child@example.com' },
+              last_notified_at: '2026-07-20T10:00:00+00:00',
+              next_reminder_at: '2026-07-20T12:00:00+00:00',
+              completed_at: null
+            }]
+          }
+        })
+        return
+      }
+      await route.fulfill({ status: 200, headers, json: { assignments: [] } })
+      return
+    }
+
+    if (url.pathname === '/api/v1/users/search') {
+      await route.fulfill({
+        status: 200,
+        headers,
+        json: { users: [{ id: 'child-1', name: 'Child User', email: 'child@example.com' }] }
+      })
       return
     }
 
@@ -151,6 +202,47 @@ test('mobile notification has equal side margins', async ({ page }, testInfo) =>
 
   const margins = await readMargins()
   expect(margins.left).toBeGreaterThanOrEqual(15)
+})
+
+test('quiz reminder interval is submitted from form editor', async ({ page }) => {
+  let updatePayload: Record<string, unknown> | null = null
+  await page.route('http://localhost:8000/api/v1/forms/form-quiz', async route => {
+    const headers = {
+      'access-control-allow-origin': 'http://127.0.0.1:4176',
+      'access-control-allow-credentials': 'true',
+      'content-type': 'application/json'
+    }
+    if (route.request().method() === 'PATCH') {
+      updatePayload = route.request().postDataJSON()
+    }
+    await route.fulfill({ status: 200, headers, json: quizForm })
+  })
+
+  await page.goto('/forms/form-quiz/edit')
+  await page.getByLabel('Напоминать, пока тест не пройден').selectOption('4320')
+  await page.getByRole('button', { name: 'Сохранить' }).click()
+
+  await expect.poll(() => updatePayload?.reminder_interval_minutes).toBe(4320)
+})
+
+test('quiz can be assigned to a searched user without mobile overflow', async ({ page }) => {
+  let assignmentPayload: Record<string, unknown> | null = null
+  page.on('request', request => {
+    if (request.method() === 'POST' && request.url().endsWith('/forms/form-quiz/assignments')) {
+      assignmentPayload = request.postDataJSON()
+    }
+  })
+
+  await page.goto('/forms/form-quiz')
+  await page.getByRole('button', { name: 'Поделиться формой' }).click()
+  await page.getByLabel('Получатели теста').fill('child')
+  await page.getByText('child@example.com').click()
+  await page.getByRole('button', { name: 'Назначить тест' }).click()
+
+  await expect.poll(() => assignmentPayload).toEqual({ user_ids: ['child-1'] })
+  await expect(page.getByText('Child User · child@example.com')).toBeVisible()
+  await page.waitForTimeout(400)
+  await expectNoHorizontalOverflow(page)
 })
 
 async function expectNoHorizontalOverflow(page: Page): Promise<void> {

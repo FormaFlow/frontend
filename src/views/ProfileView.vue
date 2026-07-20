@@ -55,6 +55,29 @@
 
       <div class="divider my-8"></div>
 
+      <section>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-semibold">{{ $t('settings.notifications') }}</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {{ pushEnabled ? $t('settings.notifications_enabled') : $t('settings.notifications_disabled') }}
+            </p>
+          </div>
+          <button
+            v-if="pushSupported"
+            type="button"
+            :class="pushEnabled ? 'btn-secondary' : 'btn-primary'"
+            :disabled="pushLoading"
+            @click="togglePush"
+          >
+            {{ pushEnabled ? $t('settings.disable_notifications') : $t('settings.enable_notifications') }}
+          </button>
+          <span v-else class="text-sm text-gray-500">{{ $t('settings.notifications_unsupported') }}</span>
+        </div>
+      </section>
+
+      <div class="divider my-8"></div>
+
       <div>
         <h2 class="text-lg font-semibold mb-4">{{ $t('settings.theme') }}</h2>
         <div class="space-y-2">
@@ -84,12 +107,21 @@ import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useTheme } from '@/composables/useTheme'
 import { useNotification } from '@/composables/useNotification'
+import { usePushNotifications } from '@/composables/usePushNotifications'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 const { showSuccess } = useNotification()
 const { theme, setTheme } = useTheme()
+const {
+  supported: pushSupported,
+  enabled: pushEnabled,
+  loading: pushLoading,
+  refresh: refreshPush,
+  enable: enablePush,
+  disable: disablePush
+} = usePushNotifications()
 
 const form = ref({
   name: '',
@@ -103,12 +135,17 @@ interface TimezoneOption {
   offset: number
 }
 
+type IntlWithSupportedValues = typeof Intl & {
+  supportedValuesOf?: (key: 'timeZone') => string[]
+}
+
 const timezones = ref<TimezoneOption[]>([])
 
-onMounted(() => {
+onMounted(async () => {
   try {
-    if (typeof Intl !== 'undefined' && typeof (Intl as any).supportedValuesOf === 'function') {
-      const zones = (Intl as any).supportedValuesOf('timeZone') as string[]
+    const intl = Intl as IntlWithSupportedValues
+    if (typeof Intl !== 'undefined' && typeof intl.supportedValuesOf === 'function') {
+      const zones = intl.supportedValuesOf('timeZone')
       const mappedZones = zones.map((tz: string) => {
         try {
           const str = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' }).format(new Date())
@@ -127,7 +164,7 @@ onMounted(() => {
           }
           
           return { value: tz, label: `(${offsetLabel}) ${tz}`, offset: numericOffset }
-        } catch (e) {
+        } catch {
           return { value: tz, label: tz, offset: 0 }
         }
       })
@@ -136,7 +173,7 @@ onMounted(() => {
     } else {
       throw new Error('Intl.supportedValuesOf not supported')
     }
-  } catch (e) {
+  } catch {
     timezones.value = [
       { value: 'UTC', label: '(UTC+00:00) UTC', offset: 0 },
       { value: 'Europe/Moscow', label: '(UTC+03:00) Europe/Moscow', offset: 180 },
@@ -145,12 +182,27 @@ onMounted(() => {
       { value: 'Asia/Tokyo', label: '(UTC+09:00) Asia/Tokyo', offset: 540 }
     ].sort((a: TimezoneOption, b: TimezoneOption) => a.offset - b.offset)
   }
+
+  await refreshPush()
 })
+
+const togglePush = async () => {
+  try {
+    if (pushEnabled.value) {
+      await disablePush()
+    } else {
+      await enablePush()
+    }
+    showSuccess(t('settings.settings_saved'))
+  } catch (error) {
+    uiStore.handleApiError(error)
+  }
+}
 
 const currentTime = computed(() => {
   try {
     return new Date().toLocaleTimeString('en-US', { timeZone: form.value.timezone })
-  } catch (e) {
+  } catch {
     return ''
   }
 })

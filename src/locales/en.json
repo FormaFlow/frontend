@@ -106,7 +106,19 @@
     "want_to_try": "I want to try!",
     "your_score": "Your Score",
     "time_taken": "Time Taken",
-    "seconds": "seconds"
+    "seconds": "seconds",
+    "reminder_interval": "Remind until the test is completed",
+    "reminder_disabled": "Do not repeat the notification",
+    "every_hours": "Every {count} hours",
+    "every_days": "Every {count} days",
+    "assign_test": "Assign test",
+    "assign_recipients": "Test recipients",
+    "search_users": "Search by name or email",
+    "no_users_found": "No users found",
+    "assigned": "Assigned",
+    "test_assigned": "Test assigned to selected users",
+    "completed": "Completed",
+    "pending": "Pending"
   },
   "quiz": {
     "question": "Question",
@@ -148,7 +160,12 @@
     "system": "System",
     "notifications": "Notifications",
     "save_settings": "Save Settings",
-    "settings_saved": "Settings saved successfully"
+    "settings_saved": "Settings saved successfully",
+    "enable_notifications": "Enable",
+    "disable_notifications": "Disable",
+    "notifications_enabled": "Test reminders are enabled on this device.",
+    "notifications_disabled": "Enable push to receive test reminders.",
+    "notifications_unsupported": "This browser does not support push notifications."
   },
   "validation": {
     "required": "This field is required",

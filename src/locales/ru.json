@@ -106,7 +106,19 @@
     "want_to_try": "Хочу попробовать!",
     "your_score": "Ваш счёт",
     "time_taken": "Затраченное время",
-    "seconds": "секунд"
+    "seconds": "секунд",
+    "reminder_interval": "Напоминать, пока тест не пройден",
+    "reminder_disabled": "Не повторять уведомление",
+    "every_hours": "Каждые {count} ч.",
+    "every_days": "Каждые {count} дн.",
+    "assign_test": "Назначить тест",
+    "assign_recipients": "Получатели теста",
+    "search_users": "Найти по имени или email",
+    "no_users_found": "Пользователи не найдены",
+    "assigned": "Назначено",
+    "test_assigned": "Тест назначен выбранным пользователям",
+    "completed": "Пройден",
+    "pending": "Ожидает"
   },
   "quiz": {
     "question": "Вопрос",
@@ -148,7 +160,12 @@
     "system": "Системная",
     "notifications": "Уведомления",
     "save_settings": "Сохранить настройки",
-    "settings_saved": "Настройки сохранены успешно"
+    "settings_saved": "Настройки сохранены успешно",
+    "enable_notifications": "Включить",
+    "disable_notifications": "Отключить",
+    "notifications_enabled": "Напоминания о назначенных тестах включены на этом устройстве.",
+    "notifications_disabled": "Включите push, чтобы получать напоминания о тестах.",
+    "notifications_unsupported": "Этот браузер не поддерживает push-уведомления."
   },
   "validation": {
     "required": "Это поле обязательно",
