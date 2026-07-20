@@ -51,13 +51,13 @@ describe('useFormsStore', () => {
   it('creates form successfully', async () => {
     const store = useFormsStore()
     const newForm = { name: 'New Form', description: 'New Desc', is_quiz: false }
-    const createdForm = { ...newForm, id: '3', fields: [], published: false, created_at: 'now', user_id: 'u1', single_submission: false }
+    const createdForm = { id: '3' }
 
     vi.mocked(formsApi.create).mockResolvedValue(createdForm as unknown as Form)
 
     await store.createForm(newForm)
 
     expect(formsApi.create).toHaveBeenCalledWith(newForm)
-    expect(store.forms).toContainEqual(createdForm)
+    expect(store.forms).toEqual([])
   })
 })

@@ -22,7 +22,7 @@ export interface FormField {
   points?: number
 }
 
-export interface Form {
+interface FormMetadata {
   id: string
   name: string
   description?: string
@@ -30,10 +30,25 @@ export interface Form {
   is_quiz: boolean
   single_submission: boolean
   quick_entry_favorite: boolean
-  fields: FormField[]
+}
+
+export interface FormSummary extends FormMetadata {
+  fields_count: number
   entries_count: number
   created_at: string
   updated_at: string
+}
+
+export interface Form extends FormMetadata {
+  fields: FormField[]
+  fields_count: number
+  entries_count?: number
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CreateFormResponse {
+  id: string
 }
 
 export interface CreateFormRequest {

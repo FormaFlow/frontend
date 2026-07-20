@@ -26,7 +26,17 @@ export const useForms = () => {
 
         const index = formsStore.forms.findIndex(f => f.id === id)
         if (index !== -1 && formsStore.currentForm) {
-          formsStore.forms[index] = formsStore.currentForm
+          const previous = formsStore.forms[index]
+          formsStore.forms[index] = {
+            ...previous,
+            name: formsStore.currentForm.name,
+            description: formsStore.currentForm.description,
+            published: formsStore.currentForm.published,
+            is_quiz: formsStore.currentForm.is_quiz,
+            single_submission: formsStore.currentForm.single_submission,
+            quick_entry_favorite: formsStore.currentForm.quick_entry_favorite,
+            fields_count: formsStore.currentForm.fields_count
+          }
         }
 
         return formsStore.currentForm

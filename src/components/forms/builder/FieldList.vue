@@ -9,12 +9,12 @@
     <div
       v-for="(field, index) in fields"
       :key="field.id"
-      class="card hover:shadow-lg transition"
+      class="card overflow-hidden p-4 hover:shadow-lg transition sm:p-6"
     >
-      <div class="flex items-start justify-between">
-        <div class="flex-1">
-          <div class="flex items-center gap-2 mb-2">
-            <h3 class="text-lg font-semibold">{{ field.label }}</h3>
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="mb-2 flex flex-wrap items-center gap-2">
+            <h3 class="min-w-0 break-words text-lg font-semibold">{{ field.label }}</h3>
             <span
               v-if="field.required"
               class="badge badge-danger text-xs"
@@ -30,7 +30,7 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex shrink-0 items-center gap-1 self-end sm:gap-2">
           <!-- Кнопки перемещения -->
           <button
             type="button"

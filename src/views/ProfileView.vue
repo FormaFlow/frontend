@@ -107,7 +107,6 @@ const timezones = ref<TimezoneOption[]>([])
 
 onMounted(() => {
   try {
-    // @ts-ignore
     if (typeof Intl !== 'undefined' && typeof (Intl as any).supportedValuesOf === 'function') {
       const zones = (Intl as any).supportedValuesOf('timeZone') as string[]
       const mappedZones = zones.map((tz: string) => {

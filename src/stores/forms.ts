@@ -3,7 +3,7 @@ import {ref} from 'vue'
 import {formsApi} from '@/api/forms'
 import {db} from '@/db'
 import {isNetworkError} from '@/utils/network'
-import type {CreateFormRequest, Form, UpdateFormRequest} from '@/types/form'
+import type {CreateFormRequest, Form, FormSummary, UpdateFormRequest} from '@/types/form'
 
 type FormsListRequest = {
   page: number
@@ -13,7 +13,7 @@ type FormsListRequest = {
 }
 
 export const useFormsStore = defineStore('forms', () => {
-  const forms = ref<Form[]>([])
+  const forms = ref<FormSummary[]>([])
   const currentForm = ref<Form | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -77,7 +77,7 @@ export const useFormsStore = defineStore('forms', () => {
           last_page: Math.ceil(response.total / response.limit)
         }
         // Cache forms
-        await db.saveForms(JSON.parse(JSON.stringify(forms.value)))
+        await db.saveFormSummaries(JSON.parse(JSON.stringify(forms.value)))
       }
     }
 
@@ -136,7 +136,7 @@ export const useFormsStore = defineStore('forms', () => {
         current_page: request.page,
         last_page: Math.max(1, Math.ceil(response.total / response.limit))
       }
-      await db.saveForms(JSON.parse(JSON.stringify(forms.value)))
+      await db.saveFormSummaries(JSON.parse(JSON.stringify(forms.value)))
     } catch (err: unknown) {
       if (!isNetworkError(err)) {
         error.value = (err as Error).message
@@ -148,7 +148,7 @@ export const useFormsStore = defineStore('forms', () => {
     loading.value = true
     error.value = null
 
-    const cached = await db.forms.get(id)
+    const cached = await db.getFormDefinition(id)
     if (cached) {
       currentForm.value = cached
       loading.value = false
@@ -168,7 +168,7 @@ export const useFormsStore = defineStore('forms', () => {
       }
     } catch (err: unknown) {
       if (isNetworkError(err)) {
-        const cached = await db.forms.get(id)
+        const cached = await db.getFormDefinition(id)
         if (cached) {
           currentForm.value = cached
         }
@@ -203,7 +203,6 @@ export const useFormsStore = defineStore('forms', () => {
     try {
       const response = await formsApi.create(data)
       if (response) {
-        forms.value.unshift(response)
         return response
       }
     } catch (err: unknown) {

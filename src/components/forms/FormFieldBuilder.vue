@@ -1,11 +1,11 @@
 <template>
   <div class="space-y-6">
     <!-- Заголовок секции -->
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
       <h2 class="text-xl font-semibold">{{ $t('forms.field_name') }}</h2>
       <button
         type="button"
-        class="btn btn-primary"
+        class="btn btn-primary w-full sm:w-auto"
         @click="openAddModal"
       >
         {{ $t('forms.add_field') }}

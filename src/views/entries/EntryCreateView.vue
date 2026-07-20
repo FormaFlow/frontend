@@ -22,6 +22,7 @@
             :options="formOptions"
             required
             :error="errors.form"
+            @update:modelValue="handleFormSelect"
         />
 
         <div v-if="selectedForm && route.query.form_id" class="mb-6">
@@ -216,9 +217,8 @@ import AppModal from '@/components/common/AppModal.vue'
 import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
-import {formsApi} from "@/api/forms";
 import {validateForm, type ValidationRules} from '@/utils/validation'
-import type {Form, FormField} from "@/types/form";
+import type {FormField, FormSummary} from "@/types/form";
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -320,15 +320,20 @@ const rules: ValidationRules = {
 }
 
 const formOptions = computed(() =>
-    forms.value.map((f: Form) => ({label: f.name, value: f.id}))
+    forms.value.map((f: FormSummary) => ({label: f.name, value: f.id}))
 )
 
 const selectedForm = computed(() => {
   if (currentForm.value && currentForm.value.id === selectedFormId.value) {
     return currentForm.value
   }
-  return forms.value.find((f: Form) => f.id === selectedFormId.value)
+  return null
 })
+
+const handleFormSelect = async (formId: string) => {
+  if (!formId || currentForm.value?.id === formId) return
+  await fetchForm(formId)
+}
 
 watch(selectedForm, (form) => {
   Object.keys(formData).forEach(k => delete formData[k])

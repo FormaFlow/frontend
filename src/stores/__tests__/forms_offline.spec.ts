@@ -78,6 +78,47 @@ describe('useFormsStore Offline', () => {
     expect(cached.forms[0].name).toBe('Fresh Form')
   })
 
+  it('preserves a cached form definition when a list summary is refreshed', async () => {
+    const store = useFormsStore()
+    await db.saveForms([{
+      id: 'f1',
+      name: 'Cached Form',
+      fields: [{ id: 'field-1', label: 'Amount', type: 'number', required: true, order: 0 }],
+      fields_count: 1,
+      entries_count: 0,
+      published: true,
+      is_quiz: false,
+      single_submission: false,
+      quick_entry_favorite: true,
+      created_at: '2026-07-05',
+      updated_at: '2026-07-05'
+    }])
+    vi.mocked(formsApi.list).mockResolvedValueOnce({
+      forms: [{
+        id: 'f1',
+        name: 'Fresh Summary',
+        fields_count: 1,
+        entries_count: 2,
+        published: true,
+        is_quiz: false,
+        single_submission: false,
+        quick_entry_favorite: true,
+        created_at: '2026-07-05',
+        updated_at: '2026-07-06'
+      }],
+      total: 1,
+      limit: 10,
+      offset: 0
+    })
+
+    await store.refreshCurrentForms()
+
+    const cached = await db.forms.get('f1')
+    expect(cached?.name).toBe('Fresh Summary')
+    expect(cached?.fields).toHaveLength(1)
+    expect(cached?.fields[0].label).toBe('Amount')
+  })
+
   it('passes is_quiz parameter to API', async () => {
     const store = useFormsStore()
     vi.mocked(formsApi.list).mockResolvedValue({ forms: [], total: 0, limit: 15, offset: 0 })

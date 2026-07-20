@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Form } from '@/types/form'
+import type { Form, FormSummary } from '@/types/form'
 import type { CreateEntryRequest, Entry } from '@/types/entry'
 
 export interface PendingEntry extends CreateEntryRequest {
@@ -27,8 +27,12 @@ export interface CacheItem<T = unknown> {
   updated_at: string
 }
 
+interface CachedForm extends Form {
+  definition_cached?: boolean
+}
+
 export class FormaFlowDatabase extends Dexie {
-  forms!: Table<Form>
+  forms!: Table<CachedForm>
   pendingEntries!: Table<PendingEntry>
   entries!: Table<CachedEntry>
   cacheItems!: Table<CacheItem>
@@ -49,12 +53,47 @@ export class FormaFlowDatabase extends Dexie {
 
   async saveForms(forms: Form[]): Promise<void> {
     if (forms.length === 0) return
-    await this.forms.bulkPut(forms)
+    await this.forms.bulkPut(forms.map(form => ({ ...form, definition_cached: true })))
+  }
+
+  async saveFormSummaries(forms: FormSummary[]): Promise<void> {
+    if (forms.length === 0) return
+
+    await this.transaction('rw', this.forms, async () => {
+      for (const summary of forms) {
+        const cached = await this.forms.get(summary.id)
+        const definitionCached = cached?.definition_cached
+          ?? Boolean(cached?.fields?.length || summary.fields_count === 0)
+
+        await this.forms.put({
+          ...cached,
+          ...summary,
+          fields: cached?.fields || [],
+          definition_cached: definitionCached
+        })
+      }
+    })
+  }
+
+  async getFormDefinition(id: string): Promise<Form | undefined> {
+    const cached = await this.forms.get(id)
+    if (!cached) return undefined
+
+    const hasDefinition = cached.definition_cached
+      ?? Boolean(cached.fields?.length || cached.fields_count === 0)
+
+    return hasDefinition ? cached : undefined
   }
 
   async getForms(filters: { search?: string; isQuiz?: boolean; limit?: number; offset?: number } = {}) {
     const search = filters.search?.trim().toLowerCase()
-    let forms = await this.forms.toArray()
+    let forms: FormSummary[] = (await this.forms.toArray()).map(form => ({
+      ...form,
+      fields_count: form.fields_count ?? form.fields?.length ?? 0,
+      entries_count: form.entries_count ?? 0,
+      created_at: form.created_at ?? '',
+      updated_at: form.updated_at ?? form.created_at ?? ''
+    }))
 
     if (search) {
       forms = forms.filter(form => {

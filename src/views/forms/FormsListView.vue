@@ -28,12 +28,12 @@
       <p class="text-gray-600 dark:text-gray-400">{{ $t('forms.no_forms') }}</p>
     </div>
     <div v-else class="space-y-4">
-      <div v-for="form in filteredForms" :key="form.id" class="card hover:shadow-lg transition">
-        <div class="flex items-start justify-between">
-          <div class="flex-1">
-            <h3 class="text-lg font-semibold mb-2">{{ form.name }}</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mb-3">{{ form.description }}</p>
-            <div class="flex gap-2">
+      <div v-for="form in filteredForms" :key="form.id" class="card overflow-hidden p-4 hover:shadow-lg transition sm:p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div class="min-w-0 flex-1">
+            <h3 class="mb-2 break-words text-lg font-semibold">{{ form.name }}</h3>
+            <p class="mb-3 break-words text-sm text-gray-600 dark:text-gray-400">{{ form.description }}</p>
+            <div class="flex flex-wrap items-center gap-2">
               <span :class="['badge', form.published ? 'badge-success' : 'badge-warning']">
                 {{ form.published ? $t('forms.published') : $t('forms.draft') }}
               </span>
@@ -42,14 +42,14 @@
               </span>
             </div>
           </div>
-          <div class="flex gap-2">
-            <router-link :to="`/forms/${form.id}`" class="btn-secondary btn-sm">
+          <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+            <router-link :to="`/forms/${form.id}`" class="btn-secondary btn-sm text-center">
               {{ $t('common.view') }}
             </router-link>
-            <router-link :to="`/forms/${form.id}/edit`" class="btn-secondary btn-sm">
+            <router-link :to="`/forms/${form.id}/edit`" class="btn-secondary btn-sm text-center">
               {{ $t('common.edit') }}
             </router-link>
-            <button type="button" class="btn-danger btn-sm" @click="handleDelete(form.id)">
+            <button type="button" class="btn-danger btn-sm col-span-2 sm:col-auto" @click="handleDelete(form.id)">
               {{ $t('common.delete') }}
             </button>
           </div>

@@ -70,7 +70,7 @@ const getIcon = (type: string) => {
 
 .notification-leave-active {
   position: absolute;
-  width: calc(100% - 2rem);
+  width: 100%;
 }
 
 .notification-enter-from,

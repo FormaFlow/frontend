@@ -1,11 +1,19 @@
 import client from './client'
-import type {AddFieldRequest, CreateFormRequest, Form, UpdateFormRequest, UpdateFieldRequest} from '@/types/form'
+import type {
+  AddFieldRequest,
+  CreateFormRequest,
+  CreateFormResponse,
+  Form,
+  FormSummary,
+  UpdateFormRequest,
+  UpdateFieldRequest
+} from '@/types/form'
 
 import {PaginatedResponse} from "@/types/api";
 
 export const formsApi = {
   list(params?: Record<string, unknown>) {
-    return client.get<PaginatedResponse<Form>>('/forms', params)
+    return client.get<PaginatedResponse<FormSummary>>('/forms', params)
   },
 
   get(id: string) {
@@ -17,7 +25,7 @@ export const formsApi = {
   },
 
   create(data: CreateFormRequest) {
-    return client.post<Form>('/forms', data)
+    return client.post<CreateFormResponse>('/forms', data)
   },
 
   update(id: string, data: UpdateFormRequest) {
