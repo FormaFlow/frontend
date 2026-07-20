@@ -5,15 +5,16 @@
       <div class="flex w-full items-center gap-2 sm:w-auto">
         <button
             type="button"
-            class="btn-secondary flex h-10 w-10 shrink-0 items-center justify-center p-0"
+            class="btn-secondary flex h-10 w-16 shrink-0 items-center gap-1 overflow-hidden px-2 sm:w-28"
             :disabled="formOptions.length <= 1"
-            :title="$t('common.previous')"
-            :aria-label="$t('common.previous')"
+            :title="`${$t('common.previous')}: ${previousFormName}`"
+            :aria-label="`${$t('common.previous')}: ${previousFormName}`"
             @click="selectAdjacentForm(-1)"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
+          <span class="quick-form-neighbor-name min-w-0 text-xs">{{ previousFormName }}</span>
         </button>
         <AppSelect
           v-model="selectedFormId"
@@ -24,13 +25,14 @@
         />
         <button
             type="button"
-            class="btn-secondary flex h-10 w-10 shrink-0 items-center justify-center p-0"
+            class="btn-secondary flex h-10 w-16 shrink-0 items-center justify-end gap-1 overflow-hidden px-2 sm:w-28"
             :disabled="formOptions.length <= 1"
-            :title="$t('common.next')"
-            :aria-label="$t('common.next')"
+            :title="`${$t('common.next')}: ${nextFormName}`"
+            :aria-label="`${$t('common.next')}: ${nextFormName}`"
             @click="selectAdjacentForm(1)"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <span class="quick-form-neighbor-name min-w-0 text-xs">{{ nextFormName }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -259,12 +261,30 @@ const selectedFormIndex = computed(() => {
   return formOptions.value.findIndex(option => option.value === selectedFormId.value)
 })
 
-const selectAdjacentForm = async (direction: -1 | 1) => {
-  if (formOptions.value.length === 0) return
+const adjacentFormOption = (direction: -1 | 1) => {
+  if (formOptions.value.length <= 1) return null
 
-  const currentIndex = selectedFormIndex.value === -1 ? 0 : selectedFormIndex.value
-  const nextIndex = (currentIndex + direction + formOptions.value.length) % formOptions.value.length
-  const nextFormId = String(formOptions.value[nextIndex].value)
+  if (selectedFormIndex.value === -1) {
+    return direction === -1
+      ? formOptions.value[formOptions.value.length - 1]
+      : formOptions.value[0]
+  }
+
+  const adjacentIndex = (
+    selectedFormIndex.value + direction + formOptions.value.length
+  ) % formOptions.value.length
+
+  return formOptions.value[adjacentIndex]
+}
+
+const previousFormName = computed(() => adjacentFormOption(-1)?.label || '')
+const nextFormName = computed(() => adjacentFormOption(1)?.label || '')
+
+const selectAdjacentForm = async (direction: -1 | 1) => {
+  const adjacentForm = adjacentFormOption(direction)
+  if (!adjacentForm) return
+
+  const nextFormId = String(adjacentForm.value)
 
   selectedFormId.value = nextFormId
   await handleFormSelect(nextFormId)
@@ -469,5 +489,13 @@ onMounted(async () => {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: rgba(156, 163, 175, 0.5);
   border-radius: 2px;
+}
+
+.quick-form-neighbor-name {
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0.8;
+  mask-image: linear-gradient(to right, #000 65%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 65%, transparent 100%);
 }
 </style>

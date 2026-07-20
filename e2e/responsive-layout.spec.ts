@@ -18,10 +18,10 @@ const formSummaries = [
     id: 'form-2',
     name: 'Second form',
     description: null,
-    published: false,
+    published: true,
     is_quiz: false,
     single_submission: false,
-    quick_entry_favorite: false,
+    quick_entry_favorite: true,
     fields_count: 0,
     entries_count: 0,
     created_at: '2026-07-19T10:00:00+00:00',
@@ -93,6 +93,15 @@ test('forms list does not create horizontal overflow', async ({ page }) => {
   await page.goto('/forms')
   await expect(page.getByRole('heading', { name: 'Формы' })).toBeVisible()
   await expect(page.getByText('Very long form name that must stay inside its card')).toBeVisible()
+
+  await expectNoHorizontalOverflow(page)
+})
+
+test('quick entry shows adjacent forms without horizontal overflow', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: 'Создать запись' })).toBeVisible()
+  await expect(page.locator('.quick-form-neighbor-name').first()).toContainText('Second form')
+  await expect(page.locator('.quick-form-neighbor-name').last()).toContainText('Very long form name')
 
   await expectNoHorizontalOverflow(page)
 })

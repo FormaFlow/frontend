@@ -186,6 +186,27 @@ describe('QuickEntryWidget cache refresh', () => {
       { label: 'Daily form', value: 'form-1' }
     ])
   })
+
+  it('shows the neighboring form names on navigation buttons', async () => {
+    const wrapper = mountWidget()
+    await flushPromises()
+
+    await selectForm(wrapper, 'form-1')
+    await flushPromises()
+
+    const neighborNames = wrapper.findAll('.quick-form-neighbor-name')
+    expect(neighborNames.map(item => item.text())).toEqual(['Other form', 'Other form'])
+
+    const vm = wrapper.vm as unknown as {
+      selectedFormId: string
+      selectAdjacentForm: (direction: -1 | 1) => Promise<void>
+    }
+    await vm.selectAdjacentForm(1)
+    await flushPromises()
+
+    expect(vm.selectedFormId).toBe('form-2')
+    expect(neighborNames.map(item => item.text())).toEqual(['Daily form', 'Daily form'])
+  })
 })
 
 async function selectForm(wrapper: ReturnType<typeof mount>, formId: string): Promise<void> {
