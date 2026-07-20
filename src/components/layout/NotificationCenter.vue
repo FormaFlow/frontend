@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="fixed top-20 right-4 z-[200] space-y-3 pointer-events-none max-w-sm w-full">
+    <div class="fixed top-20 left-1/2 z-[200] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 space-y-3 pointer-events-none sm:left-auto sm:right-4 sm:w-full sm:translate-x-0">
       <transition-group name="notification" tag="div" class="space-y-3">
         <div
             v-for="notification in notifications"
