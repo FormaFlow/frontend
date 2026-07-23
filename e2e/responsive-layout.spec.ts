@@ -122,6 +122,27 @@ test.beforeEach(async ({ page }) => {
       return
     }
 
+    if (url.pathname === '/api/v1/entries/stats/week') {
+      const anchor = url.searchParams.get('date') || new Date().toISOString().slice(0, 10)
+      const days = Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(`${anchor}T12:00:00Z`)
+        date.setUTCDate(date.getUTCDate() - index)
+        return {
+          date: date.toISOString().slice(0, 10),
+          stats: [{ field: '_count', sum: index === 1 ? 2 : 0 }]
+        }
+      })
+      await route.fulfill({
+        status: 200,
+        headers,
+        json: {
+          days,
+          months: { [anchor.slice(0, 7)]: [{ field: '_count', sum_month: 2 }] }
+        }
+      })
+      return
+    }
+
     if (url.pathname === '/api/v1/forms') {
       await route.fulfill({
         status: 200,
@@ -242,6 +263,23 @@ test('quiz can be assigned to a searched user without mobile overflow', async ({
   await expect.poll(() => assignmentPayload).toEqual({ user_ids: ['child-1'] })
   await expect(page.getByText('Child User · child@example.com')).toBeVisible()
   await page.waitForTimeout(400)
+  await expectNoHorizontalOverflow(page)
+})
+
+test('form with no entries today keeps the date navigation and reuses weekly stats', async ({ page }) => {
+  let weeklyStatsRequests = 0
+  page.on('request', request => {
+    if (new URL(request.url()).pathname === '/api/v1/entries/stats/week') {
+      weeklyStatsRequests += 1
+    }
+  })
+
+  await page.goto('/entries?form_id=form-1')
+  await expect(page.getByTestId('today-entry-count')).toHaveText('0')
+  await page.getByRole('button', { name: 'Назад' }).click()
+
+  await expect(page.getByTestId('today-entry-count')).toHaveText('2')
+  expect(weeklyStatsRequests).toBe(1)
   await expectNoHorizontalOverflow(page)
 })
 

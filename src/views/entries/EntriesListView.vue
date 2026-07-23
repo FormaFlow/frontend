@@ -27,7 +27,7 @@
     </div>
 
     <!-- Summary Card -->
-    <div v-if="!loading && (formattedStats.today.length > 0 || formattedStats.month.length > 0)" class="card p-0 overflow-hidden">
+    <div v-if="!loading && selectedFormId && (formattedStats.today.length > 0 || formattedStats.month.length > 0)" class="card p-0 overflow-hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
         <!-- Today's Summary -->
         <div v-if="formattedStats.today.length > 0" class="p-6">
@@ -37,12 +37,16 @@
             </h3>
             <div class="flex gap-1">
               <button
+                :aria-label="$t('common.previous')"
+                :title="$t('common.previous')"
                 class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                 @click="changeDate(-1)"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
               </button>
               <button
+                :aria-label="$t('common.next')"
+                :title="$t('common.next')"
                 class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 :disabled="isToday"
                 @click="changeDate(1)"
@@ -53,6 +57,9 @@
           </div>
           <div class="flex flex-wrap gap-x-8 gap-y-4">
             <div v-for="(item, idx) in formattedStats.today" :key="idx">
+              <template v-if="idx === 0">
+                <div class="sr-only" data-testid="today-entry-count">{{ item.value }}</div>
+              </template>
               <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ item.value }}</div>
               <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ item.label }}</div>
             </div>
@@ -118,7 +125,7 @@ import {addDaysToLocalDateString, parseLocalDate, toLocalDateString} from '@/uti
 const route = useRoute()
 const {entries, loading, loadingMore, pagination, fetchEntries, deleteEntry} = useEntries()
 const {forms, currentForm, fetchForms, fetchForm} = useForms()
-const {showSuccess, showError} = useNotification()
+const {showSuccess} = useNotification()
 
 const { t, locale } = useI18n()
 const searchQuery = ref('')
@@ -126,7 +133,7 @@ const selectedFormId = ref('')
 const loadMoreTrigger = ref<HTMLElement | null>(null)
 const statsDate = ref(toLocalDateString())
 
-const { stats, fetchStats } = useStats(selectedFormId, statsDate)
+const { stats } = useStats(selectedFormId, statsDate)
 
 const changeDate = (days: number) => {
   statsDate.value = addDaysToLocalDateString(statsDate.value, days)
@@ -181,10 +188,10 @@ const formattedStats = computed(() => {
   const countStat = stats.value.find(s => s.field === '_count')
   const entriesLabel = t('forms.entries_count')
 
-  if (countStat && countStat.sum_today > 0) {
+  if (countStat) {
     todayItems.push({ label: entriesLabel, value: countStat.sum_today })
   }
-  if (countStat && countStat.sum_month > 0) {
+  if (countStat) {
     monthItems.push({ label: entriesLabel, value: countStat.sum_month })
   }
 
@@ -197,14 +204,10 @@ const formattedStats = computed(() => {
 
     const label = field.label
 
-    if (stat.sum_today > 0) {
-      const val = formatFieldValue(stat.sum_today, field.type, field.unit)
-      todayItems.push({ label: label, value: val })
-    }
-    if (stat.sum_month > 0) {
-      const val = formatFieldValue(stat.sum_month, field.type, field.unit)
-      monthItems.push({ label: label, value: val })
-    }
+    const todayValue = formatFieldValue(stat.sum_today, field.type, field.unit)
+    todayItems.push({ label: label, value: todayValue })
+    const monthValue = formatFieldValue(stat.sum_month, field.type, field.unit)
+    monthItems.push({ label: label, value: monthValue })
   })
 
   return { today: todayItems, month: monthItems }
@@ -214,18 +217,23 @@ const handleSearch = debounce(async () => {
   await fetchEntries(1, selectedFormId.value || undefined)
 }, 500)
 
-const handleFormFilter = async (formId?: string) => {
+const loadFormFilter = async (formId?: string) => {
   const targetFormId = formId ?? selectedFormId.value
   selectedFormId.value = targetFormId
 
-  await fetchEntries(1, targetFormId || undefined)
-
   if (targetFormId) {
-    await fetchForm(targetFormId)
-    await fetchStats()
+    await Promise.all([
+      fetchEntries(1, targetFormId),
+      fetchForm(targetFormId)
+    ])
   } else {
     currentForm.value = null
+    await fetchEntries(1)
   }
+}
+
+const handleFormFilter = async (formId?: string) => {
+  await loadFormFilter(formId)
 }
 
 const handleDelete = async (id: string) => {
@@ -242,21 +250,18 @@ const handleDelete = async (id: string) => {
 
 watch(() => route.query.form_id, async (newFormId) => {
   if (newFormId && typeof newFormId === 'string') {
-    selectedFormId.value = newFormId
-    await fetchEntries(1, newFormId)
-    await fetchForm(newFormId)
+    await loadFormFilter(newFormId)
+  } else if (selectedFormId.value) {
+    await loadFormFilter('')
   }
-}, { immediate: true })
+})
 
 onMounted(async () => {
   await fetchForms(1, undefined, undefined, false)
 
   const formId = route.query.form_id
   if (formId && typeof formId === 'string') {
-    selectedFormId.value = formId
-    await fetchEntries(1, formId)
-    await fetchForm(formId)
-    await fetchStats()
+    await loadFormFilter(formId)
   } else {
     await fetchEntries()
     if (entries.value.length > 0) {

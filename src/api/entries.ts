@@ -44,6 +44,10 @@ export const entriesApi = {
 
   stats(formId: string, date?: string) {
     return client.get<{ stats: EntryStats }>(`/entries/stats`, { form_id: formId, date }).then(res => res.stats)
+  },
+
+  weeklyStats(formId: string, date?: string) {
+    return client.get<WeeklyEntryStats>(`/entries/stats/week`, { form_id: formId, date })
   }
 }
 
@@ -52,3 +56,17 @@ export type EntryStats = {
   sum_today: number
   sum_month: number
 }[]
+
+export interface WeeklyEntryStats {
+  days: Array<{
+    date: string
+    stats: Array<{
+      field: string
+      sum: number
+    }>
+  }>
+  months: Record<string, Array<{
+    field: string
+    sum_month: number
+  }>>
+}
