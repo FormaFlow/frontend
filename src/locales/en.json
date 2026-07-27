@@ -29,6 +29,9 @@
     "select": "Select",
     "and": "and",
     "in_one_place": "in one place",
+    "main_navigation": "Main navigation",
+    "open_navigation": "Open navigation",
+    "close_navigation": "Close navigation",
     "online_sync": "Internet restored. Syncing pending data..."
   },
   "auth": {

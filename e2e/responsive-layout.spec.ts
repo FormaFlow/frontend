@@ -178,6 +178,17 @@ test('quick entry shows adjacent forms without horizontal overflow', async ({ pa
   await expectNoHorizontalOverflow(page)
 })
 
+test('mobile dashboard uses the header menu instead of the welcome card', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chrome')
+
+  await page.goto('/')
+
+  await expect(page.getByRole('heading', { name: 'FormaFlow' })).toBeHidden()
+  await page.getByRole('button', { name: 'Открыть навигацию' }).click()
+  await expect(page.getByRole('navigation', { name: 'Основная навигация' }).getByRole('link', { name: 'Формы' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Основная навигация' }).getByRole('link', { name: 'Записи' })).toBeVisible()
+})
+
 test('form field editor does not create horizontal overflow', async ({ page }) => {
   await page.goto('/forms/form-1/edit')
   await expect(page.getByRole('heading', { name: 'Редактировать форму' })).toBeVisible()
@@ -281,6 +292,63 @@ test('form with no entries today keeps the date navigation and reuses weekly sta
   await expect(page.getByTestId('today-entry-count')).toHaveText('2')
   expect(weeklyStatsRequests).toBe(1)
   await expectNoHorizontalOverflow(page)
+})
+
+test('visible entry stays in place while relative time and background data refresh', async ({ page }) => {
+  const now = new Date('2026-07-27T12:00:00.000Z')
+  const createdAt = '2026-07-26T12:00:15.000Z'
+  const initialEntries = Array.from({ length: 12 }, (_, index) => ({
+    id: `entry-${index + 1}`,
+    form_id: 'form-1',
+    data: { 'field-1': index + 1 },
+    tags: [],
+    created_at: createdAt,
+    updated_at: createdAt
+  }))
+  const newEntry = {
+    id: 'entry-new',
+    form_id: 'form-1',
+    data: { 'field-1': 99 },
+    tags: [],
+    created_at: now.toISOString(),
+    updated_at: now.toISOString()
+  }
+  let returnRefreshedEntries = false
+
+  await page.clock.install({ time: now })
+  await page.route('http://localhost:8000/api/v1/entries**', async route => {
+    if (new URL(route.request().url()).pathname !== '/api/v1/entries') {
+      await route.fallback()
+      return
+    }
+
+    const headers = {
+      'access-control-allow-origin': 'http://127.0.0.1:4176',
+      'access-control-allow-credentials': 'true',
+      'content-type': 'application/json'
+    }
+    const entries = returnRefreshedEntries ? [newEntry, ...initialEntries] : initialEntries
+    await route.fulfill({ status: 200, headers, json: { entries, total: entries.length, limit: 15, offset: 0 } })
+  })
+
+  await page.goto('/entries?form_id=form-1')
+  const anchor = page.locator('[data-entry-id="entry-8"]')
+  await expect(anchor).toBeVisible()
+  await anchor.evaluate(element => {
+    const previousScrollBehavior = document.documentElement.style.scrollBehavior
+    document.documentElement.style.scrollBehavior = 'auto'
+    element.scrollIntoView({ block: 'center' })
+    document.documentElement.style.scrollBehavior = previousScrollBehavior
+  })
+  const initialTop = await anchor.evaluate(element => element.getBoundingClientRect().top)
+
+  await page.clock.fastForward(30_000)
+  await expect.poll(() => anchor.evaluate(element => element.getBoundingClientRect().top)).toBeCloseTo(initialTop, 0)
+
+  returnRefreshedEntries = true
+  await page.evaluate(() => window.dispatchEvent(new Event('online')))
+  await expect(page.locator('[data-entry-id="entry-new"]')).toBeAttached()
+  await expect.poll(() => anchor.evaluate(element => element.getBoundingClientRect().top)).toBeCloseTo(initialTop, 0)
 })
 
 async function expectNoHorizontalOverflow(page: Page): Promise<void> {

@@ -14,7 +14,7 @@
         </div>
 
         <!-- Navigation -->
-        <nav class="hidden md:flex items-center gap-8">
+        <nav :aria-label="$t('common.main_navigation')" class="hidden md:flex items-center gap-8">
           <router-link to="/forms" class="text-gray-700 dark:text-gray-300 hover:text-primary-500 transition">
             {{ $t('forms.title') }}
           </router-link>
@@ -24,7 +24,23 @@
         </nav>
 
         <!-- Right Section -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-1 sm:gap-4">
+          <button
+              type="button"
+              class="p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition md:hidden"
+              :aria-expanded="showMobileMenu"
+              aria-controls="mobile-navigation"
+              :aria-label="$t(showMobileMenu ? 'common.close_navigation' : 'common.open_navigation')"
+              @click="showMobileMenu = !showMobileMenu"
+          >
+            <svg v-if="showMobileMenu" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/>
+            </svg>
+            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+
           <!-- Theme Switcher -->
           <button
               type="button"
@@ -100,6 +116,28 @@
           </div>
         </div>
       </div>
+
+      <nav
+          v-if="showMobileMenu"
+          id="mobile-navigation"
+          :aria-label="$t('common.main_navigation')"
+          class="border-t border-gray-200 py-2 dark:border-gray-700 md:hidden"
+      >
+        <router-link
+            to="/forms"
+            class="block px-2 py-3 text-gray-700 hover:text-primary-500 dark:text-gray-300"
+            @click="showMobileMenu = false"
+        >
+          {{ $t('forms.title') }}
+        </router-link>
+        <router-link
+            to="/entries"
+            class="block px-2 py-3 text-gray-700 hover:text-primary-500 dark:text-gray-300"
+            @click="showMobileMenu = false"
+        >
+          {{ $t('entries.title') }}
+        </router-link>
+      </nav>
     </div>
   </header>
 </template>
@@ -122,6 +160,7 @@ const {showSuccess} = useNotification()
 
 const showUserMenu = ref(false)
 const showLangMenu = ref(false)
+const showMobileMenu = ref(false)
 
 const user = computed(() => authStore.user)
 const currentLocale = computed(() => locale.value)

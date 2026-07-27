@@ -88,8 +88,8 @@
     <div v-else-if="entries.length === 0" class="card text-center py-12">
       <p class="text-gray-600 dark:text-gray-400">{{ $t('entries.no_entries') }}</p>
     </div>
-    <div v-else class="space-y-4">
-      <div v-for="entry in entries" :key="entry.id">
+    <div v-else ref="entriesList" class="space-y-4">
+      <div v-for="entry in entries" :key="entry.id" :data-entry-id="entry.id">
         <EntryCard 
           :entry="entry" 
           :form-fields="currentForm?.fields" 
@@ -107,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
+import {computed, onBeforeUpdate, onMounted, onUnmounted, onUpdated, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {useI18n} from 'vue-i18n'
 import {useIntersectionObserver} from '@vueuse/core'
@@ -131,9 +131,46 @@ const { t, locale } = useI18n()
 const searchQuery = ref('')
 const selectedFormId = ref('')
 const loadMoreTrigger = ref<HTMLElement | null>(null)
+const entriesList = ref<HTMLElement | null>(null)
 const statsDate = ref(toLocalDateString())
+let scrollAnchor: { id: string, top: number } | null = null
 
 const { stats } = useStats(selectedFormId, statsDate)
+
+onBeforeUpdate(() => {
+  if (!entriesList.value) {
+    scrollAnchor = null
+    return
+  }
+
+  const headerBottom = document.querySelector('header')?.getBoundingClientRect().bottom ?? 0
+  const visibleEntry = Array.from(entriesList.value.querySelectorAll<HTMLElement>('[data-entry-id]'))
+    .find(element => element.getBoundingClientRect().bottom > headerBottom)
+
+  const id = visibleEntry?.dataset.entryId
+  scrollAnchor = visibleEntry && id
+    ? { id, top: visibleEntry.getBoundingClientRect().top }
+    : null
+})
+
+onUpdated(() => {
+  if (!entriesList.value || !scrollAnchor) return
+
+  const anchor = scrollAnchor
+  scrollAnchor = null
+  const visibleEntry = Array.from(entriesList.value.querySelectorAll<HTMLElement>('[data-entry-id]'))
+    .find(element => element.dataset.entryId === anchor.id)
+
+  if (!visibleEntry) return
+
+  const offset = visibleEntry.getBoundingClientRect().top - anchor.top
+  if (Math.abs(offset) > 0.5) {
+    const previousScrollBehavior = document.documentElement.style.scrollBehavior
+    document.documentElement.style.scrollBehavior = 'auto'
+    window.scrollBy(0, offset)
+    document.documentElement.style.scrollBehavior = previousScrollBehavior
+  }
+})
 
 const changeDate = (days: number) => {
   statsDate.value = addDaysToLocalDateString(statsDate.value, days)
