@@ -4,6 +4,8 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import { createPinia, setActivePinia } from 'pinia'
 import QuickEntryWidget from '../QuickEntryWidget.vue'
+import EntryStatsSummary from '@/components/entries/EntryStatsSummary.vue'
+import FormSwitcher from '@/components/entries/FormSwitcher.vue'
 import { entriesApi } from '@/api/entries'
 import { formsApi } from '@/api/forms'
 import { db } from '@/db'
@@ -27,6 +29,7 @@ vi.mock('@/api/entries', () => ({
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    weeklyStats: vi.fn(),
   }
 }))
 
@@ -114,6 +117,11 @@ describe('QuickEntryWidget cache refresh', () => {
       offset: 0
     })
     vi.mocked(formsApi.get).mockImplementation(async id => forms.find(form => form.id === id) || forms[0])
+    vi.mocked(entriesApi.weeklyStats).mockResolvedValue({
+      days: [],
+      months: {}
+    })
+    vi.mocked(entriesApi.list).mockResolvedValue({entries: [], total: 0, limit: 5, offset: 0})
   })
 
   it('refetches a selected form even when its local quick-entry list is already empty', async () => {
@@ -187,6 +195,14 @@ describe('QuickEntryWidget cache refresh', () => {
     ])
   })
 
+  it('opens the first available form immediately', async () => {
+    const wrapper = mountWidget()
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as {selectedFormId: string}
+    expect(vm.selectedFormId).toBe('form-1')
+  })
+
   it('shows the neighboring form names on navigation buttons', async () => {
     const wrapper = mountWidget()
     await flushPromises()
@@ -194,18 +210,33 @@ describe('QuickEntryWidget cache refresh', () => {
     await selectForm(wrapper, 'form-1')
     await flushPromises()
 
-    const neighborNames = wrapper.findAll('.quick-form-neighbor-name')
+    const switcher = wrapper.findComponent(FormSwitcher)
+    const neighborNames = switcher.findAll('.form-neighbor-name')
     expect(neighborNames.map(item => item.text())).toEqual(['Other form', 'Other form'])
 
-    const vm = wrapper.vm as unknown as {
-      selectedFormId: string
-      selectAdjacentForm: (direction: -1 | 1) => Promise<void>
-    }
-    await vm.selectAdjacentForm(1)
+    await switcher.findAll('button')[1].trigger('click')
     await flushPromises()
 
+    const vm = wrapper.vm as unknown as {selectedFormId: string}
     expect(vm.selectedFormId).toBe('form-2')
     expect(neighborNames.map(item => item.text())).toEqual(['Daily form', 'Daily form'])
+  })
+
+  it('opens statistics for the currently selected form', async () => {
+    const wrapper = mountWidget()
+    await flushPromises()
+    await selectForm(wrapper, 'form-1')
+    await flushPromises()
+
+    const statsButton = wrapper.findAll('button').find(button => button.text() === 'Статистика')
+    expect(statsButton).toBeDefined()
+
+    await statsButton!.trigger('click')
+    await flushPromises()
+
+    const summary = wrapper.findComponent(EntryStatsSummary)
+    expect(summary.exists()).toBe(true)
+    expect(summary.props('formId')).toBe('form-1')
   })
 })
 

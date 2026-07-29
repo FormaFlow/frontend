@@ -1,47 +1,41 @@
 <template>
   <div class="card bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 quick-entry-widget">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <h2 class="text-xl font-bold">{{ $t('entries.create_entry') }}</h2>
-      <div class="flex w-full items-center gap-2 sm:w-auto">
-        <button
-            type="button"
-            class="btn-secondary flex h-10 w-16 shrink-0 items-center gap-1 overflow-hidden px-2 sm:w-28"
-            :disabled="formOptions.length <= 1"
-            :title="`${$t('common.previous')}: ${previousFormName}`"
-            :aria-label="`${$t('common.previous')}: ${previousFormName}`"
-            @click="selectAdjacentForm(-1)"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          <span class="quick-form-neighbor-name min-w-0 text-xs">{{ previousFormName }}</span>
-        </button>
-        <AppSelect
+    <div class="mb-6 flex flex-col gap-4">
+      <div class="flex items-center justify-between gap-4">
+        <div class="inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
+          <button
+              type="button"
+              class="px-4 py-2 text-sm font-semibold transition-colors"
+              :class="activeMode === 'create' ? 'bg-primary-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'"
+              @click="activeMode = 'create'"
+          >
+            {{ $t('entries.create_entry') }}
+          </button>
+          <button
+              type="button"
+              class="border-l border-gray-200 px-4 py-2 text-sm font-semibold transition-colors dark:border-gray-600"
+              :class="activeMode === 'stats' ? 'bg-primary-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'"
+              @click="activeMode = 'stats'"
+          >
+            {{ $t('entries.statistics') }}
+          </button>
+        </div>
+        <router-link :to="entriesLink" class="text-sm font-semibold text-primary-500 hover:underline">
+          {{ $t('entries.title') }} →
+        </router-link>
+      </div>
+
+      <FormSwitcher
           v-model="selectedFormId"
           :options="formOptions"
           :placeholder="$t('reports.custom.select_form')"
-          class="min-w-0 flex-1 sm:w-64"
-          @update:modelValue="handleFormSelect"
-        />
-        <button
-            type="button"
-            class="btn-secondary flex h-10 w-16 shrink-0 items-center justify-end gap-1 overflow-hidden px-2 sm:w-28"
-            :disabled="formOptions.length <= 1"
-            :title="`${$t('common.next')}: ${nextFormName}`"
-            :aria-label="`${$t('common.next')}: ${nextFormName}`"
-            @click="selectAdjacentForm(1)"
-        >
-          <span class="quick-form-neighbor-name min-w-0 text-xs">{{ nextFormName }}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
+          @update:model-value="handleFormSelect"
+      />
     </div>
 
     <div class="grid grid-cols-1 gap-8" :class="{ 'lg:grid-cols-3': selectedFormId }">
       <!-- Form Fields (Left 2/3) -->
-      <div v-if="selectedFormId" class="lg:col-span-2 space-y-4">
+      <div v-if="activeMode === 'create' && selectedFormId" class="lg:col-span-2 space-y-4">
         <form @submit.prevent="handleSubmit" v-if="currentForm">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div v-for="field in requiredFields" :key="field.id" class="form-group">
@@ -151,6 +145,10 @@
         </div>
       </div>
 
+      <div v-else-if="activeMode === 'stats'" class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 lg:col-span-2">
+        <EntryStatsSummary :form-id="selectedFormId" :form="currentForm" />
+      </div>
+
       <!-- Recent Entries -->
       <div
           class="border-gray-200 dark:border-gray-700"
@@ -196,6 +194,8 @@ import { useNotification } from '@/composables/useNotification'
 import AppSelect from '@/components/common/AppSelect.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
 import EntryCard from '@/components/entries/EntryCard.vue'
+import EntryStatsSummary from '@/components/entries/EntryStatsSummary.vue'
+import FormSwitcher from '@/components/entries/FormSwitcher.vue'
 import { useI18n } from 'vue-i18n'
 import type { FormField, FormFieldType } from '@/types/form'
 import type { Entry } from '@/types/entry'
@@ -205,6 +205,7 @@ const { forms, fetchForms, fetchForm, currentForm } = useForms()
 const { entries, createEntry, fetchEntries } = useEntries()
 const { showSuccess } = useNotification()
 
+const activeMode = ref<'create' | 'stats'>('create')
 const selectedFormId = ref('')
 const formData = ref<Record<string, any>>({})
 const createdAt = ref(getCurrentDateTimeForInput())
@@ -229,6 +230,11 @@ const quickEntryForms = computed(() => {
 const formOptions = computed(() => 
   quickEntryForms.value
     .map(f => ({ label: f.name, value: f.id }))
+)
+
+const entriesLink = computed(() => selectedFormId.value
+  ? {name: 'entries-list', query: {form_id: selectedFormId.value}}
+  : {name: 'entries-list'}
 )
 
 const requiredFields = computed<FormField[]>(() => {
@@ -256,39 +262,6 @@ watch(entries, nextEntries => {
 
   recentEntries.value = sortEntriesByCreatedAt([...nextEntries]).slice(0, RECENT_ENTRIES_LIMIT)
 })
-
-const selectedFormIndex = computed(() => {
-  return formOptions.value.findIndex(option => option.value === selectedFormId.value)
-})
-
-const adjacentFormOption = (direction: -1 | 1) => {
-  if (formOptions.value.length <= 1) return null
-
-  if (selectedFormIndex.value === -1) {
-    return direction === -1
-      ? formOptions.value[formOptions.value.length - 1]
-      : formOptions.value[0]
-  }
-
-  const adjacentIndex = (
-    selectedFormIndex.value + direction + formOptions.value.length
-  ) % formOptions.value.length
-
-  return formOptions.value[adjacentIndex]
-}
-
-const previousFormName = computed(() => adjacentFormOption(-1)?.label || '')
-const nextFormName = computed(() => adjacentFormOption(1)?.label || '')
-
-const selectAdjacentForm = async (direction: -1 | 1) => {
-  const adjacentForm = adjacentFormOption(direction)
-  if (!adjacentForm) return
-
-  const nextFormId = String(adjacentForm.value)
-
-  selectedFormId.value = nextFormId
-  await handleFormSelect(nextFormId)
-}
 
 const handleFormSelect = async (formId: string) => {
   if (!formId) {
@@ -475,7 +448,13 @@ onMounted(async () => {
     return
   }
 
-  await loadRecentEntries()
+  const firstFormId = formOptions.value[0]?.value
+  if (firstFormId) {
+    selectedFormId.value = String(firstFormId)
+    await handleFormSelect(selectedFormId.value)
+  } else {
+    await loadRecentEntries()
+  }
 })
 </script>
 
@@ -491,11 +470,4 @@ onMounted(async () => {
   border-radius: 2px;
 }
 
-.quick-form-neighbor-name {
-  overflow: hidden;
-  white-space: nowrap;
-  opacity: 0.8;
-  mask-image: linear-gradient(to right, #000 65%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, #000 65%, transparent 100%);
-}
 </style>

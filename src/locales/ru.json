@@ -131,6 +131,7 @@
   "entries": {
     "title": "Записи",
     "create_entry": "Создать запись",
+    "statistics": "Статистика",
     "edit_entry": "Редактировать запись",
     "no_entries": "Записи не найдены",
     "entry_created": "Запись создана успешно",

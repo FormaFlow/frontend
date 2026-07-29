@@ -131,6 +131,7 @@
   "entries": {
     "title": "Entries",
     "create_entry": "Create Entry",
+    "statistics": "Statistics",
     "edit_entry": "Edit Entry",
     "no_entries": "No entries found",
     "entry_created": "Entry created successfully",

@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <h1 class="text-3xl font-bold">{{ $t('entries.title') }}</h1>
-      <router-link to="/entries/create" class="btn-primary">
+      <router-link :to="createEntryLink" class="btn-primary">
         + {{ $t('entries.create_entry') }}
       </router-link>
     </div>
@@ -17,68 +17,18 @@
             class="form-input flex-1"
             @input="handleSearch"
         />
-        <AppSelect
+        <FormSwitcher
             v-model="selectedFormId"
             :options="formOptions"
-            :placeholder="$t('forms.title')"
-            @update:modelValue="handleFormFilter"
+            :placeholder="$t('reports.custom.select_form')"
+            @update:model-value="handleFormFilter"
         />
       </div>
     </div>
 
     <!-- Summary Card -->
-    <div v-if="!loading && selectedFormId && (formattedStats.today.length > 0 || formattedStats.month.length > 0)" class="card p-0 overflow-hidden">
-      <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
-        <!-- Today's Summary -->
-        <div v-if="formattedStats.today.length > 0" class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              {{ isToday ? $t('entries.today') : formattedStatsDate }}
-            </h3>
-            <div class="flex gap-1">
-              <button
-                :aria-label="$t('common.previous')"
-                :title="$t('common.previous')"
-                class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                @click="changeDate(-1)"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-              </button>
-              <button
-                :aria-label="$t('common.next')"
-                :title="$t('common.next')"
-                class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                :disabled="isToday"
-                @click="changeDate(1)"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-              </button>
-            </div>
-          </div>
-          <div class="flex flex-wrap gap-x-8 gap-y-4">
-            <div v-for="(item, idx) in formattedStats.today" :key="idx">
-              <template v-if="idx === 0">
-                <div class="sr-only" data-testid="today-entry-count">{{ item.value }}</div>
-              </template>
-              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ item.value }}</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ item.label }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- This Month's Summary -->
-        <div v-if="formattedStats.month.length > 0" class="p-6">
-          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
-            {{ isThisMonth ? $t('entries.this_month') : formattedStatsMonth }}
-          </h3>
-          <div class="flex flex-wrap gap-x-8 gap-y-4">
-            <div v-for="(item, idx) in formattedStats.month" :key="idx">
-              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ item.value }}</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ item.label }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div v-if="!loading && selectedFormId" class="card overflow-hidden p-0">
+      <EntryStatsSummary :form-id="selectedFormId" :form="currentForm" />
     </div>
 
     <!-- Entries List -->
@@ -108,34 +58,30 @@
 
 <script setup lang="ts">
 import {computed, onBeforeUpdate, onMounted, onUnmounted, onUpdated, ref, watch} from 'vue'
-import {useRoute} from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
 import {useI18n} from 'vue-i18n'
 import {useIntersectionObserver} from '@vueuse/core'
 import AppLoader from '@/components/common/AppLoader.vue'
-import AppSelect from '@/components/common/AppSelect.vue'
 import EntryCard from '@/components/entries/EntryCard.vue'
+import EntryStatsSummary from '@/components/entries/EntryStatsSummary.vue'
+import FormSwitcher from '@/components/entries/FormSwitcher.vue'
 import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
-import {useStats} from '@/composables/useStats'
 import {debounce} from '@/utils/helpers'
-import {formatFieldValue} from '@/utils/formatters'
-import {addDaysToLocalDateString, parseLocalDate, toLocalDateString} from '@/utils/date'
 
 const route = useRoute()
+const router = useRouter()
 const {entries, loading, loadingMore, pagination, fetchEntries, deleteEntry} = useEntries()
 const {forms, currentForm, fetchForms, fetchForm} = useForms()
 const {showSuccess} = useNotification()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const searchQuery = ref('')
 const selectedFormId = ref('')
 const loadMoreTrigger = ref<HTMLElement | null>(null)
 const entriesList = ref<HTMLElement | null>(null)
-const statsDate = ref(toLocalDateString())
 let scrollAnchor: { id: string, top: number } | null = null
-
-const { stats } = useStats(selectedFormId, statsDate)
 
 onBeforeUpdate(() => {
   if (!entriesList.value) {
@@ -172,28 +118,6 @@ onUpdated(() => {
   }
 })
 
-const changeDate = (days: number) => {
-  statsDate.value = addDaysToLocalDateString(statsDate.value, days)
-}
-
-const formattedStatsDate = computed(() => {
-  return new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long', year: 'numeric' }).format(parseLocalDate(statsDate.value))
-})
-
-const formattedStatsMonth = computed(() => {
-  return new Intl.DateTimeFormat(locale.value, { month: 'long', year: 'numeric' }).format(parseLocalDate(statsDate.value))
-})
-
-const isToday = computed(() => {
-  return statsDate.value === toLocalDateString()
-})
-
-const isThisMonth = computed(() => {
-  const now = new Date()
-  const d = parseLocalDate(statsDate.value)
-  return now.getMonth() === d.getMonth() && now.getFullYear() === d.getFullYear()
-})
-
 // Load more logic
 useIntersectionObserver(
   loadMoreTrigger,
@@ -215,40 +139,10 @@ const formOptions = computed(() =>
     forms.value.map(f => ({label: f.name, value: f.id}))
 )
 
-const formattedStats = computed(() => {
-  if (!stats.value || !currentForm.value) return { today: [], month: [] }
-
-  const todayItems: { label: string, value: string | number }[] = []
-  const monthItems: { label: string, value: string | number }[] = []
-
-  // Find count stat
-  const countStat = stats.value.find(s => s.field === '_count')
-  const entriesLabel = t('forms.entries_count')
-
-  if (countStat) {
-    todayItems.push({ label: entriesLabel, value: countStat.sum_today })
-  }
-  if (countStat) {
-    monthItems.push({ label: entriesLabel, value: countStat.sum_month })
-  }
-
-  // Process other fields
-  stats.value.forEach(stat => {
-    if (stat.field === '_count') return
-
-    const field = currentForm.value?.fields.find(f => f.id === stat.field)
-    if (!field) return
-
-    const label = field.label
-
-    const todayValue = formatFieldValue(stat.sum_today, field.type, field.unit)
-    todayItems.push({ label: label, value: todayValue })
-    const monthValue = formatFieldValue(stat.sum_month, field.type, field.unit)
-    monthItems.push({ label: label, value: monthValue })
-  })
-
-  return { today: todayItems, month: monthItems }
-})
+const createEntryLink = computed(() => selectedFormId.value
+  ? {name: 'entry-create', query: {form_id: selectedFormId.value}}
+  : {name: 'entry-create'}
+)
 
 const handleSearch = debounce(async () => {
   await fetchEntries(1, selectedFormId.value || undefined)
@@ -259,6 +153,7 @@ const loadFormFilter = async (formId?: string) => {
   selectedFormId.value = targetFormId
 
   if (targetFormId) {
+    localStorage.setItem('formaflow:last-quick-form-id', targetFormId)
     await Promise.all([
       fetchEntries(1, targetFormId),
       fetchForm(targetFormId)
@@ -270,7 +165,13 @@ const loadFormFilter = async (formId?: string) => {
 }
 
 const handleFormFilter = async (formId?: string) => {
-  await loadFormFilter(formId)
+  const currentFormId = typeof route.query.form_id === 'string' ? route.query.form_id : ''
+  if ((formId || '') === currentFormId) {
+    await loadFormFilter(formId)
+    return
+  }
+
+  await router.replace({name: 'entries-list', query: formId ? {form_id: formId} : {}})
 }
 
 const handleDelete = async (id: string) => {
@@ -300,9 +201,15 @@ onMounted(async () => {
   if (formId && typeof formId === 'string') {
     await loadFormFilter(formId)
   } else {
-    await fetchEntries()
-    if (entries.value.length > 0) {
-      await fetchForm(entries.value[0].form_id)
+    const rememberedFormId = localStorage.getItem('formaflow:last-quick-form-id')
+    const initialFormId = forms.value.some(form => form.id === rememberedFormId)
+      ? rememberedFormId
+      : forms.value[0]?.id
+
+    if (initialFormId) {
+      await router.replace({name: 'entries-list', query: {form_id: initialFormId}})
+    } else {
+      await fetchEntries()
     }
   }
 })

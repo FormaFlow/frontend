@@ -427,7 +427,7 @@ const handleSubmit = async () => {
 
     if (!entry) {
       showSuccess(t('entries.entry_saved_offline'))
-      await router.push('/entries')
+      await router.push({name: 'entries-list', query: {form_id: selectedFormId.value}})
       return
     }
 
@@ -443,7 +443,7 @@ const handleSubmit = async () => {
       showResultModal.value = true
     } else {
       showSuccess(t('entries.entry_created'))
-      await router.push('/entries')
+      await router.push({name: 'entries-list', query: {form_id: selectedFormId.value}})
     }
   } catch (error: any) {
     console.error('Failed to create entry:', error)
