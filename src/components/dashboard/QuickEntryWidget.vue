@@ -1,7 +1,7 @@
 <template>
   <div class="card bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 quick-entry-widget">
     <div class="mb-6 flex flex-col gap-4">
-      <div class="flex items-center justify-between gap-4">
+      <div>
         <div class="inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
           <button
               type="button"
@@ -20,9 +20,6 @@
             {{ $t('entries.statistics') }}
           </button>
         </div>
-        <router-link :to="entriesLink" class="text-sm font-semibold text-primary-500 hover:underline">
-          {{ $t('entries.title') }} →
-        </router-link>
       </div>
 
       <FormSwitcher
@@ -230,11 +227,6 @@ const quickEntryForms = computed(() => {
 const formOptions = computed(() => 
   quickEntryForms.value
     .map(f => ({ label: f.name, value: f.id }))
-)
-
-const entriesLink = computed(() => selectedFormId.value
-  ? {name: 'entries-list', query: {form_id: selectedFormId.value}}
-  : {name: 'entries-list'}
 )
 
 const requiredFields = computed<FormField[]>(() => {
