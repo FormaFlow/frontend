@@ -96,6 +96,19 @@
       >
         + {{ $t('forms.add_option') }}
       </button>
+
+      <label class="flex items-start gap-2 rounded-lg border border-gray-200 p-3 dark:border-gray-600">
+        <input
+          id="field-sum-values"
+          v-model="fieldForm.sum_values"
+          type="checkbox"
+          class="mt-0.5 h-4 w-4 rounded text-primary-600"
+        />
+        <span>
+          <span class="block text-sm font-medium">{{ $t('forms.sum_values') }}</span>
+          <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $t('forms.sum_values_hint') }}</span>
+        </span>
+      </label>
     </div>
   </div>
 </template>
@@ -119,6 +132,7 @@ interface LocalEditableField extends Omit<EditableField, 'unit' | 'placeholder' 
   placeholder: string
   correctAnswer: string
   points: number
+  sum_values: boolean
   order: number
 }
 
@@ -138,6 +152,7 @@ const fieldForm = ref<LocalEditableField>({
   placeholder: props.modelValue.placeholder ?? '',
   correctAnswer: props.modelValue.correctAnswer ?? '',
   points: props.modelValue.points ?? 0,
+  sum_values: props.modelValue.sum_values ?? false,
   order: props.modelValue.order ?? 0,
   options: props.modelValue.options ? JSON.parse(JSON.stringify(props.modelValue.options)) : []
 })
@@ -150,8 +165,15 @@ watch(() => props.modelValue.id, () => {
     placeholder: props.modelValue.placeholder ?? '',
     correctAnswer: props.modelValue.correctAnswer ?? '',
     points: props.modelValue.points ?? 0,
+    sum_values: props.modelValue.sum_values ?? false,
     order: props.modelValue.order ?? 0,
     options: props.modelValue.options ? JSON.parse(JSON.stringify(props.modelValue.options)) : []
+  }
+})
+
+watch(() => fieldForm.value.type, type => {
+  if (type !== 'select') {
+    fieldForm.value.sum_values = false
   }
 })
 

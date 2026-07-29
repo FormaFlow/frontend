@@ -74,6 +74,8 @@
     "option_value": "Option Value",
     "field_unit": "Unit",
     "field_options": "Options",
+    "sum_values": "Sum values in statistics",
+    "sum_values_hint": "Option values must be numbers, for example 10, 20, 30.",
     "publish": "Publish",
     "unpublish": "Unpublish",
     "published": "Published",

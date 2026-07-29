@@ -74,6 +74,7 @@ const editorRef = ref<InstanceType<typeof FieldEditor> | null>(null)
 const defaultFieldState = {
   label: '',
   type: 'text' as FormFieldType,
+  sum_values: false,
   required: false,
   placeholder: '',
   unit: '',

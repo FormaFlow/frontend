@@ -9,6 +9,7 @@ export interface FormField {
   id: string
   label: string
   type: FormFieldType
+  sum_values?: boolean
   required: boolean
   placeholder?: string
   unit?: string
@@ -73,6 +74,7 @@ export interface UpdateFormRequest {
 export interface AddFieldRequest {
   label: string
   type: FormFieldType
+  sum_values?: boolean
   required: boolean
   placeholder?: string
   unit?: string
@@ -89,6 +91,7 @@ export interface AddFieldRequest {
 export interface UpdateFieldRequest {
   label?: string
   type?: FormFieldType
+  sum_values?: boolean
   required?: boolean
   placeholder?: string
   unit?: string
