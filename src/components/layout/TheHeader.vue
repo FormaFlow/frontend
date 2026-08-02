@@ -46,6 +46,13 @@
         >
           {{ $t('entries.title') }}
         </router-link>
+        <router-link
+            to="/payments"
+            class="block px-2 py-3 text-gray-700 hover:text-primary-500 dark:text-gray-300"
+            @click="showMenu = false"
+        >
+          {{ $t('payments.title') }}
+        </router-link>
 
         <div class="my-2 border-t border-gray-200 dark:border-gray-700"></div>
 
