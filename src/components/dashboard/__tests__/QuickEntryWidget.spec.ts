@@ -228,8 +228,13 @@ describe('QuickEntryWidget cache refresh', () => {
     await selectForm(wrapper, 'form-1')
     await flushPromises()
 
+    const heading = wrapper.get('h2')
+    expect(heading.classes()).toEqual(expect.arrayContaining(['whitespace-nowrap', 'text-lg', 'sm:text-xl']))
+
     const statsButton = wrapper.findAll('button').find(button => button.text() === 'Статистика')
     expect(statsButton).toBeDefined()
+    const toggleThumb = statsButton!.find('.absolute')
+    expect(toggleThumb.classes()).toEqual(expect.arrayContaining(['left-0.5', 'translate-x-0']))
     const summary = wrapper.findComponent(EntryStatsSummary)
     const statsPanel = wrapper.get('[data-testid="quick-entry-stats"]')
     expect(summary.exists()).toBe(true)
@@ -239,6 +244,7 @@ describe('QuickEntryWidget cache refresh', () => {
     await statsButton!.trigger('click')
     await flushPromises()
 
+    expect(toggleThumb.classes()).toContain('translate-x-4')
     expect(statsPanel.attributes('style') ?? '').not.toContain('display: none')
     expect(summary.props('formId')).toBe('form-1')
     expect(wrapper.find('button[type="submit"]').exists()).toBe(true)

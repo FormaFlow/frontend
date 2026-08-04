@@ -1,18 +1,18 @@
 <template>
   <div class="card bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 quick-entry-widget">
     <div class="mb-6 flex flex-col gap-4">
-      <div class="flex items-center justify-between gap-4">
-        <h2 class="text-xl font-bold">{{ $t('entries.create_entry') }}</h2>
+      <div class="flex items-center justify-between gap-2 sm:gap-4">
+        <h2 class="whitespace-nowrap text-lg font-bold sm:text-xl">{{ $t('entries.create_entry') }}</h2>
         <button
             type="button"
-            class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors"
+            class="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-semibold transition-colors sm:gap-2 sm:px-3 sm:text-sm"
             :class="showStats ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/40 dark:text-primary-200' : 'border-gray-300 text-gray-600 hover:border-primary-400 dark:border-gray-600 dark:text-gray-300'"
             :aria-pressed="showStats"
             @click="showStats = !showStats"
         >
           <span>{{ $t('entries.statistics') }}</span>
           <span class="relative h-5 w-9 rounded-full transition-colors" :class="showStats ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'">
-            <span class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform" :class="showStats ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
+            <span class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform" :class="showStats ? 'translate-x-4' : 'translate-x-0'"></span>
           </span>
         </button>
       </div>
