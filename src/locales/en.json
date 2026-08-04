@@ -134,6 +134,7 @@
     "title": "Entries",
     "create_entry": "Create Entry",
     "statistics": "Statistics",
+    "choose_stats_date": "Choose statistics date",
     "edit_entry": "Edit Entry",
     "no_entries": "No entries found",
     "entry_created": "Entry created successfully",

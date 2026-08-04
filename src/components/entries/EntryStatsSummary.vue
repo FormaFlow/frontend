@@ -1,5 +1,38 @@
 <template>
   <div>
+    <div v-if="formId" class="flex justify-end gap-1 border-b border-gray-200 p-3 dark:border-gray-700">
+      <input
+          v-model="statsDate"
+          type="date"
+          :max="todayDate"
+          :aria-label="$t('entries.choose_stats_date')"
+          class="form-input h-8 w-36 px-2 py-1 text-xs"
+      />
+      <button
+          type="button"
+          :aria-label="$t('common.previous')"
+          :title="$t('common.previous')"
+          class="rounded-md p-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          @click="changeDate(-1)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6"/>
+        </svg>
+      </button>
+      <button
+          type="button"
+          :aria-label="$t('common.next')"
+          :title="$t('common.next')"
+          class="rounded-md p-1 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-gray-700"
+          :disabled="isToday"
+          @click="changeDate(1)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/>
+        </svg>
+      </button>
+    </div>
+
     <div v-if="loading" class="flex justify-center py-8">
       <AppLoader />
     </div>
@@ -18,31 +51,6 @@
           <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">
             {{ isToday ? $t('entries.today') : formattedStatsDate }}
           </h3>
-          <div class="flex gap-1">
-            <button
-                type="button"
-                :aria-label="$t('common.previous')"
-                :title="$t('common.previous')"
-                class="rounded-md p-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                @click="changeDate(-1)"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6"/>
-              </svg>
-            </button>
-            <button
-                type="button"
-                :aria-label="$t('common.next')"
-                :title="$t('common.next')"
-                class="rounded-md p-1 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-gray-700"
-                :disabled="isToday"
-                @click="changeDate(1)"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/>
-              </svg>
-            </button>
-          </div>
         </div>
         <div class="flex flex-wrap gap-x-8 gap-y-4">
           <div v-for="item in formattedStats.today" :key="item.label">
@@ -83,6 +91,7 @@ const props = defineProps<{
 
 const {t, locale} = useI18n()
 const statsDate = ref(toLocalDateString())
+const todayDate = toLocalDateString()
 const {stats, loading} = useStats(toRef(props, 'formId'), statsDate)
 
 const changeDate = (days: number) => {

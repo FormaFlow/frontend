@@ -1,25 +1,20 @@
 <template>
   <div class="card bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 quick-entry-widget">
     <div class="mb-6 flex flex-col gap-4">
-      <div>
-        <div class="inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
-          <button
-              type="button"
-              class="px-4 py-2 text-sm font-semibold transition-colors"
-              :class="activeMode === 'create' ? 'bg-primary-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'"
-              @click="activeMode = 'create'"
-          >
-            {{ $t('entries.create_entry') }}
-          </button>
-          <button
-              type="button"
-              class="border-l border-gray-200 px-4 py-2 text-sm font-semibold transition-colors dark:border-gray-600"
-              :class="activeMode === 'stats' ? 'bg-primary-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'"
-              @click="activeMode = 'stats'"
-          >
-            {{ $t('entries.statistics') }}
-          </button>
-        </div>
+      <div class="flex items-center justify-between gap-4">
+        <h2 class="text-xl font-bold">{{ $t('entries.create_entry') }}</h2>
+        <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors"
+            :class="showStats ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/40 dark:text-primary-200' : 'border-gray-300 text-gray-600 hover:border-primary-400 dark:border-gray-600 dark:text-gray-300'"
+            :aria-pressed="showStats"
+            @click="showStats = !showStats"
+        >
+          <span>{{ $t('entries.statistics') }}</span>
+          <span class="relative h-5 w-9 rounded-full transition-colors" :class="showStats ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'">
+            <span class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform" :class="showStats ? 'translate-x-[18px]' : 'translate-x-0.5'"></span>
+          </span>
+        </button>
       </div>
 
       <FormSwitcher
@@ -30,9 +25,17 @@
       />
     </div>
 
+    <div
+        v-show="showStats"
+        data-testid="quick-entry-stats"
+        class="mb-8 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
+    >
+      <EntryStatsSummary :form-id="selectedFormId" :form="currentForm" />
+    </div>
+
     <div class="grid grid-cols-1 gap-8" :class="{ 'lg:grid-cols-3': selectedFormId }">
       <!-- Form Fields (Left 2/3) -->
-      <div v-if="activeMode === 'create' && selectedFormId" class="lg:col-span-2 space-y-4">
+      <div v-if="selectedFormId" class="lg:col-span-2 space-y-4">
         <form @submit.prevent="handleSubmit" v-if="currentForm">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div v-for="field in requiredFields" :key="field.id" class="form-group">
@@ -142,10 +145,6 @@
         </div>
       </div>
 
-      <div v-else-if="activeMode === 'stats'" class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 lg:col-span-2">
-        <EntryStatsSummary :form-id="selectedFormId" :form="currentForm" />
-      </div>
-
       <!-- Recent Entries -->
       <div
           class="border-gray-200 dark:border-gray-700"
@@ -202,7 +201,6 @@ const { forms, fetchForms, fetchForm, currentForm } = useForms()
 const { entries, createEntry, fetchEntries } = useEntries()
 const { showSuccess } = useNotification()
 
-const activeMode = ref<'create' | 'stats'>('create')
 const selectedFormId = ref('')
 const formData = ref<Record<string, any>>({})
 const createdAt = ref(getCurrentDateTimeForInput())
@@ -216,6 +214,12 @@ const cachedEntries = reactive<Record<string, Entry[]>>({})
 const RECENT_ENTRIES_LIMIT = 10
 const FORM_ENTRIES_LIMIT = 5
 const LAST_QUICK_FORM_KEY = 'formaflow:last-quick-form-id'
+const QUICK_STATS_VISIBLE_KEY = 'formaflow:quick-stats-visible'
+const showStats = ref(localStorage.getItem(QUICK_STATS_VISIBLE_KEY) === 'true')
+
+watch(showStats, value => {
+  localStorage.setItem(QUICK_STATS_VISIBLE_KEY, String(value))
+})
 
 const quickEntryForms = computed(() => {
   const publishedForms = forms.value.filter(form => form.published)

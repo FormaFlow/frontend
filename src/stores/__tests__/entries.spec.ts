@@ -21,6 +21,7 @@ describe('useEntriesStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   it('fetches entries successfully', async () => {
@@ -50,5 +51,21 @@ describe('useEntriesStore', () => {
     await store.fetchEntries(1, 'form-123')
 
     expect(entriesApi.list).toHaveBeenCalledWith({ limit: 15, offset: 0, form_id: 'form-123' })
+  })
+
+  it('announces a created entry to other browser tabs', async () => {
+    const store = useEntriesStore()
+    vi.mocked(entriesApi.create).mockResolvedValue({
+      id: 'entry-1',
+      form_id: 'form-live',
+      data: {value: 10},
+      created_at: '2026-08-04T10:00:00Z',
+      updated_at: '2026-08-04T10:00:00Z'
+    } as Entry)
+
+    await store.createEntry({form_id: 'form-live', data: {value: 10}})
+
+    const notification = JSON.parse(localStorage.getItem('formaflow:entry-change') || '{}')
+    expect(notification.formId).toBe('form-live')
   })
 })

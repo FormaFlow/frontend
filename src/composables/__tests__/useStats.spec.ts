@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick, ref } from 'vue'
+import { ref } from 'vue'
+import { flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { entriesApi } from '@/api/entries'
 import { useStats } from '@/composables/useStats'
@@ -37,16 +38,53 @@ describe('useStats', () => {
     const date = ref('2026-07-24')
     const { stats } = useStats(formId, date)
 
-    await nextTick()
-    await nextTick()
+    await flushPromises()
     expect(entriesApi.weeklyStats).toHaveBeenCalledTimes(1)
     expect(stats.value?.[0]).toEqual({ field: '_count', sum_today: 0, sum_month: 3 })
 
     date.value = '2026-07-23'
-    await nextTick()
-    await nextTick()
+    await flushPromises()
 
     expect(entriesApi.weeklyStats).toHaveBeenCalledTimes(1)
     expect(stats.value?.[0]).toEqual({ field: '_count', sum_today: 2, sum_month: 3 })
+  })
+
+  it('prefetches the older week before the user reaches the cache boundary', async () => {
+    const formId = ref('form-prefetch')
+    const date = ref('2026-07-24')
+    useStats(formId, date)
+
+    await flushPromises()
+
+    date.value = '2026-07-21'
+    await flushPromises()
+
+    expect(entriesApi.weeklyStats).toHaveBeenCalledWith('form-prefetch', '2026-07-17')
+  })
+
+  it('invalidates cached statistics when another tab creates an entry', async () => {
+    const formId = ref('form-live')
+    const date = ref('2026-07-24')
+    const refreshedResponse = {
+      ...weeklyResponse,
+      days: weeklyResponse.days.map(day => day.date === '2026-07-24'
+        ? {date: day.date, stats: [{field: '_count', sum: 1}]}
+        : day)
+    }
+    vi.mocked(entriesApi.weeklyStats)
+      .mockResolvedValueOnce(weeklyResponse)
+      .mockResolvedValueOnce(refreshedResponse)
+
+    const {stats} = useStats(formId, date)
+    await flushPromises()
+
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'formaflow:entry-change',
+      newValue: JSON.stringify({formId: 'form-live', changedAt: Date.now()})
+    }))
+    await flushPromises()
+
+    expect(entriesApi.weeklyStats).toHaveBeenCalledTimes(2)
+    expect(stats.value?.[0].sum_today).toBe(1)
   })
 })

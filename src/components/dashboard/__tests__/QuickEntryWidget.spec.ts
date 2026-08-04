@@ -222,7 +222,7 @@ describe('QuickEntryWidget cache refresh', () => {
     expect(neighborNames.map(item => item.text())).toEqual(['Daily form', 'Daily form'])
   })
 
-  it('opens statistics for the currently selected form', async () => {
+  it('toggles statistics above the form and remembers the state', async () => {
     const wrapper = mountWidget()
     await flushPromises()
     await selectForm(wrapper, 'form-1')
@@ -230,13 +230,35 @@ describe('QuickEntryWidget cache refresh', () => {
 
     const statsButton = wrapper.findAll('button').find(button => button.text() === 'Статистика')
     expect(statsButton).toBeDefined()
+    const summary = wrapper.findComponent(EntryStatsSummary)
+    const statsPanel = wrapper.get('[data-testid="quick-entry-stats"]')
+    expect(summary.exists()).toBe(true)
+    expect(statsPanel.attributes('style')).toContain('display: none')
+    expect(wrapper.find('button[type="submit"]').exists()).toBe(true)
 
     await statsButton!.trigger('click')
     await flushPromises()
 
-    const summary = wrapper.findComponent(EntryStatsSummary)
-    expect(summary.exists()).toBe(true)
+    expect(statsPanel.attributes('style') ?? '').not.toContain('display: none')
     expect(summary.props('formId')).toBe('form-1')
+    expect(wrapper.find('button[type="submit"]').exists()).toBe(true)
+    expect(localStorage.getItem('formaflow:quick-stats-visible')).toBe('true')
+
+    const restoredWrapper = mountWidget()
+    await flushPromises()
+    expect(restoredWrapper.get('[data-testid="quick-entry-stats"]').attributes('style') ?? '')
+      .not.toContain('display: none')
+    restoredWrapper.unmount()
+
+    const dateInput = summary.find('input[type="date"]')
+    expect(dateInput.exists()).toBe(true)
+    await dateInput.setValue('2026-07-01')
+    await flushPromises()
+    expect(entriesApi.weeklyStats).toHaveBeenCalledWith('form-1', '2026-07-01')
+
+    await statsButton!.trigger('click')
+    expect(statsPanel.attributes('style')).toContain('display: none')
+    expect(localStorage.getItem('formaflow:quick-stats-visible')).toBe('false')
   })
 })
 

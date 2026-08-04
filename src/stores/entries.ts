@@ -3,6 +3,7 @@ import {ref} from 'vue'
 import {entriesApi} from '@/api/entries'
 import {db} from '@/db'
 import {createLocalId, isNetworkError} from '@/utils/network'
+import {publishEntryChange} from '@/utils/entryEvents'
 import type {CreateEntryRequest, Entry, UpdateEntryRequest} from '@/types/entry'
 
 type EntriesListRequest = {
@@ -257,6 +258,7 @@ export const useEntriesStore = defineStore('entries', () => {
       if (response) {
         entries.value.unshift(response)
         await db.saveEntries([response])
+        publishEntryChange(response.form_id)
         return response
       }
     } catch (err: unknown) {
@@ -289,6 +291,7 @@ export const useEntriesStore = defineStore('entries', () => {
             }
             await db.saveEntries([response])
             entries.value = [response, ...entries.value.filter(item => item.id !== response.id)]
+            publishEntryChange(response.form_id)
           }
         } catch (err) {
           console.error('Failed to sync entry:', err)
@@ -324,6 +327,7 @@ export const useEntriesStore = defineStore('entries', () => {
           currentEntry.value = response
         }
         await db.saveEntries([response])
+        publishEntryChange(response.form_id)
         return response
       }
     } catch (err: unknown) {
@@ -338,12 +342,14 @@ export const useEntriesStore = defineStore('entries', () => {
     loading.value = true
     error.value = null
     try {
+      const formId = entries.value.find(entry => entry.id === id)?.form_id ?? currentEntry.value?.form_id
       await entriesApi.delete(id)
       entries.value = entries.value.filter(e => e.id !== id)
       await db.deleteCachedEntry(id)
       if (currentEntry.value?.id === id) {
         currentEntry.value = null
       }
+      if (formId) publishEntryChange(formId)
     } catch (err: unknown) {
       error.value = (err as Error).message
       throw err
