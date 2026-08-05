@@ -68,4 +68,39 @@ describe('useEntriesStore', () => {
     const notification = JSON.parse(localStorage.getItem('formaflow:entry-change') || '{}')
     expect(notification.formId).toBe('form-live')
   })
+
+  it('announces an updated entry to other browser tabs', async () => {
+    const store = useEntriesStore()
+    vi.mocked(entriesApi.update).mockResolvedValue({
+      id: 'entry-updated',
+      form_id: 'form-edited',
+      data: {value: 20},
+      created_at: '2026-08-04T10:00:00Z',
+      updated_at: '2026-08-05T10:00:00Z'
+    } as Entry)
+
+    await store.updateEntry('entry-updated', {data: {value: 20}})
+
+    const notification = JSON.parse(localStorage.getItem('formaflow:entry-change') || '{}')
+    expect(notification.formId).toBe('form-edited')
+  })
+
+  it('announces a deleted entry to other browser tabs', async () => {
+    const store = useEntriesStore()
+    const entry = {
+      id: 'entry-deleted',
+      form_id: 'form-deleted',
+      data: {},
+      created_at: '2026-08-04T10:00:00Z',
+      updated_at: '2026-08-04T10:00:00Z'
+    } as Entry
+    vi.mocked(entriesApi.list).mockResolvedValue({entries: [entry], total: 1, limit: 15, offset: 0})
+    vi.mocked(entriesApi.delete).mockResolvedValue(undefined)
+    await store.fetchEntries()
+
+    await store.deleteEntry(entry.id)
+
+    const notification = JSON.parse(localStorage.getItem('formaflow:entry-change') || '{}')
+    expect(notification.formId).toBe('form-deleted')
+  })
 })

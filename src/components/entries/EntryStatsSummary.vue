@@ -1,29 +1,30 @@
 <template>
   <div>
-    <div v-if="formId" class="flex justify-end gap-1 border-b border-gray-200 p-3 dark:border-gray-700">
-      <input
-          v-model="statsDate"
-          type="date"
-          :max="todayDate"
-          :aria-label="$t('entries.choose_stats_date')"
-          class="form-input h-8 w-36 px-2 py-1 text-xs"
-      />
+    <div v-if="formId" class="border-b border-gray-200 p-3 dark:border-gray-700">
+      <div class="mx-auto grid w-full max-w-sm grid-cols-[2rem_minmax(0,1fr)_2rem] items-center gap-2">
       <button
           type="button"
           :aria-label="$t('common.previous')"
           :title="$t('common.previous')"
-          class="rounded-md p-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          class="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           @click="changeDate(-1)"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6"/>
         </svg>
       </button>
+      <input
+          v-model="statsDate"
+          type="date"
+          :max="todayDate"
+          :aria-label="$t('entries.choose_stats_date')"
+          class="form-input h-8 w-full min-w-0 px-2 py-1 text-xs"
+      />
       <button
           type="button"
           :aria-label="$t('common.next')"
           :title="$t('common.next')"
-          class="rounded-md p-1 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-gray-700"
+          class="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-gray-700"
           :disabled="isToday"
           @click="changeDate(1)"
       >
@@ -31,6 +32,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/>
         </svg>
       </button>
+      </div>
     </div>
 
     <div v-if="loading" class="flex justify-center py-8">
@@ -54,7 +56,10 @@
         </div>
         <div class="flex flex-wrap gap-x-8 gap-y-4">
           <div v-for="item in formattedStats.today" :key="item.label">
-            <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ item.value }}</div>
+            <div
+                class="text-2xl font-bold text-gray-900 dark:text-white"
+                :data-testid="item.field === '_count' ? 'today-entry-count' : undefined"
+            >{{ item.value }}</div>
             <div class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{{ item.label }}</div>
           </div>
         </div>
@@ -118,21 +123,21 @@ const isThisMonth = computed(() => {
 const formattedStats = computed(() => {
   if (!stats.value || !props.form) return {today: [], month: []}
 
-  const today: Array<{label: string, value: string | number}> = []
-  const month: Array<{label: string, value: string | number}> = []
+  const today: Array<{field: string, label: string, value: string | number}> = []
+  const month: Array<{field: string, label: string, value: string | number}> = []
 
   stats.value.forEach(stat => {
     if (stat.field === '_count') {
-      today.push({label: t('forms.entries_count'), value: stat.sum_today})
-      month.push({label: t('forms.entries_count'), value: stat.sum_month})
+      today.push({field: stat.field, label: t('forms.entries_count'), value: stat.sum_today})
+      month.push({field: stat.field, label: t('forms.entries_count'), value: stat.sum_month})
       return
     }
 
     const field = props.form?.fields.find(item => item.id === stat.field)
     if (!field) return
 
-    today.push({label: field.label, value: formatFieldValue(stat.sum_today, field.type, field.unit)})
-    month.push({label: field.label, value: formatFieldValue(stat.sum_month, field.type, field.unit)})
+    today.push({field: stat.field, label: field.label, value: formatFieldValue(stat.sum_today, field.type, field.unit)})
+    month.push({field: stat.field, label: field.label, value: formatFieldValue(stat.sum_month, field.type, field.unit)})
   })
 
   return {today, month}

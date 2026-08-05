@@ -172,8 +172,8 @@ test('forms list does not create horizontal overflow', async ({ page }) => {
 test('quick entry shows adjacent forms without horizontal overflow', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Создать запись' })).toBeVisible()
-  await expect(page.locator('.quick-form-neighbor-name').first()).toContainText('Second form')
-  await expect(page.locator('.quick-form-neighbor-name').last()).toContainText('Very long form name')
+  await expect(page.locator('.quick-entry-widget .form-neighbor-name').first()).toContainText('Second form')
+  await expect(page.locator('.quick-entry-widget .form-neighbor-name').last()).toContainText('Second form')
 
   await expectNoHorizontalOverflow(page)
 })
@@ -277,7 +277,7 @@ test('quiz can be assigned to a searched user without mobile overflow', async ({
   await expectNoHorizontalOverflow(page)
 })
 
-test('form with no entries today keeps the date navigation and reuses weekly stats', async ({ page }) => {
+test('form with no entries today keeps the date navigation and reuses weekly stats', async ({ page }, testInfo) => {
   let weeklyStatsRequests = 0
   page.on('request', request => {
     if (new URL(request.url()).pathname === '/api/v1/entries/stats/week') {
@@ -286,8 +286,24 @@ test('form with no entries today keeps the date navigation and reuses weekly sta
   })
 
   await page.goto('/entries?form_id=form-1')
+  await expect(page.getByRole('heading', { name: 'Записи' })).toBeVisible()
+  if (testInfo.project.name === 'mobile-chrome') {
+    await expect(page.locator('.form-neighbor-name').first()).toBeHidden()
+  }
+
+  const previousDay = page.getByRole('button', { name: 'Назад', exact: true })
+  const statsDate = page.getByLabel('Выбрать дату статистики')
+  const nextDay = page.getByRole('button', { name: 'Далее', exact: true })
+  const [previousBox, dateBox, nextBox] = await Promise.all([
+    previousDay.boundingBox(),
+    statsDate.boundingBox(),
+    nextDay.boundingBox()
+  ])
+  expect(previousBox!.x + previousBox!.width).toBeLessThanOrEqual(dateBox!.x)
+  expect(dateBox!.x + dateBox!.width).toBeLessThanOrEqual(nextBox!.x)
+
   await expect(page.getByTestId('today-entry-count')).toHaveText('0')
-  await page.getByRole('button', { name: 'Назад' }).click()
+  await previousDay.click()
 
   await expect(page.getByTestId('today-entry-count')).toHaveText('2')
   expect(weeklyStatsRequests).toBe(1)
@@ -314,6 +330,7 @@ test('visible entry stays in place while relative time and background data refre
     updated_at: now.toISOString()
   }
   let returnRefreshedEntries = false
+  let entriesRequests = 0
 
   await page.clock.install({ time: now })
   await page.route('http://localhost:8000/api/v1/entries**', async route => {
@@ -321,6 +338,7 @@ test('visible entry stays in place while relative time and background data refre
       await route.fallback()
       return
     }
+    entriesRequests += 1
 
     const headers = {
       'access-control-allow-origin': 'http://127.0.0.1:4176',
@@ -342,7 +360,10 @@ test('visible entry stays in place while relative time and background data refre
   })
   const initialTop = await anchor.evaluate(element => element.getBoundingClientRect().top)
 
+  const requestsBeforeTick = entriesRequests
   await page.clock.fastForward(30_000)
+  await expect.poll(() => entriesRequests).toBeGreaterThan(requestsBeforeTick)
+  await page.waitForLoadState('networkidle')
   await expect.poll(() => anchor.evaluate(element => element.getBoundingClientRect().top)).toBeCloseTo(initialTop, 0)
 
   returnRefreshedEntries = true

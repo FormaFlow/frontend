@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import {effectScope, ref} from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { entriesApi } from '@/api/entries'
 import { useStats } from '@/composables/useStats'
+import {publishEntryChange} from '@/utils/entryEvents'
 
 vi.mock('@/api/entries', () => ({
   entriesApi: {
@@ -86,5 +87,23 @@ describe('useStats', () => {
 
     expect(entriesApi.weeklyStats).toHaveBeenCalledTimes(2)
     expect(stats.value?.[0].sum_today).toBe(1)
+  })
+
+  it('invalidates cached statistics while the stats widget is unmounted', async () => {
+    const formId = ref('form-edited-away-from-stats')
+    const date = ref('2026-07-24')
+    const firstScope = effectScope()
+    firstScope.run(() => useStats(formId, date))
+    await flushPromises()
+    firstScope.stop()
+
+    publishEntryChange(formId.value)
+
+    const secondScope = effectScope()
+    secondScope.run(() => useStats(formId, date))
+    await flushPromises()
+    secondScope.stop()
+
+    expect(entriesApi.weeklyStats).toHaveBeenCalledTimes(2)
   })
 })

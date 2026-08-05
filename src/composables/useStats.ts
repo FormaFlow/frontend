@@ -8,6 +8,10 @@ const weeklyStatsCache = new Map<string, WeeklyEntryStats[]>()
 const pendingWeeks = new Map<string, Promise<WeeklyEntryStats>>()
 const maxCachedWeeksPerForm = 8
 
+subscribeToEntryChanges(event => {
+  weeklyStatsCache.delete(event.formId)
+})
+
 function findCachedWeek(formId: string, date: string): WeeklyEntryStats | undefined {
   return weeklyStatsCache.get(formId)?.find(week => week.days.some(day => day.date === date))
 }

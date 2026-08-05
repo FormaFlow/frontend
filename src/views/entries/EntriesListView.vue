@@ -8,8 +8,8 @@
     </div>
 
     <!-- Filters -->
-    <div class="card">
-      <div class="flex flex-col sm:flex-row gap-4">
+    <div class="card p-3 sm:p-6">
+      <div class="flex flex-col gap-3 sm:flex-row sm:gap-4">
         <input
             v-model="searchQuery"
             type="search"
@@ -21,6 +21,7 @@
             v-model="selectedFormId"
             :options="formOptions"
             :placeholder="$t('reports.custom.select_form')"
+            compact-mobile
             @update:model-value="handleFormFilter"
         />
       </div>

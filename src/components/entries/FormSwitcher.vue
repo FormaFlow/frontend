@@ -2,7 +2,8 @@
   <div class="flex w-full items-center gap-2 sm:w-auto">
     <button
         type="button"
-        class="btn-secondary flex h-10 w-16 shrink-0 items-center gap-1 overflow-hidden px-2 sm:w-28"
+        class="btn-secondary flex h-10 shrink-0 items-center gap-1 overflow-hidden px-2 sm:w-28"
+        :class="compactMobile ? 'w-10 justify-center sm:justify-start' : 'w-16'"
         :disabled="options.length <= 1"
         :title="`${$t('common.previous')}: ${previousName}`"
         :aria-label="`${$t('common.previous')}: ${previousName}`"
@@ -11,7 +12,7 @@
       <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
       </svg>
-      <span class="form-neighbor-name min-w-0 text-xs">{{ previousName }}</span>
+      <span class="form-neighbor-name min-w-0 text-xs" :class="{'hidden sm:block': compactMobile}">{{ previousName }}</span>
     </button>
 
     <AppSelect
@@ -24,13 +25,14 @@
 
     <button
         type="button"
-        class="btn-secondary flex h-10 w-16 shrink-0 items-center justify-end gap-1 overflow-hidden px-2 sm:w-28"
+        class="btn-secondary flex h-10 shrink-0 items-center justify-end gap-1 overflow-hidden px-2 sm:w-28"
+        :class="compactMobile ? 'w-10 justify-center sm:justify-end' : 'w-16'"
         :disabled="options.length <= 1"
         :title="`${$t('common.next')}: ${nextName}`"
         :aria-label="`${$t('common.next')}: ${nextName}`"
         @click="selectAdjacent(1)"
     >
-      <span class="form-neighbor-name min-w-0 text-xs">{{ nextName }}</span>
+      <span class="form-neighbor-name min-w-0 text-xs" :class="{'hidden sm:block': compactMobile}">{{ nextName }}</span>
       <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
       </svg>
@@ -51,6 +53,7 @@ const props = defineProps<{
   modelValue: string
   options: Option[]
   placeholder: string
+  compactMobile?: boolean
 }>()
 
 const emit = defineEmits<{
