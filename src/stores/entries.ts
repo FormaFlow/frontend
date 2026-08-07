@@ -27,6 +27,19 @@ export const useEntriesStore = defineStore('entries', () => {
     last_page: 1
   })
 
+  const mergePendingWithServerEntries = async (serverEntries: Entry[], formId?: string) => {
+    const pendingEntries = await db.getPendingCachedEntries(formId)
+    const serverIds = new Set(serverEntries.map(entry => entry.id))
+    const localOnlyEntries = pendingEntries.filter(entry => !serverIds.has(entry.id))
+    const mergedEntries = [...localOnlyEntries, ...serverEntries]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+    return {
+      entries: mergedEntries,
+      localOnlyCount: localOnlyEntries.length
+    }
+  }
+
   const fetchEntries = async (page = 1, formId?: string, limit?: number, append = false) => {
     if (!append) {
       lastListRequest.value = { page, formId, limit }
@@ -88,7 +101,15 @@ export const useEntriesStore = defineStore('entries', () => {
       
       if (response) {
         const responseEntries = response.entries || []
-        applyEntries(responseEntries, response.total || responseEntries.length, response.limit || pageLimit)
+        const visibleEntries = page === 1
+          ? await mergePendingWithServerEntries(responseEntries, formId)
+          : {entries: responseEntries, localOnlyCount: 0}
+        const serverTotal = response.total ?? responseEntries.length
+        applyEntries(
+          visibleEntries.entries,
+          serverTotal + visibleEntries.localOnlyCount,
+          response.limit || pageLimit
+        )
         await db.saveEntries(responseEntries)
         await db.pruneCachedEntries()
       }
@@ -147,12 +168,18 @@ export const useEntriesStore = defineStore('entries', () => {
       if (!response) return
 
       const responseEntries = response.entries || []
-      entries.value = responseEntries
+      const visibleEntries = request.page === 1
+        ? await mergePendingWithServerEntries(responseEntries, request.formId)
+        : {entries: responseEntries, localOnlyCount: 0}
+      const serverTotal = response.total ?? responseEntries.length
+      entries.value = visibleEntries.entries
       pagination.value = {
-        total: response.total || responseEntries.length,
+        total: serverTotal + visibleEntries.localOnlyCount,
         per_page: response.limit || pageLimit,
         current_page: request.page,
-        last_page: Math.max(1, Math.ceil((response.total || responseEntries.length) / (response.limit || pageLimit)))
+        last_page: Math.max(1, Math.ceil(
+          (serverTotal + visibleEntries.localOnlyCount) / (response.limit || pageLimit)
+        ))
       }
       await db.saveEntries(responseEntries)
       await db.pruneCachedEntries()

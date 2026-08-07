@@ -144,6 +144,17 @@ export class FormaFlowDatabase extends Dexie {
     return this.entries.get(id)
   }
 
+  async getPendingCachedEntries(formId?: string): Promise<CachedEntry[]> {
+    let entries = await this.entries.filter(entry => Boolean(entry.pending)).toArray()
+    if (formId) {
+      entries = entries.filter(entry => entry.form_id === formId)
+    }
+
+    return entries.sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+  }
+
   async getCachedEntries(query: CachedEntryQuery): Promise<{ entries: CachedEntry[]; total: number }> {
     let entries = await this.entries.toArray()
 

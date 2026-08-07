@@ -99,6 +99,47 @@ describe('useEntriesStore Offline', () => {
     expect(entriesApi.list).toHaveBeenCalled()
   })
 
+  it('keeps pending entries visible when sync fails but list refresh succeeds', async () => {
+    const store = useEntriesStore()
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    mockOnLine.mockReturnValue(false)
+    await store.fetchEntries(1, 'form-1')
+    await store.createEntry({form_id: 'form-1', data: {value: 'offline'}})
+    const pendingId = store.entries[0].id
+
+    mockOnLine.mockReturnValue(true)
+    vi.mocked(entriesApi.create).mockRejectedValue(new Error('Network Error'))
+    vi.mocked(entriesApi.list).mockResolvedValue({
+      entries: [{
+        id: 'server-entry',
+        form_id: 'form-1',
+        data: {value: 'server'},
+        created_at: '2026-08-06T10:00:00Z',
+        updated_at: '2026-08-06T10:00:00Z'
+      }],
+      total: 1,
+      limit: 15,
+      offset: 0
+    })
+
+    await store.syncPendingEntries()
+    await store.refreshCurrentEntries()
+
+    expect(store.entries.map(entry => entry.id)).toEqual([pendingId, 'server-entry'])
+    expect(await db.getPendingEntries()).toHaveLength(1)
+
+    setActivePinia(createPinia())
+    const reloadedStore = useEntriesStore()
+    mockOnLine.mockReturnValue(false)
+    await reloadedStore.fetchEntries(1, 'form-1')
+    expect(reloadedStore.entries.map(entry => entry.id)).toEqual([pendingId, 'server-entry'])
+
+    mockOnLine.mockReturnValue(true)
+    await reloadedStore.refreshCurrentEntries()
+    expect(reloadedStore.entries.map(entry => entry.id)).toEqual([pendingId, 'server-entry'])
+    consoleError.mockRestore()
+  })
+
   it('refreshes current entries from API and updates cache', async () => {
     const store = useEntriesStore()
     vi.mocked(entriesApi.list).mockResolvedValueOnce({

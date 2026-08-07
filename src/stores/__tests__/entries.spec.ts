@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useEntriesStore } from '../entries'
 import { entriesApi } from '@/api/entries'
+import {db} from '@/db'
 import type { PaginatedResponse } from '@/types/api'
 import type { Entry } from '@/types/entry'
 
@@ -18,10 +19,12 @@ vi.mock('@/api/entries', () => ({
 }))
 
 describe('useEntriesStore', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     localStorage.clear()
+    await db.pendingEntries.clear()
+    await db.entries.clear()
   })
 
   it('fetches entries successfully', async () => {
