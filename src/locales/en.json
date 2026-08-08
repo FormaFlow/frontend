@@ -166,6 +166,7 @@
     "hide_plans": "Hide plans",
     "no_payments": "No payments in the selected period",
     "overdue": "Overdue",
+    "overdue_notice": "Overdue payments: {count}",
     "due_soon": "Due in 7 days",
     "expected_month": "Expected this month",
     "paid_month": "Paid this month",

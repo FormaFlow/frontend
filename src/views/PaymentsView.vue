@@ -33,14 +33,14 @@
           <option value="paid">{{ $t('payments.paid') }}</option>
           <option value="cancelled">{{ $t('payments.cancelled') }}</option>
         </select>
-        <select v-model="filters.categoryId" class="form-select" aria-label="Payment category" @change="loadData">
+        <select v-model="filters.categoryId" class="form-select" aria-label="Payment category" @change="loadData()">
           <option value="">{{ $t('payments.all_categories') }}</option>
           <option v-for="category in categories" :key="category.id" :value="category.id">
             {{ category.name }}
           </option>
         </select>
-        <input v-model="filters.from" type="date" class="form-input" aria-label="From date" @change="loadData" />
-        <input v-model="filters.to" type="date" class="form-input" aria-label="To date" @change="loadData" />
+        <input v-model="filters.from" type="date" class="form-input" aria-label="From date" @change="loadData()" />
+        <input v-model="filters.to" type="date" class="form-input" aria-label="To date" @change="loadData()" />
       </div>
     </div>
 
@@ -91,12 +91,22 @@
     <div v-else-if="displayedOccurrences.length === 0" class="card py-12 text-center text-gray-500">
       {{ $t('payments.no_payments') }}
     </div>
-    <div v-else class="space-y-3">
+    <div v-else class="space-y-3" data-testid="payments-list">
+      <div
+        v-if="displayedOverdueCount"
+        class="rounded-lg border border-red-300 bg-red-50 px-4 py-3 font-medium text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+        data-testid="overdue-alert"
+      >
+        {{ $t('payments.overdue_notice', {count: displayedOverdueCount}) }}
+      </div>
       <article
         v-for="occurrence in displayedOccurrences"
         :key="occurrence.id"
         class="card p-4"
-        :class="isOverdue(occurrence) && 'border-l-4 border-red-500'"
+        :class="isOverdue(occurrence) && 'border border-red-400 border-l-4 border-l-red-500 bg-red-50 dark:border-red-800 dark:bg-red-950/20'"
+        :data-occurrence-id="occurrence.id"
+        :data-overdue="isOverdue(occurrence) ? 'true' : undefined"
+        data-testid="payment-occurrence"
       >
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex min-w-0 gap-4">
@@ -293,7 +303,7 @@ const localDateTime = () => {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 }
 const filters = reactive({
-  status: '',
+  status: 'planned',
   categoryId: '',
   from: dateInput(new Date(today.getFullYear(), today.getMonth() - 1, today.getDate())),
   to: dateInput(new Date(today.getFullYear(), today.getMonth() + 4, today.getDate()))
@@ -328,14 +338,20 @@ const scheduleOptions = computed(() => [
   {label: t('payments.manual'), value: 'manual'}
 ])
 const dateRangeLabel = computed(() => `${formatDate(filters.from)} — ${formatDate(filters.to)}`)
-const displayedOccurrences = computed(() => occurrences.value.filter(occurrence => {
-  if (!filters.status) return true
-  if (filters.status === 'overdue') return isOverdue(occurrence)
-  return occurrence.status === filters.status
-}))
+const displayedOccurrences = computed(() => occurrences.value
+  .filter(occurrence => {
+    if (!filters.status) return true
+    if (filters.status === 'overdue') return isOverdue(occurrence)
+    return occurrence.status === filters.status
+  })
+  .sort((left, right) => {
+    const overdueOrder = Number(isOverdue(right)) - Number(isOverdue(left))
+    return overdueOrder || left.due_on.localeCompare(right.due_on) || left.id.localeCompare(right.id)
+  }))
+const displayedOverdueCount = computed(() => displayedOccurrences.value.filter(isOverdue).length)
 
-const loadData = async () => {
-  loading.value = true
+const loadData = async (showLoader = true) => {
+  if (showLoader) loading.value = true
   try {
     const params: Record<string, unknown> = {from: filters.from, to: filters.to}
     if (filters.categoryId) params.category_id = filters.categoryId
@@ -349,7 +365,7 @@ const loadData = async () => {
   } catch (error) {
     showError(error instanceof Error ? error.message : t('common.error'))
   } finally {
-    loading.value = false
+    if (showLoader) loading.value = false
   }
 }
 
@@ -435,7 +451,7 @@ const savePlan = async () => {
     }
     planModalOpen.value = false
     showSuccess(t('payments.saved'))
-    await loadData()
+    await loadData(false)
   } catch (error) {
     showError(error instanceof Error ? error.message : t('common.error'))
   }
@@ -446,7 +462,7 @@ const removePlan = async (plan: PaymentPlan) => {
   try {
     await paymentsApi.deletePlan(plan.id)
     showSuccess(t('payments.deleted'))
-    await loadData()
+    await loadData(false)
   } catch (error) {
     showError(error instanceof Error ? error.message : t('common.error'))
   }
@@ -462,10 +478,11 @@ const openPay = (occurrence: PaymentOccurrence) => {
 const confirmPay = async () => {
   if (!payingOccurrence.value || !paymentForm.actual_amount) return
   try {
-    await paymentsApi.pay(payingOccurrence.value.id, {...paymentForm})
+    const updated = await paymentsApi.pay(payingOccurrence.value.id, {...paymentForm})
+    applyOccurrenceUpdate(updated)
     payModalOpen.value = false
+    payingOccurrence.value = null
     showSuccess(t('payments.marked_paid'))
-    await loadData()
   } catch (error) {
     showError(error instanceof Error ? error.message : t('common.error'))
   }
@@ -473,9 +490,9 @@ const confirmPay = async () => {
 
 const reopenPayment = async (occurrence: PaymentOccurrence) => {
   try {
-    await paymentsApi.reopen(occurrence.id)
+    const updated = await paymentsApi.reopen(occurrence.id)
+    applyOccurrenceUpdate(updated)
     showSuccess(t('payments.reopened'))
-    await loadData()
   } catch (error) {
     showError(error instanceof Error ? error.message : t('common.error'))
   }
@@ -495,7 +512,7 @@ const confirmClosePlan = async () => {
     await paymentsApi.closePlan(closingPlan.value.id, {...closeForm})
     closeModalOpen.value = false
     showSuccess(t('payments.closed_success'))
-    await loadData()
+    await loadData(false)
   } catch (error) {
     showError(error instanceof Error ? error.message : t('common.error'))
   }
@@ -507,6 +524,55 @@ const day = (value: string) => new Intl.DateTimeFormat(locale.value, {day: '2-di
 const month = (value: string) => new Intl.DateTimeFormat(locale.value, {month: 'short'}).format(parseDate(value))
 const money = (value?: string | null) => new Intl.NumberFormat(locale.value, {style: 'currency', currency: 'RUB', maximumFractionDigits: 2}).format(Number(value || 0))
 const isOverdue = (occurrence: PaymentOccurrence) => occurrence.status === 'planned' && occurrence.due_on.slice(0, 10) < dateInput(today)
+const dueSoonThrough = dateInput(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7))
+const isDueSoon = (occurrence: PaymentOccurrence) => occurrence.status === 'planned' &&
+  occurrence.due_on.slice(0, 10) >= dateInput(today) && occurrence.due_on.slice(0, 10) <= dueSoonThrough
+const isCurrentMonth = (value?: string | null) => value?.slice(0, 7) === dateInput(today).slice(0, 7)
+const occurrenceContribution = (occurrence: PaymentOccurrence) => ({
+  overdue: isOverdue(occurrence) ? 1 : 0,
+  dueSoon: isDueSoon(occurrence) ? 1 : 0,
+  expected: occurrence.status === 'planned' && isCurrentMonth(occurrence.due_on)
+    ? Number(occurrence.expected_amount || 0)
+    : 0,
+  paid: occurrence.status === 'paid' && isCurrentMonth(occurrence.paid_at)
+    ? Number(occurrence.actual_amount || 0)
+    : 0
+})
+const applyOccurrenceUpdate = (updated: PaymentOccurrence) => {
+  const index = occurrences.value.findIndex(item => item.id === updated.id)
+  if (index < 0) return
+
+  const previous = occurrences.value[index]
+  const next = {...updated, plan: updated.plan || previous.plan}
+  const before = occurrenceContribution(previous)
+  const after = occurrenceContribution(next)
+
+  occurrences.value.splice(index, 1, next)
+  summary.overdue_count = Math.max(0, summary.overdue_count - before.overdue + after.overdue)
+  summary.due_soon_count = Math.max(0, summary.due_soon_count - before.dueSoon + after.dueSoon)
+  summary.expected_this_month = Math.max(
+    0,
+    Number(summary.expected_this_month) - before.expected + after.expected
+  ).toFixed(2)
+  summary.paid_this_month = Math.max(
+    0,
+    Number(summary.paid_this_month) - before.paid + after.paid
+  ).toFixed(2)
+
+  if (previous.status !== next.status) {
+    plans.value = plans.value.map(plan => plan.id === next.plan_id ? {
+      ...plan,
+      planned_count: Math.max(
+        0,
+        (plan.planned_count || 0) - Number(previous.status === 'planned') + Number(next.status === 'planned')
+      ),
+      paid_count: Math.max(
+        0,
+        (plan.paid_count || 0) - Number(previous.status === 'paid') + Number(next.status === 'paid')
+      )
+    } : plan)
+  }
+}
 const statusLabel = (occurrence: PaymentOccurrence) => t(isOverdue(occurrence) ? 'payments.overdue' : `payments.${occurrence.status}`)
 const statusClass = (occurrence: PaymentOccurrence) => [
   'badge',

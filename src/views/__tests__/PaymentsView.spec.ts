@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {flushPromises, mount} from '@vue/test-utils'
 import {createI18n} from 'vue-i18n'
 import {createPinia, setActivePinia} from 'pinia'
@@ -56,6 +56,12 @@ const occurrence: PaymentOccurrence = {
   paid_at: null
 }
 
+const makeOccurrence = (overrides: Partial<PaymentOccurrence>): PaymentOccurrence => ({
+  ...occurrence,
+  ...overrides,
+  plan: {...plan, ...overrides.plan}
+})
+
 function mountView() {
   const i18n = createI18n({legacy: false, locale: 'ru', fallbackLocale: 'ru', messages: {ru}})
   return mount(PaymentsView, {
@@ -68,6 +74,8 @@ function mountView() {
 
 describe('PaymentsView', () => {
   beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-08T12:00:00+03:00'))
     setActivePinia(createPinia())
     vi.clearAllMocks()
     vi.mocked(paymentsApi.overview).mockResolvedValue({
@@ -76,8 +84,15 @@ describe('PaymentsView', () => {
     })
     vi.mocked(paymentsApi.categories).mockResolvedValue({categories: [plan.category!]})
     vi.mocked(paymentsApi.plans).mockResolvedValue({plans: [plan]})
-    vi.mocked(paymentsApi.pay).mockResolvedValue({...occurrence, status: 'paid', actual_amount: '9000.00'})
+    vi.mocked(paymentsApi.pay).mockResolvedValue({
+      ...occurrence,
+      status: 'paid',
+      actual_amount: '9000.00',
+      paid_at: '2026-08-08T12:00:00+03:00'
+    })
   })
+
+  afterEach(() => vi.useRealTimers())
 
   it('shows payment summary and the three amount layers', async () => {
     const wrapper = mountView()
@@ -104,6 +119,37 @@ describe('PaymentsView', () => {
     await flushPromises()
 
     expect(paymentsApi.pay).toHaveBeenCalledWith('occurrence-1', expect.objectContaining({actual_amount: '9000.00'}))
-    expect(paymentsApi.overview).toHaveBeenCalledTimes(2)
+    expect(paymentsApi.overview).toHaveBeenCalledOnce()
+    expect(wrapper.find('[data-occurrence-id="occurrence-1"]').exists()).toBe(false)
+    expect(wrapper.find('app-loader-stub').exists()).toBe(false)
+  })
+
+  it('opens with planned payments and puts overdue occurrences first', async () => {
+    vi.mocked(paymentsApi.overview).mockResolvedValue({
+      summary: {overdue_count: 1, due_soon_count: 1, expected_this_month: '1500.00', paid_this_month: '500.00'},
+      occurrences: [
+        makeOccurrence({id: 'future', due_on: '2026-08-10', expected_amount: '500.00'}),
+        makeOccurrence({
+          id: 'paid',
+          due_on: '2026-08-01',
+          status: 'paid',
+          actual_amount: '500.00',
+          paid_at: '2026-08-01T12:00:00+03:00'
+        }),
+        makeOccurrence({id: 'overdue', due_on: '2026-08-07', expected_amount: '1000.00'})
+      ]
+    })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    const status = wrapper.get<HTMLSelectElement>('select[aria-label="Payment status"]')
+    expect(status.element.value).toBe('planned')
+
+    const rows = wrapper.findAll('[data-testid="payment-occurrence"]')
+    expect(rows.map(row => row.attributes('data-occurrence-id'))).toEqual(['overdue', 'future'])
+    expect(rows[0].attributes('data-overdue')).toBe('true')
+    expect(rows[0].classes()).toContain('bg-red-50')
+    expect(wrapper.get('[data-testid="overdue-alert"]').text()).toContain('Просроченные платежи: 1')
   })
 })
