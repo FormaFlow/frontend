@@ -38,7 +38,12 @@
       <div v-if="selectedFormId" class="lg:col-span-2 space-y-4">
         <form @submit.prevent="handleSubmit" v-if="currentForm">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div v-for="field in requiredFields" :key="field.id" class="form-group">
+            <div
+                v-for="field in requiredFields"
+                :key="field.id"
+                class="form-group"
+                :class="{'md:col-span-2': field.type === 'textarea'}"
+            >
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {{ field.label }}
                 <span v-if="field.required" class="text-red-500">*</span>
@@ -63,6 +68,15 @@
                 </label>
               </div>
 
+              <textarea
+                  v-else-if="field.type === 'textarea'"
+                  v-model="formData[field.id]"
+                  :placeholder="field.placeholder"
+                  :required="field.required"
+                  rows="4"
+                  class="form-textarea w-full"
+              ></textarea>
+
               <div v-else>
                 <input
                     v-model="formData[field.id]"
@@ -79,7 +93,11 @@
 
           <!-- TODO: Replace this temporary optional-fields block with attribute-based rendering at the end of the form. -->
           <div v-if="optionalFields.length > 0" class="mt-4 flex flex-wrap items-end gap-3">
-            <div v-for="field in optionalFields" :key="field.id" class="min-w-[5rem]">
+            <div
+                v-for="field in optionalFields"
+                :key="field.id"
+                :class="field.type === 'textarea' ? 'w-full basis-full' : 'min-w-[5rem]'"
+            >
               <label
                   v-if="field.type === 'boolean'"
                   class="inline-flex h-12 items-center gap-2 rounded-lg border border-gray-200 px-3 text-sm text-gray-700 dark:border-gray-600 dark:text-gray-200"
@@ -99,6 +117,14 @@
                     :placeholder="field.placeholder || field.label"
                 />
               </div>
+
+              <textarea
+                  v-else-if="field.type === 'textarea'"
+                  v-model="formData[field.id]"
+                  :placeholder="field.placeholder || field.label"
+                  rows="4"
+                  class="form-textarea w-full"
+              ></textarea>
 
               <div v-else class="min-w-[10rem]">
                 <input

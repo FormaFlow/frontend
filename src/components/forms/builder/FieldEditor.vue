@@ -188,6 +188,7 @@ defineExpose({
 
 const fieldTypeOptions = computed(() => [
   { label: t('forms.field_types.text'), value: 'text' },
+  { label: t('forms.field_types.textarea'), value: 'textarea' },
   { label: t('forms.field_types.number'), value: 'number' },
   { label: t('forms.field_types.email'), value: 'email' },
   { label: t('forms.field_types.date'), value: 'date' },

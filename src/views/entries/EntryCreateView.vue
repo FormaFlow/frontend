@@ -51,6 +51,16 @@
                 :step="['number', 'currency'].includes(field.type) ? 'any' : undefined"
             />
 
+            <textarea
+                v-else-if="field.type === 'textarea'"
+                :id="field.id"
+                v-model="formData[field.id]"
+                :placeholder="field.placeholder"
+                :required="field.required"
+                rows="4"
+                :class="['form-textarea', fieldErrors[field.id] ? 'border-red-500 focus:ring-red-500' : '']"
+            ></textarea>
+
             <input
                 v-else-if="field.type === 'date'"
                 :id="field.id"

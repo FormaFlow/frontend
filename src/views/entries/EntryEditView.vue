@@ -17,8 +17,20 @@
           <h2 class="text-lg font-semibold mb-4">{{ $t('common.data') }}</h2>
           <div v-if="currentForm" class="space-y-4">
             <div v-for="field in sortedFields" :key="field.id">
+              <label v-if="field.type === 'textarea'" class="block">
+                <span class="form-label">
+                  {{ field.label }} <span v-if="field.required" class="text-red-500">*</span>
+                </span>
+                <textarea
+                    v-model="(currentEntry.data[field.id] as string)"
+                    :required="field.required"
+                    :placeholder="field.placeholder"
+                    rows="4"
+                    class="form-textarea"
+                ></textarea>
+              </label>
               <AppInput
-                  v-if="['text', 'number', 'email', 'date', 'currency'].includes(field.type)"
+                  v-else-if="['text', 'number', 'email', 'date', 'currency'].includes(field.type)"
                   v-model="(currentEntry.data[field.id] as string | number)"
                   :label="field.label"
                   :type="getInputType(field.type)"

@@ -46,6 +46,14 @@ const fullForm = {
       type: 'boolean',
       required: false,
       order: 1
+    },
+    {
+      id: 'field-notes',
+      label: 'Long notes',
+      type: 'textarea',
+      required: false,
+      placeholder: 'Several lines',
+      order: 2
     }
   ]
 }
@@ -143,6 +151,22 @@ test.beforeEach(async ({ page }) => {
       return
     }
 
+    if (url.pathname === '/api/v1/entries/entry-textarea') {
+      await route.fulfill({
+        status: 200,
+        headers,
+        json: {
+          id: 'entry-textarea',
+          form_id: 'form-1',
+          data: {'field-notes': 'First line\nSecond line'},
+          tags: [],
+          created_at: '2026-08-10T10:00:00+00:00',
+          updated_at: '2026-08-10T10:00:00+00:00'
+        }
+      })
+      return
+    }
+
     if (url.pathname === '/api/v1/forms') {
       await route.fulfill({
         status: 200,
@@ -209,7 +233,16 @@ test('entry form loads its field definition only after selection', async ({ page
   await page.getByLabel('Формы').selectOption('form-1')
 
   await expect(page.getByText('Very long required field label that must wrap')).toBeVisible()
+  await expect(page.getByLabel('Long notes')).toHaveJSProperty('tagName', 'TEXTAREA')
   expect(detailRequests).toBe(1)
+})
+
+test('entry editor preserves multiline textarea values', async ({page}) => {
+  await page.goto('/entries/entry-textarea/edit')
+
+  const textarea = page.getByLabel('Long notes')
+  await expect(textarea).toHaveJSProperty('tagName', 'TEXTAREA')
+  await expect(textarea).toHaveValue('First line\nSecond line')
 })
 
 test('mobile notification has equal side margins', async ({ page }, testInfo) => {

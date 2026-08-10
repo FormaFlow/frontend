@@ -203,6 +203,29 @@ describe('QuickEntryWidget cache refresh', () => {
     expect(vm.selectedFormId).toBe('form-1')
   })
 
+  it('renders a textarea field as a multiline control', async () => {
+    const textareaForm = {
+      ...forms[0],
+      fields: [{
+        id: 'notes',
+        name: 'notes',
+        label: 'Long notes',
+        type: 'textarea',
+        required: true
+      }]
+    } as unknown as Form
+    vi.mocked(formsApi.list).mockResolvedValue({forms: [textareaForm], total: 1, limit: 10, offset: 0})
+    vi.mocked(formsApi.get).mockResolvedValue(textareaForm)
+
+    const wrapper = mountWidget()
+    await flushPromises()
+    await selectForm(wrapper, 'form-1')
+    await flushPromises()
+
+    const textarea = wrapper.get('textarea')
+    expect(textarea.attributes('rows')).toBe('4')
+  })
+
   it('shows the neighboring form names on navigation buttons', async () => {
     const wrapper = mountWidget()
     await flushPromises()

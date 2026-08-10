@@ -1,4 +1,4 @@
-export type FormFieldType = 'text' | 'number' | 'date' | 'boolean' | 'select' | 'currency' | 'email'
+export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'boolean' | 'select' | 'currency' | 'email'
 
 export interface FormFieldOption {
   label: string

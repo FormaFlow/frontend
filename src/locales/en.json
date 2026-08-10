@@ -91,6 +91,7 @@
     "preview": "Preview",
     "field_types": {
       "text": "Text",
+      "textarea": "Multiline text",
       "number": "Number",
       "date": "Date",
       "boolean": "Boolean",
