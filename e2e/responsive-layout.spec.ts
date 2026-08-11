@@ -148,6 +148,12 @@ test.beforeEach(async ({ page }) => {
 
     if (url.pathname === '/api/v1/entries/stats/week') {
       const anchor = url.searchParams.get('date') || new Date().toISOString().slice(0, 10)
+      const monthTotals: Record<string, {count: number, amount: number}> = {
+        '2026-08': {count: 2, amount: 160},
+        '2026-07': {count: 4, amount: 100},
+        '2026-06': {count: 3, amount: 120}
+      }
+      const totals = monthTotals[anchor.slice(0, 7)] || {count: 0, amount: 0}
       const days = Array.from({ length: 7 }, (_, index) => {
         const date = new Date(`${anchor}T12:00:00Z`)
         date.setUTCDate(date.getUTCDate() - index)
@@ -166,8 +172,8 @@ test.beforeEach(async ({ page }) => {
           days,
           months: {
             [anchor.slice(0, 7)]: [
-              { field: '_count', sum_month: 2 },
-              { field: 'field-1', sum_month: 160 }
+              { field: '_count', sum_month: totals.count },
+              { field: 'field-1', sum_month: totals.amount }
             ]
           }
         }
@@ -382,11 +388,12 @@ test('form with no entries today keeps the date navigation and reuses weekly sta
   expect(previousBox!.x + previousBox!.width).toBeLessThanOrEqual(dateBox!.x)
   expect(dateBox!.x + dateBox!.width).toBeLessThanOrEqual(nextBox!.x)
 
-  await expect(page.getByTestId('stats-entry-count-note')).toContainText('Записей: 0')
+  await expect(page.getByTestId('stats-current-_count')).toContainText('0')
+  const requestsBeforeDayNavigation = weeklyStatsRequests
   await previousDay.click()
 
-  await expect(page.getByTestId('stats-entry-count-note')).toContainText('Записей: 2')
-  expect(weeklyStatsRequests).toBe(1)
+  await expect(page.getByTestId('stats-current-_count')).toContainText('2')
+  expect(weeklyStatsRequests).toBe(requestsBeforeDayNavigation)
   await expectNoHorizontalOverflow(page)
 })
 
@@ -394,21 +401,34 @@ test('statistics forecast is compact, compares yesterday and switches to month',
   await page.clock.install({time: new Date(2026, 7, 11, 12, 0)})
   await page.goto('/entries?form_id=form-1')
 
-  await expect(page.getByTestId('forecast-field-1')).toContainText('120 mg')
-  await expect(page.getByTestId('stats-entry-count-note')).toContainText('Записей: 0')
+  await expect(page.getByTestId('stats-current-field-1')).toContainText('60.25 mg')
+  await expect(page.getByTestId('stats-secondary-field-1')).toContainText('120 mg')
+  await expect(page.getByTestId('stats-current-_count')).toContainText('0')
+  await expect(page.getByTestId('stats-secondary-_count')).toContainText('0')
   await expect(page.getByTestId('comparison-field-1')).toContainText('+20 mg')
   await expect(page.getByTestId('comparison-field-1')).toHaveClass(/text-emerald-600/)
 
   if (testInfo.project.name === 'mobile-chrome') {
-    await page.screenshot({path: testInfo.outputPath('stats-forecast-mobile.png'), fullPage: true})
+    await page.getByTestId('entry-stats-summary').screenshot({path: testInfo.outputPath('stats-forecast-mobile.png')})
   }
 
   await page.getByTestId('stats-month-tab').click()
-  await expect(page.getByText('160 mg')).toBeVisible()
+  await expect(page.getByTestId('stats-current-field-1')).toContainText('160 mg')
+  await expect(page.getByTestId('stats-secondary-field-1')).toContainText('472 mg')
+  await expect(page.getByTestId('stats-current-_count')).toContainText('2')
+  await expect(page.getByTestId('stats-secondary-_count')).toContainText('6')
   await expectNoHorizontalOverflow(page)
 
   if (testInfo.project.name === 'mobile-chrome') {
-    await page.screenshot({path: testInfo.outputPath('stats-month-mobile.png'), fullPage: true})
+    await page.getByTestId('entry-stats-summary').screenshot({path: testInfo.outputPath('stats-month-mobile.png')})
+  }
+
+  await page.getByTestId('stats-previous').click()
+  await expect(page.getByTestId('stats-current-field-1')).toContainText('100 mg')
+  await expect(page.getByTestId('stats-secondary-field-1')).toContainText('−20 mg')
+  await expect(page.getByTestId('stats-secondary-_count')).toContainText('+1')
+  if (testInfo.project.name === 'mobile-chrome') {
+    await page.getByTestId('entry-stats-summary').screenshot({path: testInfo.outputPath('stats-previous-month-mobile.png')})
   }
 })
 

@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {comparisonTone, forecastForToday} from '@/utils/statsForecast'
+import {comparisonTone, forecastForCurrentMonth, forecastForToday} from '@/utils/statsForecast'
 
 describe('statistics forecast', () => {
   it('projects the current value using elapsed minutes of the day', () => {
@@ -20,6 +20,13 @@ describe('statistics forecast', () => {
   it('does not divide by zero immediately after midnight', () => {
     expect(forecastForToday(0, new Date(2026, 7, 11, 0, 0))).toBe(0)
     expect(Number.isFinite(forecastForToday(1, new Date(2026, 7, 11, 0, 0)))).toBe(true)
+  })
+
+  it('projects the current month using its elapsed fraction', () => {
+    const augustEleventhAtNoon = new Date(2026, 7, 11, 12, 0)
+
+    expect(forecastForCurrentMonth(240, augustEleventhAtNoon)).toBe(709)
+    expect(forecastForCurrentMonth(9, augustEleventhAtNoon)).toBe(27)
   })
 
   it('uses the configured meaning of an increase for comparison colors', () => {

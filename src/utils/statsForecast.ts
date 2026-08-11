@@ -14,6 +14,14 @@ export function forecastForToday(value: number, now = new Date()): number {
   return roundHalfDown(value * 1440 / elapsedMinutes)
 }
 
+export function forecastForCurrentMonth(value: number, now = new Date()): number {
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  const elapsedMs = Math.max(60_000, now.getTime() - monthStart.getTime())
+  const monthDurationMs = nextMonthStart.getTime() - monthStart.getTime()
+  return roundHalfDown(value * monthDurationMs / elapsedMs)
+}
+
 export function comparisonTone(delta: number, direction: TrendDirection): ComparisonTone {
   if (delta === 0 || direction === 'neutral') return 'neutral'
 

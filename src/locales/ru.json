@@ -79,8 +79,8 @@
     "trend_direction": "Оценка изменения",
     "trend_directions": {
       "neutral": "Без цветовой оценки",
-      "increase_good": "Рост — хорошо",
-      "decrease_good": "Снижение — хорошо"
+      "increase_good": "Больше — лучше",
+      "decrease_good": "Меньше — лучше"
     },
     "publish": "Опубликовать",
     "unpublish": "Снять с публикации",
@@ -169,7 +169,10 @@
     "current_value": "Сейчас",
     "compared_with_previous_day": "к предыдущему дню",
     "entry_count_note": "Записей: {count}",
-    "previous_day_difference": "{difference} ко вчера"
+    "previous_day_difference": "{difference} ко вчера",
+    "previous_day_change": "К предыдущему дню",
+    "previous_month_change": "К предыдущему месяцу",
+    "compared_with_previous_month": "к предыдущему месяцу"
   },
   "payments": {
     "title": "Платежи",

@@ -79,8 +79,8 @@
     "trend_direction": "Change assessment",
     "trend_directions": {
       "neutral": "No color assessment",
-      "increase_good": "Growth is good",
-      "decrease_good": "Decrease is good"
+      "increase_good": "More is better",
+      "decrease_good": "Less is better"
     },
     "publish": "Publish",
     "unpublish": "Unpublish",
@@ -169,7 +169,10 @@
     "current_value": "Now",
     "compared_with_previous_day": "vs previous day",
     "entry_count_note": "Entries: {count}",
-    "previous_day_difference": "{difference} vs yesterday"
+    "previous_day_difference": "{difference} vs yesterday",
+    "previous_day_change": "Vs previous day",
+    "previous_month_change": "Vs previous month",
+    "compared_with_previous_month": "vs previous month"
   },
   "payments": {
     "title": "Payments",

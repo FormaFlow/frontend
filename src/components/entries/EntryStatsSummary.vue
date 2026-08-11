@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div data-testid="entry-stats-summary">
     <div v-if="formId" class="space-y-2 border-b border-gray-200 p-3 dark:border-gray-700">
       <div class="mx-auto grid w-full max-w-sm grid-cols-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
         <button
@@ -70,64 +70,53 @@
     <div v-if="activeLoading" class="flex justify-center py-8">
       <AppLoader />
     </div>
-
     <div v-else-if="!formId" class="py-8 text-center text-gray-500 dark:text-gray-400">
       {{ $t('reports.select_form_hint') }}
     </div>
-
-    <div v-else-if="items.length === 0 && !entryCountNote" class="py-8 text-center text-gray-500 dark:text-gray-400">
+    <div v-else-if="rows.length === 0" class="py-8 text-center text-gray-500 dark:text-gray-400">
       {{ $t('reports.no_data') }}
     </div>
 
     <div v-else class="p-4">
-      <h3 class="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">
-        {{ periodTitle }}
-      </h3>
-      <div
-        v-if="items.length"
-        :class="['grid gap-3', items.length === 1 ? 'grid-cols-1' : 'grid-cols-2']"
-      >
-        <div
-          v-for="item in items"
-          :key="item.field"
-          class="min-w-0 rounded-xl bg-gray-50 p-3 dark:bg-gray-800/70"
-        >
-          <div v-if="item.isForecast" class="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-            {{ $t('entries.forecast') }}
+      <div class="overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-800/70">
+        <div class="grid grid-cols-2 divide-x divide-gray-200 dark:divide-gray-700">
+          <div class="px-3 py-2 text-xs font-bold uppercase tracking-wider text-gray-500">
+            {{ currentTitle }}
           </div>
-          <div class="flex flex-wrap items-start gap-x-2 gap-y-1">
-            <div
-              class="min-w-0 whitespace-nowrap text-xl font-bold text-gray-900 dark:text-white sm:text-2xl"
-              :data-testid="item.field === '_count' ? 'today-entry-count' : item.isForecast ? `forecast-${item.field}` : undefined"
-            >
-              {{ item.value }}
-            </div>
-            <span
-              v-if="item.comparison"
-              :data-testid="`comparison-${item.field}`"
-              :title="$t('entries.compared_with_previous_day')"
-              :class="['ml-auto', comparisonClass(item.tone)]"
-            >
-              {{ item.comparison }}
-            </span>
-          </div>
-          <div class="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
-            {{ item.label }}
-          </div>
-          <div v-if="item.currentValue" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {{ $t('entries.current_value') }}: {{ item.currentValue }}
+          <div class="px-3 py-2 text-xs font-bold uppercase tracking-wider text-gray-500">
+            {{ secondaryTitle }}
           </div>
         </div>
-      </div>
-      <div
-        v-if="entryCountNote"
-        data-testid="stats-entry-count-note"
-        class="mt-3 text-xs text-gray-400 dark:text-gray-500"
-      >
-        {{ $t('entries.entry_count_note', {count: entryCountNote.value}) }}
-        <span v-if="entryCountNote.comparison">
-          · {{ $t('entries.previous_day_difference', {difference: entryCountNote.comparison}) }}
-        </span>
+
+        <div
+          v-for="row in rows"
+          :key="row.field"
+          :class="[
+            'grid grid-cols-2 divide-x divide-gray-200 border-t border-gray-200 dark:divide-gray-700 dark:border-gray-700',
+            row.isCount && 'bg-gray-100/60 dark:bg-gray-900/20',
+          ]"
+        >
+          <div :data-testid="`stats-current-${row.field}`" :class="rowCellClass(row.isCount)">
+            <div :class="valueClass(row.isCount, 'neutral')">{{ row.current }}</div>
+            <div class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{{ row.label }}</div>
+          </div>
+          <div :data-testid="`stats-secondary-${row.field}`" :class="rowCellClass(row.isCount)">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span :class="valueClass(row.isCount, row.secondaryIsDelta ? row.tone : 'neutral')">
+                {{ row.secondary }}
+              </span>
+              <span
+                v-if="row.comparison"
+                :data-testid="`comparison-${row.field}`"
+                :title="comparisonTitle"
+                :class="comparisonClass(row.tone)"
+              >
+                {{ row.comparison }}
+              </span>
+            </div>
+            <div class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{{ row.label }}</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -140,20 +129,26 @@ import AppLoader from '@/components/common/AppLoader.vue'
 import {useStats} from '@/composables/useStats'
 import {formatFieldValue} from '@/utils/formatters'
 import {addDaysToLocalDateString, parseLocalDate, toLocalDateString} from '@/utils/date'
-import {comparisonTone, forecastForToday, type ComparisonTone} from '@/utils/statsForecast'
+import {
+  comparisonTone,
+  forecastForCurrentMonth,
+  forecastForToday,
+  type ComparisonTone,
+} from '@/utils/statsForecast'
 import type {EntryStats} from '@/api/entries'
 import type {Form, FormField, FormFieldType, TrendDirection} from '@/types/form'
 
 type PeriodMode = 'day' | 'month'
 
-interface StatsItem {
+interface SummaryRow {
   field: string
   label: string
-  value: string
-  currentValue?: string
+  current: string
+  secondary: string
   comparison?: string
   tone: ComparisonTone
-  isForecast: boolean
+  secondaryIsDelta: boolean
+  isCount: boolean
 }
 
 const props = defineProps<{
@@ -167,43 +162,62 @@ const currentMonth = todayDate.slice(0, 7)
 const mode = ref<PeriodMode>('day')
 const dayDate = ref(todayDate)
 const monthDate = ref(todayDate)
+const previousMonthDate = computed(() => shiftMonthDate(monthDate.value, -1))
 const {stats: dayStats, loading: dayLoading} = useStats(toRef(props, 'formId'), dayDate)
 const {stats: monthStats, loading: monthLoading} = useStats(toRef(props, 'formId'), monthDate)
+const {stats: previousMonthStats, loading: previousMonthLoading} = useStats(
+  toRef(props, 'formId'),
+  previousMonthDate,
+)
 
-const activeLoading = computed(() => mode.value === 'day' ? dayLoading.value : monthLoading.value)
 const isToday = computed(() => dayDate.value === todayDate)
-const isLatestPeriod = computed(() => mode.value === 'day'
-  ? isToday.value
-  : monthDate.value.slice(0, 7) === currentMonth)
+const isCurrentMonth = computed(() => monthDate.value.slice(0, 7) === currentMonth)
+const isLatestPeriod = computed(() => mode.value === 'day' ? isToday.value : isCurrentMonth.value)
+const activeLoading = computed(() => mode.value === 'day'
+  ? dayLoading.value
+  : monthLoading.value || previousMonthLoading.value)
 
 const changePeriod = (offset: number) => {
   if (mode.value === 'day') {
     dayDate.value = addDaysToLocalDateString(dayDate.value, offset)
     return
   }
+  monthDate.value = shiftMonthDate(monthDate.value, offset)
+}
 
-  const date = parseLocalDate(monthDate.value)
+function shiftMonthDate(value: string, offset: number): string {
+  const date = parseLocalDate(value)
   const originalDay = date.getDate()
   date.setDate(1)
   date.setMonth(date.getMonth() + offset)
   const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
   date.setDate(Math.min(originalDay, lastDay))
-  monthDate.value = toLocalDateString(date)
+  return toLocalDateString(date)
 }
 
-const periodTitle = computed(() => {
-  const date = parseLocalDate(mode.value === 'day' ? dayDate.value : monthDate.value)
-  if (mode.value === 'month') {
-    return new Intl.DateTimeFormat(locale.value, {month: 'long', year: 'numeric'}).format(date)
-  }
-  if (isToday.value) return t('entries.today')
-  return new Intl.DateTimeFormat(locale.value, {day: 'numeric', month: 'long', year: 'numeric'}).format(date)
-})
+const formatDate = (value: string, options: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat(locale.value, options).format(parseLocalDate(value))
 
 const formattedNavigationMonth = computed(() =>
-  new Intl.DateTimeFormat(locale.value, {month: 'long', year: 'numeric'})
-    .format(parseLocalDate(monthDate.value))
+  formatDate(monthDate.value, {month: 'long', year: 'numeric'})
 )
+
+const currentTitle = computed(() => {
+  if (mode.value === 'month') return formattedNavigationMonth.value
+  if (isToday.value) return t('entries.today')
+  return formatDate(dayDate.value, {day: 'numeric', month: 'short'})
+})
+
+const secondaryTitle = computed(() => {
+  if (mode.value === 'day') {
+    return isToday.value ? t('entries.forecast') : t('entries.previous_day_change')
+  }
+  return isCurrentMonth.value ? t('entries.forecast') : t('entries.previous_month_change')
+})
+
+const comparisonTitle = computed(() => mode.value === 'day'
+  ? t('entries.compared_with_previous_day')
+  : t('entries.compared_with_previous_month'))
 
 const fieldMeta = (fieldId: string): {field: FormField | null, type: FormFieldType, direction: TrendDirection} => {
   if (fieldId === '_count') return {field: null, type: 'number', direction: 'neutral'}
@@ -216,68 +230,72 @@ const formatValue = (value: number, fieldId: string): string => {
   return formatFieldValue(value, type, field?.unit)
 }
 
-const formatComparison = (delta: number, fieldId: string): string => {
+const formatDelta = (delta: number, fieldId: string): string => {
   const sign = delta > 0 ? '+' : delta < 0 ? '−' : '±'
   return `${sign}${formatValue(Math.abs(delta), fieldId)}`
 }
 
-const dayItems = computed<StatsItem[]>(() => {
+const statsByField = (stats: EntryStats | null, key: 'sum_today' | 'sum_month') =>
+  new Map((stats ?? []).map(stat => [stat.field, stat[key]]))
+
+const orderedStats = (stats: EntryStats | null) => {
+  const values = stats ?? []
+  return [...values.filter(stat => stat.field !== '_count'), ...values.filter(stat => stat.field === '_count')]
+}
+
+const dayRows = computed<SummaryRow[]>(() => {
   if (!dayStats.value || !props.form) return []
 
-  return dayStats.value.map(stat => {
+  return orderedStats(dayStats.value).map(stat => {
     const {field, direction} = fieldMeta(stat.field)
-    const displayValue = isToday.value ? forecastForToday(stat.sum_today) : stat.sum_today
-    const delta = displayValue - stat.sum_previous_day
+    const isCount = stat.field === '_count'
+    const secondaryValue = isToday.value ? forecastForToday(stat.sum_today) : stat.sum_today - stat.sum_previous_day
+    const comparison = isToday.value ? secondaryValue - stat.sum_previous_day : null
 
     return {
       field: stat.field,
       label: field?.label ?? t('forms.entries_count'),
-      value: formatValue(displayValue, stat.field),
-      currentValue: isToday.value ? formatValue(stat.sum_today, stat.field) : undefined,
-      comparison: formatComparison(delta, stat.field),
-      tone: comparisonTone(delta, direction),
-      isForecast: isToday.value,
-    }
-  }).filter(item => item.field !== '_count')
-})
-
-const monthItems = computed<StatsItem[]>(() => formatMonthItems(monthStats.value))
-
-function formatMonthItems(stats: EntryStats | null): StatsItem[] {
-  if (!stats || !props.form) return []
-  return stats.filter(stat => stat.field !== '_count').map(stat => {
-    const {field} = fieldMeta(stat.field)
-    return {
-      field: stat.field,
-      label: field?.label ?? t('forms.entries_count'),
-      value: formatValue(stat.sum_month, stat.field),
-      tone: 'neutral',
-      isForecast: false,
+      current: formatValue(stat.sum_today, stat.field),
+      secondary: isToday.value
+        ? formatValue(secondaryValue, stat.field)
+        : formatDelta(secondaryValue, stat.field),
+      comparison: comparison === null ? undefined : formatDelta(comparison, stat.field),
+      tone: comparisonTone(comparison ?? secondaryValue, direction),
+      secondaryIsDelta: !isToday.value,
+      isCount,
     }
   })
-}
-
-const items = computed(() => mode.value === 'day' ? dayItems.value : monthItems.value)
-
-const formatCountDifference = (difference: number): string => {
-  const sign = difference > 0 ? '+' : difference < 0 ? '−' : '±'
-  return `${sign}${Math.abs(difference).toLocaleString(locale.value)}`
-}
-
-const entryCountNote = computed(() => {
-  const stats = mode.value === 'day' ? dayStats.value : monthStats.value
-  const count = stats?.find(stat => stat.field === '_count')
-  if (!count) return null
-
-  if (mode.value === 'month') {
-    return {value: count.sum_month.toLocaleString(locale.value)}
-  }
-
-  return {
-    value: count.sum_today.toLocaleString(locale.value),
-    comparison: formatCountDifference(count.sum_today - count.sum_previous_day),
-  }
 })
+
+const monthRows = computed<SummaryRow[]>(() => {
+  if (!monthStats.value || !props.form) return []
+
+  const previous = statsByField(previousMonthStats.value, 'sum_month')
+  return orderedStats(monthStats.value).map(stat => {
+    const {field, direction} = fieldMeta(stat.field)
+    const isCount = stat.field === '_count'
+    const previousValue = previous.get(stat.field) ?? 0
+    const secondaryValue = isCurrentMonth.value
+      ? forecastForCurrentMonth(stat.sum_month)
+      : stat.sum_month - previousValue
+    const comparison = isCurrentMonth.value ? secondaryValue - previousValue : null
+
+    return {
+      field: stat.field,
+      label: field?.label ?? t('forms.entries_count'),
+      current: formatValue(stat.sum_month, stat.field),
+      secondary: isCurrentMonth.value
+        ? formatValue(secondaryValue, stat.field)
+        : formatDelta(secondaryValue, stat.field),
+      comparison: comparison === null ? undefined : formatDelta(comparison, stat.field),
+      tone: comparisonTone(comparison ?? secondaryValue, direction),
+      secondaryIsDelta: !isCurrentMonth.value,
+      isCount,
+    }
+  })
+})
+
+const rows = computed(() => mode.value === 'day' ? dayRows.value : monthRows.value)
 
 const periodButtonClass = (period: PeriodMode) => [
   'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
@@ -286,10 +304,22 @@ const periodButtonClass = (period: PeriodMode) => [
     : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white',
 ]
 
+const rowCellClass = (isCount: boolean) => [
+  'min-w-0 px-3',
+  isCount ? 'py-2' : 'py-3',
+]
+
+const valueClass = (isCount: boolean, tone: ComparisonTone) => [
+  isCount ? 'text-sm font-semibold' : 'text-xl font-bold sm:text-2xl',
+  tone === 'positive' && 'text-emerald-600 dark:text-emerald-400',
+  tone === 'negative' && 'text-red-600 dark:text-red-400',
+  tone === 'neutral' && 'text-gray-900 dark:text-white',
+]
+
 const comparisonClass = (tone: ComparisonTone) => [
   'shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-semibold',
   tone === 'positive' && 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400',
   tone === 'negative' && 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400',
-  tone === 'neutral' && 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+  tone === 'neutral' && 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
 ]
 </script>
