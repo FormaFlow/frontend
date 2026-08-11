@@ -55,6 +55,21 @@ const fullForm = {
       required: false,
       placeholder: 'Several lines',
       order: 2
+    },
+    {
+      id: 'field-select',
+      label: 'Quantity',
+      type: 'select',
+      required: true,
+      sum_values: true,
+      trend_direction: 'decrease_good',
+      options: [
+        {label: 'S', value: '15'},
+        {label: 'M', value: '25'},
+        {label: 'L', value: '35'},
+        {label: 'XL', value: '50'}
+      ],
+      order: 3
     }
   ]
 }
@@ -228,6 +243,29 @@ test('form field editor does not create horizontal overflow', async ({ page }) =
   await expect(page.getByText('Very long required field label that must wrap')).toBeVisible()
 
   await expectNoHorizontalOverflow(page)
+})
+
+test('tall field editor scrolls inside the modal and keeps its save button reachable', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chrome')
+
+  await page.goto('/forms/form-1/edit')
+  const fieldCard = page.getByRole('heading', {name: 'Quantity'})
+    .locator('xpath=ancestor::div[contains(concat(" ", normalize-space(@class), " "), " card ")][1]')
+  await fieldCard.getByTitle('Редактировать').click()
+
+  const dialog = page.getByRole('dialog', {name: 'Редактировать поле'})
+  const scrollBody = dialog.getByTestId('modal-scroll-body')
+  await expect(dialog).toBeVisible()
+  await expect.poll(() => scrollBody.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true)
+
+  const backgroundScroll = await page.evaluate(() => window.scrollY)
+  await scrollBody.hover()
+  await page.mouse.wheel(0, 3000)
+  await expect.poll(() => scrollBody.evaluate(element => element.scrollTop)).toBeGreaterThan(0)
+  await expect(dialog.getByRole('button', {name: 'Сохранить'})).toBeInViewport()
+  expect(await page.evaluate(() => window.scrollY)).toBe(backgroundScroll)
+
+  await page.screenshot({path: testInfo.outputPath('field-editor-modal-scroll.png')})
 })
 
 test('entry form loads its field definition only after selection', async ({ page }) => {
