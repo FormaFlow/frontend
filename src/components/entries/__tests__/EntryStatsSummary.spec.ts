@@ -47,7 +47,7 @@ describe('EntryStatsSummary', () => {
     setActivePinia(createPinia())
     vi.mocked(entriesApi.weeklyStats).mockResolvedValue({
       days: [
-        {date: '2026-08-11', stats: [{field: '_count', sum: 3}, {field: 'amount', sum: 60}]},
+        {date: '2026-08-11', stats: [{field: '_count', sum: 3}, {field: 'amount', sum: 60.25}]},
         {date: '2026-08-10', stats: [{field: '_count', sum: 4}, {field: 'amount', sum: 100}]},
         {date: '2026-08-09', stats: [{field: '_count', sum: 2}, {field: 'amount', sum: 140}]},
         {date: '2026-08-08', stats: [{field: '_count', sum: 0}, {field: 'amount', sum: 0}]},
@@ -67,6 +67,9 @@ describe('EntryStatsSummary', () => {
 
     expect(wrapper.get('[data-testid="stats-day-tab"]').attributes('aria-pressed')).toBe('true')
     expect(wrapper.get('[data-testid="forecast-amount"]').text()).toContain('120 kg')
+    expect(wrapper.find('[data-testid="today-entry-count"]').exists()).toBe(false)
+    expect(wrapper.get('[data-testid="stats-entry-count-note"]').text()).toContain('Записей: 3')
+    expect(wrapper.get('[data-testid="stats-entry-count-note"]').text()).toContain('−1')
     const comparison = wrapper.get('[data-testid="comparison-amount"]')
     expect(comparison.text()).toContain('+20 kg')
     expect(comparison.classes()).toContain('text-emerald-600')
@@ -77,6 +80,8 @@ describe('EntryStatsSummary', () => {
     expect(wrapper.find('[data-testid="forecast-amount"]').exists()).toBe(false)
     expect(wrapper.get('[data-testid="comparison-amount"]').text()).toContain('−40 kg')
     expect(wrapper.get('[data-testid="comparison-amount"]').classes()).toContain('text-red-600')
+    expect(wrapper.get('[data-testid="stats-entry-count-note"]').text()).toContain('Записей: 4')
+    expect(wrapper.get('[data-testid="stats-entry-count-note"]').text()).toContain('+2')
   })
 
   it('switches to a compact independently navigable month view', async () => {
@@ -86,6 +91,7 @@ describe('EntryStatsSummary', () => {
     await wrapper.get('[data-testid="stats-month-tab"]').trigger('click')
     expect(wrapper.get('[data-testid="stats-month-tab"]').attributes('aria-pressed')).toBe('true')
     expect(wrapper.text()).toContain('240 kg')
+    expect(wrapper.get('[data-testid="stats-entry-count-note"]').text()).toContain('Записей: 9')
 
     await wrapper.get('[data-testid="stats-previous"]').trigger('click')
     await flushPromises()

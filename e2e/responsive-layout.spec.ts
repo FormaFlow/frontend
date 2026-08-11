@@ -140,7 +140,7 @@ test.beforeEach(async ({ page }) => {
           date: date.toISOString().slice(0, 10),
           stats: [
             { field: '_count', sum: index === 1 ? 2 : 0 },
-            { field: 'field-1', sum: index === 0 ? 60 : index === 1 ? 100 : 0 }
+            { field: 'field-1', sum: index === 0 ? 60.25 : index === 1 ? 100 : 0 }
           ]
         }
       })
@@ -344,10 +344,10 @@ test('form with no entries today keeps the date navigation and reuses weekly sta
   expect(previousBox!.x + previousBox!.width).toBeLessThanOrEqual(dateBox!.x)
   expect(dateBox!.x + dateBox!.width).toBeLessThanOrEqual(nextBox!.x)
 
-  await expect(page.getByTestId('today-entry-count')).toHaveText('0')
+  await expect(page.getByTestId('stats-entry-count-note')).toContainText('Записей: 0')
   await previousDay.click()
 
-  await expect(page.getByTestId('today-entry-count')).toHaveText('2')
+  await expect(page.getByTestId('stats-entry-count-note')).toContainText('Записей: 2')
   expect(weeklyStatsRequests).toBe(1)
   await expectNoHorizontalOverflow(page)
 })
@@ -357,6 +357,7 @@ test('statistics forecast is compact, compares yesterday and switches to month',
   await page.goto('/entries?form_id=form-1')
 
   await expect(page.getByTestId('forecast-field-1')).toContainText('120 mg')
+  await expect(page.getByTestId('stats-entry-count-note')).toContainText('Записей: 0')
   await expect(page.getByTestId('comparison-field-1')).toContainText('+20 mg')
   await expect(page.getByTestId('comparison-field-1')).toHaveClass(/text-emerald-600/)
 

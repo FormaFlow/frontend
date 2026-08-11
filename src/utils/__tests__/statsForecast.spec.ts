@@ -7,6 +7,16 @@ describe('statistics forecast', () => {
     expect(forecastForToday(10, new Date(2026, 7, 11, 6, 0))).toBe(40)
   })
 
+  it('rounds a forecast down through a half and up only above a half', () => {
+    const noon = new Date(2026, 7, 11, 12, 0)
+
+    expect(forecastForToday(1.2, noon)).toBe(2)
+    expect(forecastForToday(1.25, noon)).toBe(2)
+    expect(forecastForToday(1.255, noon)).toBe(3)
+    expect(forecastForToday(-1.25, noon)).toBe(-2)
+    expect(forecastForToday(-1.255, noon)).toBe(-3)
+  })
+
   it('does not divide by zero immediately after midnight', () => {
     expect(forecastForToday(0, new Date(2026, 7, 11, 0, 0))).toBe(0)
     expect(Number.isFinite(forecastForToday(1, new Date(2026, 7, 11, 0, 0)))).toBe(true)

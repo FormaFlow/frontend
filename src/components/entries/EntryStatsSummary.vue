@@ -75,7 +75,7 @@
       {{ $t('reports.select_form_hint') }}
     </div>
 
-    <div v-else-if="items.length === 0" class="py-8 text-center text-gray-500 dark:text-gray-400">
+    <div v-else-if="items.length === 0 && !entryCountNote" class="py-8 text-center text-gray-500 dark:text-gray-400">
       {{ $t('reports.no_data') }}
     </div>
 
@@ -83,7 +83,10 @@
       <h3 class="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">
         {{ periodTitle }}
       </h3>
-      <div class="grid grid-cols-2 gap-3">
+      <div
+        v-if="items.length"
+        :class="['grid gap-3', items.length === 1 ? 'grid-cols-1' : 'grid-cols-2']"
+      >
         <div
           v-for="item in items"
           :key="item.field"
@@ -115,6 +118,16 @@
             {{ $t('entries.current_value') }}: {{ item.currentValue }}
           </div>
         </div>
+      </div>
+      <div
+        v-if="entryCountNote"
+        data-testid="stats-entry-count-note"
+        class="mt-3 text-xs text-gray-400 dark:text-gray-500"
+      >
+        {{ $t('entries.entry_count_note', {count: entryCountNote.value}) }}
+        <span v-if="entryCountNote.comparison">
+          · {{ $t('entries.previous_day_difference', {difference: entryCountNote.comparison}) }}
+        </span>
       </div>
     </div>
   </div>
@@ -213,8 +226,7 @@ const dayItems = computed<StatsItem[]>(() => {
 
   return dayStats.value.map(stat => {
     const {field, direction} = fieldMeta(stat.field)
-    const forecast = isToday.value ? forecastForToday(stat.sum_today) : stat.sum_today
-    const displayValue = stat.field === '_count' && isToday.value ? Math.round(forecast) : forecast
+    const displayValue = isToday.value ? forecastForToday(stat.sum_today) : stat.sum_today
     const delta = displayValue - stat.sum_previous_day
 
     return {
@@ -226,14 +238,14 @@ const dayItems = computed<StatsItem[]>(() => {
       tone: comparisonTone(delta, direction),
       isForecast: isToday.value,
     }
-  })
+  }).filter(item => item.field !== '_count')
 })
 
 const monthItems = computed<StatsItem[]>(() => formatMonthItems(monthStats.value))
 
 function formatMonthItems(stats: EntryStats | null): StatsItem[] {
   if (!stats || !props.form) return []
-  return stats.map(stat => {
+  return stats.filter(stat => stat.field !== '_count').map(stat => {
     const {field} = fieldMeta(stat.field)
     return {
       field: stat.field,
@@ -246,6 +258,26 @@ function formatMonthItems(stats: EntryStats | null): StatsItem[] {
 }
 
 const items = computed(() => mode.value === 'day' ? dayItems.value : monthItems.value)
+
+const formatCountDifference = (difference: number): string => {
+  const sign = difference > 0 ? '+' : difference < 0 ? '−' : '±'
+  return `${sign}${Math.abs(difference).toLocaleString(locale.value)}`
+}
+
+const entryCountNote = computed(() => {
+  const stats = mode.value === 'day' ? dayStats.value : monthStats.value
+  const count = stats?.find(stat => stat.field === '_count')
+  if (!count) return null
+
+  if (mode.value === 'month') {
+    return {value: count.sum_month.toLocaleString(locale.value)}
+  }
+
+  return {
+    value: count.sum_today.toLocaleString(locale.value),
+    comparison: formatCountDifference(count.sum_today - count.sum_previous_day),
+  }
+})
 
 const periodButtonClass = (period: PeriodMode) => [
   'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',

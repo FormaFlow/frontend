@@ -167,7 +167,9 @@
     "month_view": "Month",
     "forecast": "Forecast",
     "current_value": "Now",
-    "compared_with_previous_day": "vs previous day"
+    "compared_with_previous_day": "vs previous day",
+    "entry_count_note": "Entries: {count}",
+    "previous_day_difference": "{difference} vs yesterday"
   },
   "payments": {
     "title": "Payments",

@@ -167,7 +167,9 @@
     "month_view": "Месяц",
     "forecast": "Прогноз",
     "current_value": "Сейчас",
-    "compared_with_previous_day": "к предыдущему дню"
+    "compared_with_previous_day": "к предыдущему дню",
+    "entry_count_note": "Записей: {count}",
+    "previous_day_difference": "{difference} ко вчера"
   },
   "payments": {
     "title": "Платежи",
