@@ -13,7 +13,10 @@ subscribeToEntryChanges(event => {
 })
 
 function findCachedWeek(formId: string, date: string): WeeklyEntryStats | undefined {
-  return weeklyStatsCache.get(formId)?.find(week => week.days.some(day => day.date === date))
+  return weeklyStatsCache.get(formId)?.find(week => {
+    const index = week.days.findIndex(day => day.date === date)
+    return index >= 0 && index < week.days.length - 1
+  })
 }
 
 function storeWeek(formId: string, response: WeeklyEntryStats): void {
@@ -41,12 +44,16 @@ async function fetchWeek(formId: string, date: string): Promise<WeeklyEntryStats
 
 function toEntryStats(response: WeeklyEntryStats, date: string): EntryStats {
   const dailyStats = response.days.find(day => day.date === date)?.stats ?? []
+  const previousDate = addDaysToLocalDateString(date, -1)
+  const previousStats = response.days.find(day => day.date === previousDate)?.stats ?? []
+  const previousByField = new Map(previousStats.map(stat => [stat.field, stat.sum]))
   const monthlyStats = response.months[date.slice(0, 7)] ?? []
   const monthlyByField = new Map(monthlyStats.map(stat => [stat.field, stat.sum_month]))
 
   return dailyStats.map(stat => ({
     field: stat.field,
     sum_today: stat.sum,
+    sum_previous_day: previousByField.get(stat.field) ?? 0,
     sum_month: monthlyByField.get(stat.field) ?? 0
   }))
 }

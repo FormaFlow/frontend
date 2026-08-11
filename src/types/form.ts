@@ -1,4 +1,5 @@
 export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'boolean' | 'select' | 'currency' | 'email'
+export type TrendDirection = 'neutral' | 'increase_good' | 'decrease_good'
 
 export interface FormFieldOption {
   label: string
@@ -10,6 +11,7 @@ export interface FormField {
   label: string
   type: FormFieldType
   sum_values?: boolean
+  trend_direction?: TrendDirection
   required: boolean
   placeholder?: string
   unit?: string
@@ -75,6 +77,7 @@ export interface AddFieldRequest {
   label: string
   type: FormFieldType
   sum_values?: boolean
+  trend_direction?: TrendDirection
   required: boolean
   placeholder?: string
   unit?: string
@@ -92,6 +95,7 @@ export interface UpdateFieldRequest {
   label?: string
   type?: FormFieldType
   sum_values?: boolean
+  trend_direction?: TrendDirection
   required?: boolean
   placeholder?: string
   unit?: string

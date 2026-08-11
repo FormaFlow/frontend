@@ -76,6 +76,12 @@
     "field_options": "Options",
     "sum_values": "Sum values in statistics",
     "sum_values_hint": "Option values must be numbers, for example 10, 20, 30.",
+    "trend_direction": "Change assessment",
+    "trend_directions": {
+      "neutral": "No color assessment",
+      "increase_good": "Growth is good",
+      "decrease_good": "Decrease is good"
+    },
     "publish": "Publish",
     "unpublish": "Unpublish",
     "published": "Published",
@@ -156,7 +162,12 @@
     "created_at": "Entry creation date and time",
     "custom_created_at": "Set entry creation date and time",
     "today": "Today",
-    "this_month": "This month"
+    "this_month": "This month",
+    "day_view": "Day",
+    "month_view": "Month",
+    "forecast": "Forecast",
+    "current_value": "Now",
+    "compared_with_previous_day": "vs previous day"
   },
   "payments": {
     "title": "Payments",

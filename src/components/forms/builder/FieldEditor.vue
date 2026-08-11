@@ -110,6 +110,14 @@
         </span>
       </label>
     </div>
+
+    <AppSelect
+      v-if="isStatNumeric"
+      id="field-trend-direction"
+      v-model="fieldForm.trend_direction"
+      :label="$t('forms.trend_direction')"
+      :options="trendDirectionOptions"
+    />
   </div>
 </template>
 
@@ -133,6 +141,7 @@ interface LocalEditableField extends Omit<EditableField, 'unit' | 'placeholder' 
   correctAnswer: string
   points: number
   sum_values: boolean
+  trend_direction: 'neutral' | 'increase_good' | 'decrease_good'
   order: number
 }
 
@@ -153,6 +162,7 @@ const fieldForm = ref<LocalEditableField>({
   correctAnswer: props.modelValue.correctAnswer ?? '',
   points: props.modelValue.points ?? 0,
   sum_values: props.modelValue.sum_values ?? false,
+  trend_direction: props.modelValue.trend_direction ?? 'neutral',
   order: props.modelValue.order ?? 0,
   options: props.modelValue.options ? JSON.parse(JSON.stringify(props.modelValue.options)) : []
 })
@@ -166,6 +176,7 @@ watch(() => props.modelValue.id, () => {
     correctAnswer: props.modelValue.correctAnswer ?? '',
     points: props.modelValue.points ?? 0,
     sum_values: props.modelValue.sum_values ?? false,
+    trend_direction: props.modelValue.trend_direction ?? 'neutral',
     order: props.modelValue.order ?? 0,
     options: props.modelValue.options ? JSON.parse(JSON.stringify(props.modelValue.options)) : []
   }
@@ -175,6 +186,15 @@ watch(() => fieldForm.value.type, type => {
   if (type !== 'select') {
     fieldForm.value.sum_values = false
   }
+})
+
+const isStatNumeric = computed(() =>
+  ['number', 'currency'].includes(fieldForm.value.type)
+  || (fieldForm.value.type === 'select' && fieldForm.value.sum_values)
+)
+
+watch(isStatNumeric, enabled => {
+  if (!enabled) fieldForm.value.trend_direction = 'neutral'
 })
 
 // We expose the current state so the parent can read it when saving
@@ -195,6 +215,12 @@ const fieldTypeOptions = computed(() => [
   { label: t('forms.field_types.select'), value: 'select' },
   { label: t('forms.field_types.boolean'), value: 'boolean' },
   { label: t('forms.field_types.currency'), value: 'currency' }
+])
+
+const trendDirectionOptions = computed(() => [
+  {label: t('forms.trend_directions.neutral'), value: 'neutral'},
+  {label: t('forms.trend_directions.increase_good'), value: 'increase_good'},
+  {label: t('forms.trend_directions.decrease_good'), value: 'decrease_good'},
 ])
 
 const addOption = () => {

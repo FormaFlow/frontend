@@ -76,6 +76,12 @@
     "field_options": "Варианты",
     "sum_values": "Суммировать значения в статистике",
     "sum_values_hint": "Значения вариантов должны быть числами, например 10, 20, 30.",
+    "trend_direction": "Оценка изменения",
+    "trend_directions": {
+      "neutral": "Без цветовой оценки",
+      "increase_good": "Рост — хорошо",
+      "decrease_good": "Снижение — хорошо"
+    },
     "publish": "Опубликовать",
     "unpublish": "Снять с публикации",
     "published": "Опубликовано",
@@ -156,7 +162,12 @@
     "created_at": "Дата и время создания",
     "custom_created_at": "Указать дату и время создания",
     "today": "Сегодня",
-    "this_month": "За месяц"
+    "this_month": "За месяц",
+    "day_view": "День",
+    "month_view": "Месяц",
+    "forecast": "Прогноз",
+    "current_value": "Сейчас",
+    "compared_with_previous_day": "к предыдущему дню"
   },
   "payments": {
     "title": "Платежи",

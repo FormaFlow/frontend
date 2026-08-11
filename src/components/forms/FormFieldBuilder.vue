@@ -75,6 +75,7 @@ const defaultFieldState = {
   label: '',
   type: 'text' as FormFieldType,
   sum_values: false,
+  trend_direction: 'neutral' as const,
   required: false,
   placeholder: '',
   unit: '',

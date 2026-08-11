@@ -41,13 +41,23 @@ describe('useStats', () => {
 
     await flushPromises()
     expect(entriesApi.weeklyStats).toHaveBeenCalledTimes(1)
-    expect(stats.value?.[0]).toEqual({ field: '_count', sum_today: 0, sum_month: 3 })
+    expect(stats.value?.[0]).toEqual({
+      field: '_count',
+      sum_today: 0,
+      sum_previous_day: 2,
+      sum_month: 3
+    })
 
     date.value = '2026-07-23'
     await flushPromises()
 
     expect(entriesApi.weeklyStats).toHaveBeenCalledTimes(1)
-    expect(stats.value?.[0]).toEqual({ field: '_count', sum_today: 2, sum_month: 3 })
+    expect(stats.value?.[0]).toEqual({
+      field: '_count',
+      sum_today: 2,
+      sum_previous_day: 1,
+      sum_month: 3
+    })
   })
 
   it('prefetches the older week before the user reaches the cache boundary', async () => {

@@ -54,6 +54,7 @@ export const entriesApi = {
 export type EntryStats = {
   field: string
   sum_today: number
+  sum_previous_day: number
   sum_month: number
 }[]
 

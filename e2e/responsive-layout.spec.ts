@@ -36,6 +36,7 @@ const fullForm = {
       id: 'field-1',
       label: 'Very long required field label that must wrap',
       type: 'number',
+      trend_direction: 'increase_good',
       required: true,
       unit: 'mg',
       order: 0
@@ -137,7 +138,10 @@ test.beforeEach(async ({ page }) => {
         date.setUTCDate(date.getUTCDate() - index)
         return {
           date: date.toISOString().slice(0, 10),
-          stats: [{ field: '_count', sum: index === 1 ? 2 : 0 }]
+          stats: [
+            { field: '_count', sum: index === 1 ? 2 : 0 },
+            { field: 'field-1', sum: index === 0 ? 60 : index === 1 ? 100 : 0 }
+          ]
         }
       })
       await route.fulfill({
@@ -145,7 +149,12 @@ test.beforeEach(async ({ page }) => {
         headers,
         json: {
           days,
-          months: { [anchor.slice(0, 7)]: [{ field: '_count', sum_month: 2 }] }
+          months: {
+            [anchor.slice(0, 7)]: [
+              { field: '_count', sum_month: 2 },
+              { field: 'field-1', sum_month: 160 }
+            ]
+          }
         }
       })
       return
@@ -341,6 +350,27 @@ test('form with no entries today keeps the date navigation and reuses weekly sta
   await expect(page.getByTestId('today-entry-count')).toHaveText('2')
   expect(weeklyStatsRequests).toBe(1)
   await expectNoHorizontalOverflow(page)
+})
+
+test('statistics forecast is compact, compares yesterday and switches to month', async ({ page }, testInfo) => {
+  await page.clock.install({time: new Date(2026, 7, 11, 12, 0)})
+  await page.goto('/entries?form_id=form-1')
+
+  await expect(page.getByTestId('forecast-field-1')).toContainText('120 mg')
+  await expect(page.getByTestId('comparison-field-1')).toContainText('+20 mg')
+  await expect(page.getByTestId('comparison-field-1')).toHaveClass(/text-emerald-600/)
+
+  if (testInfo.project.name === 'mobile-chrome') {
+    await page.screenshot({path: testInfo.outputPath('stats-forecast-mobile.png'), fullPage: true})
+  }
+
+  await page.getByTestId('stats-month-tab').click()
+  await expect(page.getByText('160 mg')).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  if (testInfo.project.name === 'mobile-chrome') {
+    await page.screenshot({path: testInfo.outputPath('stats-month-mobile.png'), fullPage: true})
+  }
 })
 
 test('visible entry stays in place while relative time and background data refresh', async ({ page }) => {
