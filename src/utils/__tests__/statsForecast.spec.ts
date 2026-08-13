@@ -1,5 +1,10 @@
 import {describe, expect, it} from 'vitest'
-import {comparisonTone, forecastForCurrentMonth, forecastForToday} from '@/utils/statsForecast'
+import {
+  comparisonTone,
+  forecastForCurrentMonth,
+  forecastForToday,
+  forecastWithHistory,
+} from '@/utils/statsForecast'
 
 describe('statistics forecast', () => {
   it('projects the current value using elapsed minutes of the day', () => {
@@ -27,6 +32,19 @@ describe('statistics forecast', () => {
 
     expect(forecastForCurrentMonth(240, augustEleventhAtNoon)).toBe(709)
     expect(forecastForCurrentMonth(9, augustEleventhAtNoon)).toBe(27)
+  })
+
+  it('dampens an early daily spike with recent completed days', () => {
+    expect(forecastWithHistory(10, 0.1, [30, 20, 10])).toBe(30)
+  })
+
+  it('uses a recency-weighted baseline and never forecasts below the fact', () => {
+    expect(forecastWithHistory(60, 0.5, [100, 140, 0])).toBe(104)
+    expect(forecastWithHistory(120, 0.5, [20, 10])).toBe(128)
+  })
+
+  it('falls back to linear extrapolation without history', () => {
+    expect(forecastWithHistory(10, 0.25, [])).toBe(40)
   })
 
   it('uses the configured meaning of an increase for comparison colors', () => {

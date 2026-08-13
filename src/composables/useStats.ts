@@ -44,6 +44,12 @@ async function fetchWeek(formId: string, date: string): Promise<WeeklyEntryStats
 
 function toEntryStats(response: WeeklyEntryStats, date: string): EntryStats {
   const dailyStats = response.days.find(day => day.date === date)?.stats ?? []
+  const selectedIndex = response.days.findIndex(day => day.date === date)
+  const completedActiveDays = selectedIndex < 0
+    ? []
+    : response.days.slice(selectedIndex + 1).filter(day =>
+      (day.stats.find(stat => stat.field === '_count')?.sum ?? 0) > 0
+    )
   const previousDate = addDaysToLocalDateString(date, -1)
   const previousStats = response.days.find(day => day.date === previousDate)?.stats ?? []
   const previousByField = new Map(previousStats.map(stat => [stat.field, stat.sum]))
@@ -54,7 +60,10 @@ function toEntryStats(response: WeeklyEntryStats, date: string): EntryStats {
     field: stat.field,
     sum_today: stat.sum,
     sum_previous_day: previousByField.get(stat.field) ?? 0,
-    sum_month: monthlyByField.get(stat.field) ?? 0
+    sum_month: monthlyByField.get(stat.field) ?? 0,
+    daily_history: completedActiveDays.map(day =>
+      day.stats.find(dayStat => dayStat.field === stat.field)?.sum ?? 0
+    ),
   }))
 }
 

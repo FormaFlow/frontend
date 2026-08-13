@@ -56,6 +56,7 @@ export type EntryStats = {
   sum_today: number
   sum_previous_day: number
   sum_month: number
+  daily_history: number[]
 }[]
 
 export interface WeeklyEntryStats {

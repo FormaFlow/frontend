@@ -51,12 +51,13 @@ describe('EntryStatsSummary', () => {
       const month = date?.slice(0, 7)
       if (month === '2026-07') return monthlyResponse('2026-07-11', 12, 650)
       if (month === '2026-06') return monthlyResponse('2026-06-11', 10, 700)
+      if (month === '2026-05') return monthlyResponse('2026-05-11', 11, 600)
 
       return {
         days: [
           {date: '2026-08-11', stats: [{field: '_count', sum: 3}, {field: 'amount', sum: 60.25}]},
-          {date: '2026-08-10', stats: [{field: '_count', sum: 4}, {field: 'amount', sum: 100}]},
-          {date: '2026-08-09', stats: [{field: '_count', sum: 2}, {field: 'amount', sum: 140}]},
+          {date: '2026-08-10', stats: [{field: '_count', sum: 4}, {field: 'amount', sum: 20}]},
+          {date: '2026-08-09', stats: [{field: '_count', sum: 2}, {field: 'amount', sum: 30}]},
           {date: '2026-08-08', stats: [{field: '_count', sum: 0}, {field: 'amount', sum: 0}]},
           {date: '2026-08-07', stats: [{field: '_count', sum: 0}, {field: 'amount', sum: 0}]},
           {date: '2026-08-06', stats: [{field: '_count', sum: 0}, {field: 'amount', sum: 0}]},
@@ -75,14 +76,14 @@ describe('EntryStatsSummary', () => {
 
     expect(wrapper.get('[data-testid="stats-day-tab"]').attributes('aria-pressed')).toBe('true')
     expect(wrapper.get('[data-testid="stats-current-amount"]').text()).toContain('60.25 kg')
-    expect(wrapper.get('[data-testid="stats-secondary-amount"]').text()).toContain('120 kg')
+    expect(wrapper.get('[data-testid="stats-secondary-amount"]').text()).toContain('72 kg')
     expect(wrapper.get('[data-testid="stats-current-_count"]').text()).toContain('3')
-    expect(wrapper.get('[data-testid="stats-secondary-_count"]').text()).toContain('6')
+    expect(wrapper.get('[data-testid="stats-secondary-_count"]').text()).toContain('5')
     const comparison = wrapper.get('[data-testid="comparison-amount"]')
-    expect(comparison.text()).toContain('+20 kg')
+    expect(comparison.text()).toContain('+52 kg')
     expect(comparison.classes()).toContain('text-emerald-600')
 
-    expect(wrapper.get('[data-testid="comparison-_count"]').text()).toContain('+2')
+    expect(wrapper.get('[data-testid="comparison-_count"]').text()).toContain('+1')
   })
 
   it('forecasts the current month and compares a completed month with its predecessor', async () => {
@@ -91,12 +92,13 @@ describe('EntryStatsSummary', () => {
 
     await wrapper.get('[data-testid="stats-month-tab"]').trigger('click')
     expect(wrapper.get('[data-testid="stats-month-tab"]').attributes('aria-pressed')).toBe('true')
+    expect(entriesApi.weeklyStats).toHaveBeenCalledWith('form-1', '2026-05-11')
     expect(wrapper.get('[data-testid="stats-current-amount"]').text()).toContain('240 kg')
-    expect(wrapper.get('[data-testid="stats-secondary-amount"]').text()).toContain('709 kg')
+    expect(wrapper.get('[data-testid="stats-secondary-amount"]').text()).toContain('673 kg')
     expect(wrapper.get('[data-testid="stats-current-_count"]').text()).toContain('9')
-    expect(wrapper.get('[data-testid="stats-secondary-_count"]').text()).toContain('27')
-    expect(wrapper.get('[data-testid="comparison-amount"]').text()).toContain('+59 kg')
-    expect(wrapper.get('[data-testid="comparison-_count"]').text()).toContain('+15')
+    expect(wrapper.get('[data-testid="stats-secondary-_count"]').text()).toContain('16')
+    expect(wrapper.get('[data-testid="comparison-amount"]').text()).toContain('+23 kg')
+    expect(wrapper.get('[data-testid="comparison-_count"]').text()).toContain('+4')
 
     await wrapper.get('[data-testid="stats-previous"]').trigger('click')
     await flushPromises()

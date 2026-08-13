@@ -45,7 +45,8 @@ describe('useStats', () => {
       field: '_count',
       sum_today: 0,
       sum_previous_day: 2,
-      sum_month: 3
+      sum_month: 3,
+      daily_history: [2, 1],
     })
 
     date.value = '2026-07-23'
@@ -56,7 +57,8 @@ describe('useStats', () => {
       field: '_count',
       sum_today: 2,
       sum_previous_day: 1,
-      sum_month: 3
+      sum_month: 3,
+      daily_history: [1],
     })
   })
 

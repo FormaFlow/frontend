@@ -402,10 +402,10 @@ test('statistics forecast is compact, compares yesterday and switches to month',
   await page.goto('/entries?form_id=form-1')
 
   await expect(page.getByTestId('stats-current-field-1')).toContainText('60.25 mg')
-  await expect(page.getByTestId('stats-secondary-field-1')).toContainText('120 mg')
+  await expect(page.getByTestId('stats-secondary-field-1')).toContainText('110 mg')
   await expect(page.getByTestId('stats-current-_count')).toContainText('0')
-  await expect(page.getByTestId('stats-secondary-_count')).toContainText('0')
-  await expect(page.getByTestId('comparison-field-1')).toContainText('+20 mg')
+  await expect(page.getByTestId('stats-secondary-_count')).toContainText('1')
+  await expect(page.getByTestId('comparison-field-1')).toContainText('+10 mg')
   await expect(page.getByTestId('comparison-field-1')).toHaveClass(/text-emerald-600/)
 
   if (testInfo.project.name === 'mobile-chrome') {
@@ -414,9 +414,9 @@ test('statistics forecast is compact, compares yesterday and switches to month',
 
   await page.getByTestId('stats-month-tab').click()
   await expect(page.getByTestId('stats-current-field-1')).toContainText('160 mg')
-  await expect(page.getByTestId('stats-secondary-field-1')).toContainText('472 mg')
+  await expect(page.getByTestId('stats-secondary-field-1')).toContainText('232 mg')
   await expect(page.getByTestId('stats-current-_count')).toContainText('2')
-  await expect(page.getByTestId('stats-secondary-_count')).toContainText('6')
+  await expect(page.getByTestId('stats-secondary-_count')).toContainText('4')
   await expectNoHorizontalOverflow(page)
 
   if (testInfo.project.name === 'mobile-chrome') {

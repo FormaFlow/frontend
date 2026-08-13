@@ -162,20 +162,20 @@ const currentMonth = todayDate.slice(0, 7)
 const mode = ref<PeriodMode>('day')
 const dayDate = ref(todayDate)
 const monthDate = ref(todayDate)
-const previousMonthDate = computed(() => shiftMonthDate(monthDate.value, -1))
 const {stats: dayStats, loading: dayLoading} = useStats(toRef(props, 'formId'), dayDate)
 const {stats: monthStats, loading: monthLoading} = useStats(toRef(props, 'formId'), monthDate)
-const {stats: previousMonthStats, loading: previousMonthLoading} = useStats(
-  toRef(props, 'formId'),
-  previousMonthDate,
-)
+const historicalMonths = [1, 2, 3].map(offset => {
+  const date = computed(() => shiftMonthDate(monthDate.value, -offset))
+  return useStats(toRef(props, 'formId'), date)
+})
+const previousMonthStats = historicalMonths[0].stats
 
 const isToday = computed(() => dayDate.value === todayDate)
 const isCurrentMonth = computed(() => monthDate.value.slice(0, 7) === currentMonth)
 const isLatestPeriod = computed(() => mode.value === 'day' ? isToday.value : isCurrentMonth.value)
 const activeLoading = computed(() => mode.value === 'day'
   ? dayLoading.value
-  : monthLoading.value || previousMonthLoading.value)
+  : monthLoading.value || historicalMonths.some(month => month.loading.value))
 
 const changePeriod = (offset: number) => {
   if (mode.value === 'day') {
@@ -249,7 +249,9 @@ const dayRows = computed<SummaryRow[]>(() => {
   return orderedStats(dayStats.value).map(stat => {
     const {field, direction} = fieldMeta(stat.field)
     const isCount = stat.field === '_count'
-    const secondaryValue = isToday.value ? forecastForToday(stat.sum_today) : stat.sum_today - stat.sum_previous_day
+    const secondaryValue = isToday.value
+      ? forecastForToday(stat.sum_today, new Date(), stat.daily_history)
+      : stat.sum_today - stat.sum_previous_day
     const comparison = isToday.value ? secondaryValue - stat.sum_previous_day : null
 
     return {
@@ -275,8 +277,14 @@ const monthRows = computed<SummaryRow[]>(() => {
     const {field, direction} = fieldMeta(stat.field)
     const isCount = stat.field === '_count'
     const previousValue = previous.get(stat.field) ?? 0
+    const history = historicalMonths.flatMap(month => {
+      const entryCount = statsByField(month.stats.value, 'sum_month').get('_count') ?? 0
+      if (entryCount <= 0) return []
+      const value = statsByField(month.stats.value, 'sum_month').get(stat.field)
+      return value === undefined ? [] : [value]
+    })
     const secondaryValue = isCurrentMonth.value
-      ? forecastForCurrentMonth(stat.sum_month)
+      ? forecastForCurrentMonth(stat.sum_month, new Date(), history)
       : stat.sum_month - previousValue
     const comparison = isCurrentMonth.value ? secondaryValue - previousValue : null
 
