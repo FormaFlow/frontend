@@ -246,6 +246,8 @@ describe('QuickEntryWidget cache refresh', () => {
   })
 
   it('toggles statistics above the form and remembers the state', async () => {
+    localStorage.setItem('user', JSON.stringify({id: 'user-1', name: 'First user', email: 'first@example.com'}))
+    localStorage.setItem('formaflow:quick-stats-visible', 'true')
     const wrapper = mountWidget()
     await flushPromises()
     await selectForm(wrapper, 'form-1')
@@ -262,6 +264,8 @@ describe('QuickEntryWidget cache refresh', () => {
     const statsPanel = wrapper.get('[data-testid="quick-entry-stats"]')
     expect(summary.exists()).toBe(true)
     expect(statsPanel.attributes('style')).toContain('display: none')
+    expect(localStorage.getItem('formaflow:quick-stats-visible')).toBeNull()
+    expect(localStorage.getItem('formaflow:quick-stats-visible:user-1')).toBeNull()
     expect(wrapper.find('button[type="submit"]').exists()).toBe(true)
 
     await statsButton!.trigger('click')
@@ -271,13 +275,20 @@ describe('QuickEntryWidget cache refresh', () => {
     expect(statsPanel.attributes('style') ?? '').not.toContain('display: none')
     expect(summary.props('formId')).toBe('form-1')
     expect(wrapper.find('button[type="submit"]').exists()).toBe(true)
-    expect(localStorage.getItem('formaflow:quick-stats-visible')).toBe('true')
+    expect(localStorage.getItem('formaflow:quick-stats-visible:user-1')).toBe('true')
 
     const restoredWrapper = mountWidget()
     await flushPromises()
     expect(restoredWrapper.get('[data-testid="quick-entry-stats"]').attributes('style') ?? '')
       .not.toContain('display: none')
     restoredWrapper.unmount()
+
+    localStorage.setItem('user', JSON.stringify({id: 'user-2', name: 'Second user', email: 'second@example.com'}))
+    const otherUserWrapper = mountWidget()
+    await flushPromises()
+    expect(otherUserWrapper.get('[data-testid="quick-entry-stats"]').attributes('style'))
+      .toContain('display: none')
+    otherUserWrapper.unmount()
 
     const dateInput = summary.find('input[type="date"]')
     expect(dateInput.exists()).toBe(true)
@@ -287,7 +298,7 @@ describe('QuickEntryWidget cache refresh', () => {
 
     await statsButton!.trigger('click')
     expect(statsPanel.attributes('style')).toContain('display: none')
-    expect(localStorage.getItem('formaflow:quick-stats-visible')).toBe('false')
+    expect(localStorage.getItem('formaflow:quick-stats-visible:user-1')).toBe('false')
   })
 })
 

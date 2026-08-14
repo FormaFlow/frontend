@@ -213,6 +213,7 @@ import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useForms } from '@/composables/useForms'
 import { useEntries } from '@/composables/useEntries'
 import { useNotification } from '@/composables/useNotification'
+import {useAuthStore} from '@/stores/auth'
 import AppSelect from '@/components/common/AppSelect.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
 import EntryCard from '@/components/entries/EntryCard.vue'
@@ -226,6 +227,7 @@ const { t } = useI18n()
 const { forms, fetchForms, fetchForm, currentForm } = useForms()
 const { entries, createEntry, fetchEntries } = useEntries()
 const { showSuccess } = useNotification()
+const authStore = useAuthStore()
 
 const selectedFormId = ref('')
 const formData = ref<Record<string, any>>({})
@@ -240,11 +242,13 @@ const cachedEntries = reactive<Record<string, Entry[]>>({})
 const RECENT_ENTRIES_LIMIT = 10
 const FORM_ENTRIES_LIMIT = 5
 const LAST_QUICK_FORM_KEY = 'formaflow:last-quick-form-id'
-const QUICK_STATS_VISIBLE_KEY = 'formaflow:quick-stats-visible'
-const showStats = ref(localStorage.getItem(QUICK_STATS_VISIBLE_KEY) === 'true')
+const LEGACY_QUICK_STATS_VISIBLE_KEY = 'formaflow:quick-stats-visible'
+const quickStatsVisibleKey = `${LEGACY_QUICK_STATS_VISIBLE_KEY}:${authStore.user?.id ?? 'anonymous'}`
+localStorage.removeItem(LEGACY_QUICK_STATS_VISIBLE_KEY)
+const showStats = ref(localStorage.getItem(quickStatsVisibleKey) === 'true')
 
 watch(showStats, value => {
-  localStorage.setItem(QUICK_STATS_VISIBLE_KEY, String(value))
+  localStorage.setItem(quickStatsVisibleKey, String(value))
 })
 
 const quickEntryForms = computed(() => {

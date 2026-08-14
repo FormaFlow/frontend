@@ -243,6 +243,27 @@ test('mobile dashboard uses the header menu instead of the welcome card', async 
   await expect(page.getByRole('navigation', { name: 'Основная навигация' }).getByRole('link', { name: 'Записи' })).toBeVisible()
 })
 
+test('quick entry statistics are opt-in and remember each explicit choice', async ({page}) => {
+  await page.addInitScript(() => localStorage.setItem('formaflow:quick-stats-visible', 'true'))
+  await page.goto('/')
+
+  const toggle = page.getByRole('button', {name: 'Статистика'})
+  const panel = page.getByTestId('quick-entry-stats')
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  await expect(panel).toBeHidden()
+
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  await expect(panel).toBeVisible()
+  await page.reload()
+  await expect(page.getByTestId('quick-entry-stats')).toBeVisible()
+
+  await page.getByRole('button', {name: 'Статистика'}).click()
+  await expect(page.getByTestId('quick-entry-stats')).toBeHidden()
+  await page.reload()
+  await expect(page.getByTestId('quick-entry-stats')).toBeHidden()
+})
+
 test('form field editor does not create horizontal overflow', async ({ page }) => {
   await page.goto('/forms/form-1/edit')
   await expect(page.getByRole('heading', { name: 'Редактировать форму' })).toBeVisible()
