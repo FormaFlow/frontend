@@ -47,12 +47,16 @@
           {{ $t('entries.title') }}
         </router-link>
         <router-link
-            to="/payments"
+            to="/quizzes"
             class="block px-2 py-3 text-gray-700 hover:text-primary-500 dark:text-gray-300"
             @click="showMenu = false"
         >
-          {{ $t('payments.title') }}
+          {{ $t('quizzes.title') }}
         </router-link>
+        <div class="flex items-center justify-between px-2 py-3 text-gray-400 dark:text-gray-500">
+          <span aria-disabled="true">{{ $t('payments.title') }}</span>
+          <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-700">{{ $t('common.soon') }}</span>
+        </div>
 
         <div class="my-2 border-t border-gray-200 dark:border-gray-700"></div>
 

@@ -259,7 +259,9 @@ import AppModal from '@/components/common/AppModal.vue'
 import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
+import {useAuthStore} from '@/stores/auth'
 import {validateForm, type ValidationRules} from '@/utils/validation'
+import {clearQuizDraft, loadQuizDraft, rememberQuiz, saveQuizDraft} from '@/utils/quizLibrary'
 import type {FormField, FormSummary} from "@/types/form";
 
 const { t, locale } = useI18n()
@@ -268,6 +270,7 @@ const route = useRoute()
 const {loading, createEntry} = useEntries()
 const {forms, fetchForms, fetchForm, currentForm} = useForms()
 const {showSuccess} = useNotification()
+const authStore = useAuthStore()
 
 const selectedFormId = ref('')
 const createdAt = ref(getCurrentDateTimeForInput())
@@ -385,23 +388,43 @@ watch(selectedForm, (form) => {
     return
   }
 
+  const quizDraft = form.is_quiz && authStore.user?.id
+    ? loadQuizDraft(authStore.user.id, form.id)
+    : null
+
+  if (form.is_quiz && authStore.user?.id) {
+    rememberQuiz(authStore.user.id, form.id)
+  }
+
   form.fields.forEach((field: FormField) => {
     if (field.type === 'boolean') {
       formData[field.id] = false
     }
   })
 
+  if (quizDraft) {
+    Object.assign(formData, quizDraft.data)
+  }
+
   // Start timer only when explicitly enabled for the quiz.
   if (form.is_quiz && form.timer_enabled) {
-    startTimer()
+    startTimer(quizDraft?.duration || 0)
   } else {
     stopTimer()
   }
 })
 
-const startTimer = () => {
+watch([formData, duration], () => {
+  if (!selectedForm.value?.is_quiz || !authStore.user?.id) return
+  saveQuizDraft(authStore.user.id, selectedForm.value.id, {
+    data: JSON.parse(JSON.stringify(formData)),
+    duration: duration.value
+  })
+}, {deep: true})
+
+const startTimer = (initialDuration = 0) => {
   stopTimer()
-  duration.value = 0
+  duration.value = initialDuration
   timerInterval.value = window.setInterval(() => {
     duration.value++
   }, 1000)
@@ -470,12 +493,20 @@ const handleSubmit = async () => {
     })
 
     if (!entry) {
+      if (selectedForm.value?.is_quiz && authStore.user?.id) {
+        clearQuizDraft(authStore.user.id, selectedForm.value.id)
+      }
       showSuccess(t('entries.entry_saved_offline'))
-      await router.push({name: 'entries-list', query: {form_id: selectedFormId.value}})
+      await router.push(selectedForm.value?.is_quiz
+        ? {name: 'quizzes'}
+        : {name: 'entries-list', query: {form_id: selectedFormId.value}})
       return
     }
 
     if (entry && selectedForm.value?.is_quiz) {
+      if (authStore.user?.id) {
+        clearQuizDraft(authStore.user.id, selectedForm.value.id)
+      }
       const totalPoints = selectedForm.value.fields.reduce((sum, f) => sum + (f.points || 0), 0)
 
       createdEntryId.value = entry.id
@@ -501,7 +532,7 @@ const handleSubmit = async () => {
     }
 
     if (selectedForm.value?.is_quiz) {
-      startTimer() // Resume if failed
+      startTimer(duration.value) // Resume if failed
     }
   }
 }

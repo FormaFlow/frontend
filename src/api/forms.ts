@@ -5,6 +5,7 @@ import type {
   CreateFormResponse,
   Form,
   FormSummary,
+  QuizSummary,
   UpdateFormRequest,
   UpdateFieldRequest
 } from '@/types/form'
@@ -14,6 +15,10 @@ import {PaginatedResponse} from "@/types/api";
 export const formsApi = {
   list(params?: Record<string, unknown>) {
     return client.get<PaginatedResponse<FormSummary>>('/forms', params)
+  },
+
+  quizzes() {
+    return client.get<{quizzes: QuizSummary[]}>('/quizzes')
   },
 
   get(id: string) {

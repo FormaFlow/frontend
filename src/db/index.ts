@@ -53,7 +53,14 @@ export class FormaFlowDatabase extends Dexie {
 
   async saveForms(forms: Form[]): Promise<void> {
     if (forms.length === 0) return
-    await this.forms.bulkPut(forms.map(form => ({ ...form, definition_cached: true })))
+    await this.transaction('rw', this.forms, async () => {
+      const cached = await this.forms.bulkGet(forms.map(form => form.id))
+      await this.forms.bulkPut(forms.map((form, index) => ({
+        ...cached[index],
+        ...form,
+        definition_cached: true
+      })))
+    })
   }
 
   async saveFormSummaries(forms: FormSummary[]): Promise<void> {
@@ -83,6 +90,19 @@ export class FormaFlowDatabase extends Dexie {
       ?? Boolean(cached.fields?.length || cached.fields_count === 0)
 
     return hasDefinition ? cached : undefined
+  }
+
+  async getFormSummariesByIds(ids: string[]): Promise<FormSummary[]> {
+    if (ids.length === 0) return []
+
+    const forms = await this.forms.bulkGet(ids)
+    return forms.filter((form): form is CachedForm => Boolean(form)).map(form => ({
+      ...form,
+      fields_count: form.fields_count ?? form.fields?.length ?? 0,
+      entries_count: form.entries_count ?? 0,
+      created_at: form.created_at ?? '',
+      updated_at: form.updated_at ?? form.created_at ?? ''
+    }))
   }
 
   async getForms(filters: { search?: string; isQuiz?: boolean; limit?: number; offset?: number } = {}) {

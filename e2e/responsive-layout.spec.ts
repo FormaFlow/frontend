@@ -153,6 +153,22 @@ test.beforeEach(async ({ page }) => {
       return
     }
 
+    if (url.pathname === '/api/v1/quizzes') {
+      await route.fulfill({
+        status: 200,
+        headers,
+        json: {
+          quizzes: [{
+            ...quizEntryForm,
+            fields: undefined,
+            access_type: 'assigned',
+            completed_at: null
+          }]
+        }
+      })
+      return
+    }
+
     if (url.pathname === '/api/v1/forms/form-quiz/assignments') {
       if (route.request().method() === 'POST') {
         await route.fulfill({
@@ -294,6 +310,37 @@ test('mobile dashboard uses the header menu instead of the welcome card', async 
   await page.getByRole('button', { name: 'Открыть навигацию' }).click()
   await expect(page.getByRole('navigation', { name: 'Основная навигация' }).getByRole('link', { name: 'Формы' })).toBeVisible()
   await expect(page.getByRole('navigation', { name: 'Основная навигация' }).getByRole('link', { name: 'Записи' })).toBeVisible()
+})
+
+test('quiz library keeps an opened quiz and its draft available offline', async ({page}, testInfo) => {
+  await page.goto('/quizzes')
+  await expect(page.getByRole('heading', {name: 'Викторины'})).toBeVisible()
+  await expect(page.getByText('School test')).toBeVisible()
+  await expect(page.getByText('Назначена')).toBeVisible()
+  await page.waitForLoadState('networkidle')
+  if (testInfo.project.name === 'mobile-chrome') {
+    await page.screenshot({path: testInfo.outputPath('quiz-library-mobile.png'), fullPage: true})
+  }
+
+  await page.getByRole('link', {name: 'Открыть'}).click()
+  const answer = page.getByLabel('Very long required quiz question that must keep its marker at the beginning')
+  await answer.fill('Черновик офлайн-ответа')
+
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'onLine', {configurable: true, get: () => false})
+  })
+  await page.reload()
+
+  await expect(answer).toHaveValue('Черновик офлайн-ответа')
+  await page.goto('/quizzes')
+  await expect(page.getByText('School test')).toBeVisible()
+  await expect(page.getByText('Начата')).toBeVisible()
+
+  await page.getByRole('button', {name: 'Открыть навигацию'}).click()
+  const navigation = page.getByRole('navigation', {name: 'Основная навигация'})
+  await expect(navigation.getByRole('link', {name: 'Викторины'})).toBeVisible()
+  await expect(navigation.getByText('Платежи')).toHaveAttribute('aria-disabled', 'true')
+  await expect(navigation.getByText('Скоро')).toBeVisible()
 })
 
 test('quick entry statistics are opt-in and remember each explicit choice', async ({page}) => {

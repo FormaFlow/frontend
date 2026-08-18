@@ -44,6 +44,13 @@ export interface FormSummary extends FormMetadata {
   updated_at: string
 }
 
+export type QuizAccessType = 'owned' | 'assigned' | 'opened'
+
+export interface QuizSummary extends FormSummary {
+  access_type: QuizAccessType
+  completed_at: string | null
+}
+
 export interface Form extends FormMetadata {
   fields: FormField[]
   fields_count: number

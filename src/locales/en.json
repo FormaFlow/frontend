@@ -33,7 +33,8 @@
     "main_navigation": "Main navigation",
     "open_navigation": "Open navigation",
     "close_navigation": "Close navigation",
-    "online_sync": "Internet restored. Syncing pending data..."
+    "online_sync": "Internet restored. Syncing pending data...",
+    "soon": "Soon"
   },
   "auth": {
     "login": "Login",
@@ -140,6 +141,18 @@
     "question": "Question",
     "your_answer": "Your Answer",
     "correct": "Correct"
+  },
+  "quizzes": {
+    "title": "Quizzes",
+    "subtitle": "Your, assigned, and recently opened quizzes",
+    "empty": "No quizzes yet. Open a quiz link and it will appear here.",
+    "open": "Open",
+    "owned": "Mine",
+    "assigned": "Assigned",
+    "opened": "Opened by link",
+    "started": "Started",
+    "completed": "Completed",
+    "offline_available": "Available offline"
   },
   "entries": {
     "title": "Entries",
