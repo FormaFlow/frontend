@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { db } from '../index'
+import type {QuizSummary} from '@/types/form'
 
 describe('Database Service', () => {
   beforeEach(async () => {
@@ -24,6 +25,44 @@ describe('Database Service', () => {
     
     expect(forms).toHaveLength(1)
     expect(forms[0].name).toBe('Test Form')
+  })
+
+  it('keeps quiz library metadata when a full definition is cached', async () => {
+    const summary: QuizSummary = {
+      id: 'quiz-1',
+      name: 'Assigned quiz',
+      description: 'Quiz description',
+      published: true,
+      is_quiz: true,
+      timer_enabled: false,
+      single_submission: true,
+      quick_entry_favorite: false,
+      fields_count: 1,
+      entries_count: 0,
+      access_type: 'assigned',
+      completed_at: null,
+      created_at: '2026-08-18T10:00:00Z',
+      updated_at: '2026-08-18T10:00:00Z'
+    }
+    await db.saveFormSummaries([summary])
+
+    await db.saveForms([{
+      id: 'quiz-1',
+      name: 'Assigned quiz',
+      description: 'Quiz description',
+      published: true,
+      is_quiz: true,
+      timer_enabled: false,
+      single_submission: true,
+      quick_entry_favorite: false,
+      fields_count: 1,
+      fields: [{id: 'question-1', label: 'Question', type: 'text', required: true, order: 0}]
+    }])
+
+    const [cached] = await db.getFormSummariesByIds(['quiz-1']) as QuizSummary[]
+    expect(cached.access_type).toBe('assigned')
+    expect(cached.created_at).toBe('2026-08-18T10:00:00Z')
+    expect((await db.getFormDefinition('quiz-1'))?.fields).toHaveLength(1)
   })
 
   it('can page cached entries by form', async () => {

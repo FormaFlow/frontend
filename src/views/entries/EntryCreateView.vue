@@ -1,13 +1,23 @@
 <template>
   <div class="max-w-2xl">
-    <div class="flex gap-4 items-center mb-6 justify-between">
-      <div class="flex gap-4 items-center">
+    <div class="flex gap-4 items-start mb-6 justify-between">
+      <div v-if="selectedForm?.is_quiz" class="min-w-0">
+        <h1 class="text-2xl font-bold break-words">{{ selectedForm.name }}</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          {{ $t('forms.question_count', {count: selectedForm.fields.length}) }}
+        </p>
+      </div>
+      <div v-else class="flex gap-4 items-center">
         <router-link to="/entries" class="text-primary-500 hover:underline">
           ← {{ $t('common.back') }}
         </router-link>
         <h1 class="text-2xl font-bold">{{ $t('entries.create_entry') }}</h1>
       </div>
-      <div v-if="selectedForm?.is_quiz" class="text-xl font-mono bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded">
+      <div
+          v-if="selectedForm?.is_quiz && selectedForm.timer_enabled"
+          data-testid="quiz-timer"
+          class="flex-none text-xl font-mono bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded"
+      >
         ⏱ {{ formattedDuration }}
       </div>
     </div>
@@ -25,8 +35,8 @@
             @update:modelValue="handleFormSelect"
         />
 
-        <div v-if="selectedForm && route.query.form_id" class="mb-6">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ selectedForm.name }}</h2>
+        <div v-if="selectedForm && route.query.form_id && (!selectedForm.is_quiz || selectedForm.description)" class="mb-6">
+          <h2 v-if="!selectedForm.is_quiz" class="text-xl font-bold text-gray-900 dark:text-white">{{ selectedForm.name }}</h2>
           <p v-if="selectedForm.description" class="text-gray-600 dark:text-gray-400 mt-1">{{ selectedForm.description }}</p>
         </div>
 
@@ -39,7 +49,24 @@
               :class="{'p-4 bg-gray-50 dark:bg-gray-800 rounded-xl mb-6 border border-gray-100 dark:border-gray-700': selectedForm.is_quiz}"
           >
             <label :for="field.id" class="form-label mb-3 block" :class="{'text-base font-medium': selectedForm.is_quiz}">
-              {{ field.label }} <span v-if="field.required" class="text-red-500">*</span>
+              <span :class="{'flex items-start gap-2': selectedForm.is_quiz}">
+                <span
+                    v-if="field.required && selectedForm.is_quiz"
+                    data-testid="required-question-marker"
+                    class="group relative mt-2 inline-flex h-2 w-2 flex-none rounded-full bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+                    tabindex="0"
+                    :aria-label="$t('forms.required_question')"
+                >
+                  <span
+                      role="tooltip"
+                      class="absolute left-0 top-full z-20 mt-2 hidden whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs font-normal text-white shadow-lg group-hover:block group-focus:block"
+                  >
+                    {{ $t('forms.required_question') }}
+                  </span>
+                </span>
+                <span class="min-w-0">{{ field.label }}</span>
+                <span v-if="field.required && !selectedForm.is_quiz" class="text-red-500">*</span>
+              </span>
             </label>
 
             <input
@@ -142,7 +169,7 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div v-if="!selectedForm?.is_quiz" class="form-group">
           <label for="entry-created-at" class="form-label">{{ $t('entries.created_at') }}</label>
           <input
               id="entry-created-at"
@@ -152,11 +179,16 @@
           />
         </div>
 
-        <div class="flex gap-4">
-          <AppButton type="submit" :disabled="loading">
-            {{ loading ? $t('common.loading') : $t('common.create') }}
+        <div :class="selectedForm?.is_quiz ? 'pt-2' : 'flex gap-4'">
+          <AppButton
+              type="submit"
+              :disabled="loading"
+              :full-width="selectedForm?.is_quiz"
+              :size="selectedForm?.is_quiz ? 'lg' : 'md'"
+          >
+            {{ loading ? $t('common.loading') : (selectedForm?.is_quiz ? $t('common.submit') : $t('common.create')) }}
           </AppButton>
-          <router-link to="/entries" class="btn-secondary">
+          <router-link v-if="!selectedForm?.is_quiz" to="/entries" class="btn-secondary">
             {{ $t('common.cancel') }}
           </router-link>
         </div>
@@ -177,7 +209,7 @@
         <div class="text-2xl font-bold">
           {{ $t('forms.your_score') }}: {{ quizResult.score }} / {{ quizResult.total }}
         </div>
-        <div class="text-gray-600">
+        <div v-if="selectedForm?.timer_enabled" class="text-gray-600">
           {{ $t('forms.time_taken') }}: {{ formattedDuration }}
         </div>
 
@@ -227,7 +259,9 @@ import AppModal from '@/components/common/AppModal.vue'
 import {useEntries} from '@/composables/useEntries'
 import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
+import {useAuthStore} from '@/stores/auth'
 import {validateForm, type ValidationRules} from '@/utils/validation'
+import {clearQuizDraft, loadQuizDraft, rememberQuiz, saveQuizDraft} from '@/utils/quizLibrary'
 import type {FormField, FormSummary} from "@/types/form";
 
 const { t, locale } = useI18n()
@@ -236,6 +270,7 @@ const route = useRoute()
 const {loading, createEntry} = useEntries()
 const {forms, fetchForms, fetchForm, currentForm} = useForms()
 const {showSuccess} = useNotification()
+const authStore = useAuthStore()
 
 const selectedFormId = ref('')
 const createdAt = ref(getCurrentDateTimeForInput())
@@ -353,23 +388,43 @@ watch(selectedForm, (form) => {
     return
   }
 
+  const quizDraft = form.is_quiz && authStore.user?.id
+    ? loadQuizDraft(authStore.user.id, form.id)
+    : null
+
+  if (form.is_quiz && authStore.user?.id) {
+    rememberQuiz(authStore.user.id, form.id)
+  }
+
   form.fields.forEach((field: FormField) => {
     if (field.type === 'boolean') {
       formData[field.id] = false
     }
   })
 
-  // Start timer if quiz
-  if (form.is_quiz) {
-    startTimer()
+  if (quizDraft) {
+    Object.assign(formData, quizDraft.data)
+  }
+
+  // Start timer only when explicitly enabled for the quiz.
+  if (form.is_quiz && form.timer_enabled) {
+    startTimer(quizDraft?.duration || 0)
   } else {
     stopTimer()
   }
 })
 
-const startTimer = () => {
+watch([formData, duration], () => {
+  if (!selectedForm.value?.is_quiz || !authStore.user?.id) return
+  saveQuizDraft(authStore.user.id, selectedForm.value.id, {
+    data: JSON.parse(JSON.stringify(formData)),
+    duration: duration.value
+  })
+}, {deep: true})
+
+const startTimer = (initialDuration = 0) => {
   stopTimer()
-  duration.value = 0
+  duration.value = initialDuration
   timerInterval.value = window.setInterval(() => {
     duration.value++
   }, 1000)
@@ -430,18 +485,28 @@ const handleSubmit = async () => {
     const entry = await createEntry({
       form_id: selectedFormId.value,
       data: filteredData,
-      tags: tags.value,
-      duration: selectedForm.value?.is_quiz ? duration.value : undefined,
-      created_at: toIsoDateTime(createdAt.value),
+      tags: selectedForm.value?.is_quiz ? undefined : tags.value,
+      duration: selectedForm.value?.is_quiz && selectedForm.value.timer_enabled
+        ? duration.value
+        : undefined,
+      created_at: selectedForm.value?.is_quiz ? undefined : toIsoDateTime(createdAt.value),
     })
 
     if (!entry) {
+      if (selectedForm.value?.is_quiz && authStore.user?.id) {
+        clearQuizDraft(authStore.user.id, selectedForm.value.id)
+      }
       showSuccess(t('entries.entry_saved_offline'))
-      await router.push({name: 'entries-list', query: {form_id: selectedFormId.value}})
+      await router.push(selectedForm.value?.is_quiz
+        ? {name: 'quizzes'}
+        : {name: 'entries-list', query: {form_id: selectedFormId.value}})
       return
     }
 
     if (entry && selectedForm.value?.is_quiz) {
+      if (authStore.user?.id) {
+        clearQuizDraft(authStore.user.id, selectedForm.value.id)
+      }
       const totalPoints = selectedForm.value.fields.reduce((sum, f) => sum + (f.points || 0), 0)
 
       createdEntryId.value = entry.id
@@ -467,7 +532,7 @@ const handleSubmit = async () => {
     }
 
     if (selectedForm.value?.is_quiz) {
-      startTimer() // Resume if failed
+      startTimer(duration.value) // Resume if failed
     }
   }
 }

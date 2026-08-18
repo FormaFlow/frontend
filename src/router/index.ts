@@ -87,6 +87,12 @@ const routes: RouteRecordRaw[] = [
     meta: {requiresAuth: true}
   },
   {
+    path: '/quizzes',
+    name: 'quizzes',
+    component: () => import('@/views/quizzes/QuizzesView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
     path: '/forms',
     name: 'forms-list',
     component: () => import('@/views/forms/FormsListView.vue'),

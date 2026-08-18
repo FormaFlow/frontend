@@ -80,6 +80,7 @@ const quizForm = {
   description: 'Assigned quiz',
   published: true,
   is_quiz: true,
+  timer_enabled: false,
   single_submission: true,
   quick_entry_favorite: false,
   reminder_interval_minutes: 120,
@@ -98,6 +99,28 @@ const learningQuizForm = {
   fields: [
     {id: 'learning-number', label: 'Сколько будет 2 + 3?', type: 'number', required: true, points: 10, correctAnswer: '5', answerConfig: {accepted: ['5']}, order: 0},
     {id: 'learning-select', label: 'Поставь знак >, < или =: 3/9 … 5/9.', type: 'select', required: true, points: 10, options: [{label: '>', value: '>'}, {label: '<', value: '<'}, {label: '=', value: '='}], correctAnswer: '<', answerConfig: {correct: ['<']}, order: 1}
+  ]
+}
+
+const quizEntryForm = {
+  ...quizForm,
+  id: 'form-quiz-entry',
+  fields_count: 2,
+  fields: [
+    {
+      id: 'quiz-required',
+      label: 'Very long required quiz question that must keep its marker at the beginning',
+      type: 'textarea',
+      required: true,
+      order: 0
+    },
+    {
+      id: 'quiz-optional',
+      label: 'Optional quiz question',
+      type: 'text',
+      required: false,
+      order: 1
+    }
   ]
 }
 
@@ -163,6 +186,36 @@ test.beforeEach(async ({ page }) => {
 
     if (url.pathname === '/api/v1/forms/form-learning') {
       await route.fulfill({status: 200, headers, json: learningQuizForm})
+      return
+    }
+
+    if (url.pathname === '/api/v1/forms/form-quiz-entry') {
+      await route.fulfill({ status: 200, headers, json: quizEntryForm })
+      return
+    }
+
+    if (url.pathname === '/api/v1/forms/form-quiz-timer') {
+      await route.fulfill({
+        status: 200,
+        headers,
+        json: {...quizForm, id: 'form-quiz-timer', timer_enabled: true}
+      })
+      return
+    }
+
+    if (url.pathname === '/api/v1/quizzes') {
+      await route.fulfill({
+        status: 200,
+        headers,
+        json: {
+          quizzes: [{
+            ...quizEntryForm,
+            fields: undefined,
+            access_type: 'assigned',
+            completed_at: null
+          }]
+        }
+      })
       return
     }
 
@@ -240,6 +293,22 @@ test.beforeEach(async ({ page }) => {
           form_id: 'form-1',
           data: {'field-notes': 'First line\nSecond line'},
           tags: [],
+          created_at: '2026-08-10T10:00:00+00:00',
+          updated_at: '2026-08-10T10:00:00+00:00'
+        }
+      })
+      return
+    }
+
+    if (url.pathname === '/api/v1/entries/entry-quiz') {
+      await route.fulfill({
+        status: 200,
+        headers,
+        json: {
+          id: 'entry-quiz',
+          form_id: 'form-quiz-entry',
+          data: {'quiz-required': 'Existing answer'},
+          tags: ['legacy-tag'],
           created_at: '2026-08-10T10:00:00+00:00',
           updated_at: '2026-08-10T10:00:00+00:00'
         }
@@ -344,6 +413,37 @@ test('mobile dashboard uses the header menu instead of the welcome card', async 
   await expect(page.getByRole('navigation', { name: 'Основная навигация' }).getByRole('link', { name: 'Записи' })).toBeVisible()
 })
 
+test('quiz library keeps an opened quiz and its draft available offline', async ({page}, testInfo) => {
+  await page.goto('/quizzes')
+  await expect(page.getByRole('heading', {name: 'Викторины'})).toBeVisible()
+  await expect(page.getByText('School test')).toBeVisible()
+  await expect(page.getByText('Назначена')).toBeVisible()
+  await page.waitForLoadState('networkidle')
+  if (testInfo.project.name === 'mobile-chrome') {
+    await page.screenshot({path: testInfo.outputPath('quiz-library-mobile.png'), fullPage: true})
+  }
+
+  await page.getByRole('link', {name: 'Открыть'}).click()
+  const answer = page.getByLabel('Very long required quiz question that must keep its marker at the beginning')
+  await answer.fill('Черновик офлайн-ответа')
+
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'onLine', {configurable: true, get: () => false})
+  })
+  await page.reload()
+
+  await expect(answer).toHaveValue('Черновик офлайн-ответа')
+  await page.goto('/quizzes')
+  await expect(page.getByText('School test')).toBeVisible()
+  await expect(page.getByText('Начата')).toBeVisible()
+
+  await page.getByRole('button', {name: 'Открыть навигацию'}).click()
+  const navigation = page.getByRole('navigation', {name: 'Основная навигация'})
+  await expect(navigation.getByRole('link', {name: 'Викторины'})).toBeVisible()
+  await expect(navigation.getByText('Платежи')).toHaveAttribute('aria-disabled', 'true')
+  await expect(navigation.getByText('Скоро')).toBeVisible()
+})
+
 test('quick entry statistics are opt-in and remember each explicit choice', async ({page}) => {
   await page.addInitScript(() => localStorage.setItem('formaflow:quick-stats-visible', 'true'))
   await page.goto('/')
@@ -420,6 +520,65 @@ test('entry editor preserves multiline textarea values', async ({page}) => {
   await expect(textarea).toHaveValue('First line\nSecond line')
 })
 
+test('legacy quiz entry uses the focused questionnaire layout', async ({page}, testInfo) => {
+  let createPayload: Record<string, unknown> | undefined
+  let updatePayload: Record<string, unknown> | undefined
+  page.on('request', request => {
+    const path = new URL(request.url()).pathname
+    if (request.method() === 'POST' && path === '/api/v1/entries') {
+      createPayload = request.postDataJSON()
+    }
+    if (request.method() === 'PATCH' && path === '/api/v1/entries/entry-quiz') {
+      updatePayload = request.postDataJSON()
+    }
+  })
+
+  await page.goto('/entries/create?form_id=form-quiz-entry')
+  await expect(page.getByRole('heading', {name: 'School test'})).toBeVisible()
+  await expect(page.getByText('Вопросов: 2')).toBeVisible()
+  await expect(page.getByRole('link', {name: 'Назад'})).toBeHidden()
+  await expect(page.getByRole('heading', {name: 'Создать запись'})).toBeHidden()
+  await expect(page.getByTestId('quiz-timer')).toBeHidden()
+  await expect(page.getByText('Теги', {exact: true})).toBeHidden()
+  await expect(page.getByLabel('Дата и время создания')).toBeHidden()
+
+  const requiredMarker = page.getByTestId('required-question-marker').first()
+  await expect(requiredMarker).toBeVisible()
+  await requiredMarker.hover()
+  await expect(page.getByRole('tooltip', {name: 'Обязательный вопрос'})).toBeVisible()
+
+  await page.locator('#quiz-required').fill('Answer')
+  const submitButton = page.getByRole('button', {name: 'Отправить', exact: true})
+  await expect(submitButton).toHaveClass(/w-full/)
+  await expect(page.getByRole('link', {name: 'Отмена'})).toBeHidden()
+  if (testInfo.project.name === 'mobile-chrome') {
+    await page.screenshot({path: testInfo.outputPath('quiz-entry-focused-mobile.png'), fullPage: true})
+  }
+  await submitButton.click()
+  await expect.poll(() => createPayload).toBeDefined()
+  expect(createPayload).not.toHaveProperty('tags')
+  expect(createPayload).not.toHaveProperty('created_at')
+  expect(createPayload).not.toHaveProperty('duration')
+
+  await page.goto('/entries/entry-quiz/edit')
+  await expect(page.getByRole('heading', {name: 'Редактировать запись'})).toBeVisible()
+  await expect(page.getByText('Теги', {exact: true})).toBeHidden()
+  await expect(page.getByLabel('Дата и время создания')).toBeHidden()
+  await page.getByRole('button', {name: 'Сохранить', exact: true}).click()
+  await expect.poll(() => updatePayload).toBeDefined()
+  expect(updatePayload).not.toHaveProperty('tags')
+  expect(updatePayload).not.toHaveProperty('created_at')
+
+  await page.goto('/entries/create?form_id=form-1')
+  await expect(page.getByText('Теги', {exact: true})).toBeVisible()
+  await expect(page.getByLabel('Дата и время создания')).toBeVisible()
+})
+
+test('legacy quiz timer is visible only when enabled for the form', async ({page}) => {
+  await page.goto('/entries/create?form_id=form-quiz-timer')
+  await expect(page.getByTestId('quiz-timer')).toBeVisible()
+})
+
 test('mobile notification has equal side margins', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-chrome')
 
@@ -459,10 +618,12 @@ test('quiz reminder interval is submitted from form editor', async ({ page }) =>
   })
 
   await page.goto('/forms/form-quiz/edit')
+  await page.getByLabel('Использовать таймер').check()
   await page.getByLabel('Напоминать, пока тест не пройден').selectOption('4320')
   await page.getByRole('button', { name: 'Сохранить' }).click()
 
   await expect.poll(() => updatePayload?.reminder_interval_minutes).toBe(4320)
+  expect(updatePayload?.timer_enabled).toBe(true)
 })
 
 test('quiz can be assigned to a searched user without mobile overflow', async ({ page }) => {

@@ -33,6 +33,7 @@ interface FormMetadata {
   description?: string
   published: boolean
   is_quiz: boolean
+  timer_enabled?: boolean
   single_submission: boolean
   quick_entry_favorite: boolean
   reminder_interval_minutes?: number | null
@@ -43,6 +44,13 @@ export interface FormSummary extends FormMetadata {
   entries_count: number
   created_at: string
   updated_at: string
+}
+
+export type QuizAccessType = 'owned' | 'assigned' | 'opened'
+
+export interface QuizSummary extends FormSummary {
+  access_type: QuizAccessType
+  completed_at: string | null
 }
 
 export interface Form extends FormMetadata {
@@ -61,6 +69,7 @@ export interface CreateFormRequest {
   name: string
   description?: string
   is_quiz?: boolean
+  timer_enabled?: boolean
   single_submission?: boolean
   quick_entry_favorite?: boolean
   reminder_interval_minutes?: number | null
@@ -70,6 +79,7 @@ export interface UpdateFormRequest {
   name?: string
   description?: string
   is_quiz?: boolean
+  timer_enabled?: boolean
   single_submission?: boolean
   quick_entry_favorite?: boolean
   reminder_interval_minutes?: number | null

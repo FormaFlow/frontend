@@ -64,7 +64,7 @@
         </div>
 
         <!-- Tags -->
-        <div class="form-group">
+        <div v-if="!currentForm?.is_quiz" class="form-group">
           <label class="form-label">{{ $t('entries.tags') }}</label>
           <div class="flex gap-2 mb-2">
             <input
@@ -84,7 +84,7 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div v-if="!currentForm?.is_quiz" class="form-group">
           <label for="entry-created-at" class="form-label">{{ $t('entries.created_at') }}</label>
           <input
               id="entry-created-at"
@@ -218,8 +218,8 @@ const handleUpdate = async () => {
     await updateEntry(
         currentEntry.value.id, {
       data: currentEntry.value.data,
-      tags: currentEntry.value.tags,
-      created_at: toIsoDateTime(createdAt.value),
+      tags: currentForm.value?.is_quiz ? undefined : currentEntry.value.tags,
+      created_at: currentForm.value?.is_quiz ? undefined : toIsoDateTime(createdAt.value),
     })
     showSuccess(t('entries.entry_updated'))
     await router.push('/entries')

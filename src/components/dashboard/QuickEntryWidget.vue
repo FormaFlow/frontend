@@ -139,7 +139,7 @@
             </div>
           </div>
 
-          <div class="mt-4 space-y-3">
+          <div v-if="!currentForm.is_quiz" class="mt-4 space-y-3">
             <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
                   v-model="useCustomCreatedAt"
@@ -327,7 +327,9 @@ const handleSubmit = async () => {
     const newEntry = await createEntry({
       form_id: selectedFormId.value,
       data: formData.value,
-      created_at: useCustomCreatedAt.value ? toIsoDateTime(createdAt.value) : undefined,
+      created_at: !currentForm.value.is_quiz && useCustomCreatedAt.value
+        ? toIsoDateTime(createdAt.value)
+        : undefined,
     })
     
     const visibleEntry = newEntry || entries.value[0]
