@@ -31,6 +31,15 @@ cp .env.example .env
 npm run dev
 ```
 
+Для проверки PWA и Web Push на телефоне в локальной сети запустите из корня проекта:
+
+```bash
+make dev-learning-lan
+```
+
+Команда создаёт доверенный локальный сертификат через `mkcert`, запускает API, scheduler и HTTPS Vite. Адрес для телефона будет напечатан в терминале.
+Для первого запуска сгенерируйте ключи командой `cd backend && php artisan webpush:generate-vapid` и перенесите напечатанные `VAPID_*` в `backend/.env`.
+
 ## Доступные команды (Makefile)
 
 В проекте настроен `Makefile` для удобства разработки:

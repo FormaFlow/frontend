@@ -2,7 +2,7 @@
   <header class="sticky top-0 z-40 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 items-center justify-between">
-        <router-link to="/" class="flex items-center gap-2 text-lg font-bold text-primary-500">
+        <router-link :to="workspaceStore.isLearner ? '/learn' : (workspaceStore.isManager ? '/admin' : '/')" class="flex items-center gap-2 text-lg font-bold text-primary-500">
           <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
             <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
           </svg>
@@ -33,12 +33,32 @@
           class="border-t border-gray-200 py-2 dark:border-gray-700"
       >
         <router-link
+            v-if="workspaceStore.isLearner"
+            to="/learn"
+            class="block px-2 py-3 font-bold text-primary-600"
+            @click="showMenu = false"
+        >
+          Мой план
+        </router-link>
+        <router-link
+            v-if="workspaceStore.isManager"
+            to="/admin"
+            class="block px-2 py-3 font-bold text-primary-600"
+            @click="showMenu = false"
+        >
+          Учебная админка
+        </router-link>
+        <template v-if="!workspaceStore.isLearner">
+        <router-link
             to="/forms"
             class="block px-2 py-3 text-gray-700 hover:text-primary-500 dark:text-gray-300"
             @click="showMenu = false"
         >
           {{ $t('forms.title') }}
         </router-link>
+
+        </template>
+        <template v-if="!workspaceStore.isLearner">
         <router-link
             to="/entries"
             class="block px-2 py-3 text-gray-700 hover:text-primary-500 dark:text-gray-300"
@@ -46,6 +66,7 @@
         >
           {{ $t('entries.title') }}
         </router-link>
+        </template>
         <router-link
             to="/payments"
             class="block px-2 py-3 text-gray-700 hover:text-primary-500 dark:text-gray-300"
@@ -107,13 +128,14 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useI18n} from 'vue-i18n'
 import {useAuthStore} from '@/stores/auth'
 import {useTheme} from '@/composables/useTheme'
 import {useAuth} from '@/composables/useAuth'
 import {useNotification} from '@/composables/useNotification'
+import {useWorkspaceStore} from '@/stores/workspace'
 
 const router = useRouter()
 const {locale, t} = useI18n()
@@ -121,6 +143,10 @@ const {setTheme, theme} = useTheme()
 const authStore = useAuthStore()
 const {logout} = useAuth()
 const {showSuccess} = useNotification()
+const workspaceStore = useWorkspaceStore()
+onMounted(() => {
+  if (authStore.isAuthenticated) void workspaceStore.load()
+})
 
 const showMenu = ref(false)
 const user = computed(() => authStore.user)

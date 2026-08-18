@@ -2,17 +2,21 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url'
 import { VitePWA } from 'vite-plugin-pwa'
+import {readFileSync} from 'node:fs'
+import {resolve} from 'node:path'
+
+const certificateDirectory = process.env.VITE_DEV_CERT_DIR
 
 export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['icons/favicon.ico', 'icons/apple-touch-icon.png'],
       manifest: {
-        name: 'FormaFlow',
+        name: 'FormaFlow Learning',
         short_name: 'FormaFlow',
-        description: 'Modern form builder and management system',
+        description: 'Семейные учебные планы, тесты и работа над ошибками',
         theme_color: '#18b8c6',
         background_color: '#ffffff',
         display: 'standalone',
@@ -20,12 +24,12 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: '/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
@@ -73,8 +77,16 @@ export default defineConfig({
     }
   },
   server: {
+    host: process.env.VITE_DEV_HOST || 'localhost',
     port: 5173,
-    strictPort: false
+    strictPort: false,
+    https: certificateDirectory ? {
+      key: readFileSync(resolve(certificateDirectory, 'key.pem')),
+      cert: readFileSync(resolve(certificateDirectory, 'cert.pem'))
+    } : undefined,
+    proxy: process.env.VITE_DEV_API_PROXY ? {
+      '/api': {target: process.env.VITE_DEV_API_PROXY, changeOrigin: true}
+    } : undefined
   },
   build: {
     outDir: 'dist',

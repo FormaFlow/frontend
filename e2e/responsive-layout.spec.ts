@@ -90,6 +90,17 @@ const quizForm = {
   fields: []
 }
 
+const learningQuizForm = {
+  ...quizForm,
+  id: 'form-learning',
+  name: 'Математика: проверка ответов',
+  fields_count: 2,
+  fields: [
+    {id: 'learning-number', label: 'Сколько будет 2 + 3?', type: 'number', required: true, points: 10, correctAnswer: '5', answerConfig: {accepted: ['5']}, order: 0},
+    {id: 'learning-select', label: 'Поставь знак >, < или =: 3/9 … 5/9.', type: 'select', required: true, points: 10, options: [{label: '>', value: '>'}, {label: '<', value: '<'}, {label: '=', value: '='}], correctAnswer: '<', answerConfig: {correct: ['<']}, order: 1}
+  ]
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('auth_token', 'e2e-token')
@@ -111,8 +122,47 @@ test.beforeEach(async ({ page }) => {
       return
     }
 
+    if (url.pathname === '/api/v1/workspaces/workspace-learning/learning/today') {
+      await route.fulfill({status: 200, headers, json: {
+        assignments: [{id: 'assignment-learning', title: 'Диагностика за 1 класс', subject_code: 'math', status: 'assigned', due_at: null}],
+        reviews_due: 2, xp_total: 40, streak: {current: 3, longest: 5}, achievements: ['first_steps']
+      }})
+      return
+    }
+
+    if (url.pathname === '/api/v1/workspaces/workspace-learning/learning/assignments/assignment-learning/attempts') {
+      await route.fulfill({status: 201, headers, json: {
+        attempt: {id: 'attempt-learning', assignment_id: 'assignment-learning', status: 'in_progress', started_at: '2026-08-17T10:00:00+00:00'},
+        assessment: {title: 'Диагностика за 1 класс', max_points: 40, questions: [
+          {id: 'question-single', prompt: 'Сколько будет 2 + 3?', type: 'single_choice', points: 10, options: [{label: '4', value: '4'}, {label: '5', value: '5'}]},
+          {id: 'question-multiple', prompt: 'Выбери чётные числа', type: 'multiple_choice', points: 10, options: [{label: '2', value: '2'}, {label: '3', value: '3'}, {label: '4', value: '4'}]},
+          {id: 'question-number', prompt: 'Сколько будет 6 − 1?', type: 'number', points: 10},
+          {id: 'question-boolean', prompt: 'Верно ли, что 7 больше 4?', type: 'boolean', points: 10}
+        ]}
+      }})
+      return
+    }
+
+    if (url.pathname === '/api/v1/workspaces/workspace-learning/learning/attempts/attempt-learning/submit') {
+      await route.fulfill({status: 200, headers, json: {result: {
+        attempt_id: 'attempt-learning', score: 40, max_points: 40, xp_total: 90,
+        streak: {current: 4, longest: 5}, questions: [
+          {id: 'question-single', prompt: 'Сколько будет 2 + 3?', is_correct: true, points_awarded: 10, max_points: 10, answer: '5', correct_answer: {correct: ['5']}},
+          {id: 'question-multiple', prompt: 'Выбери чётные числа', is_correct: true, points_awarded: 10, max_points: 10, answer: ['2', '4'], correct_answer: {correct: ['2', '4']}},
+          {id: 'question-number', prompt: 'Сколько будет 6 − 1?', is_correct: true, points_awarded: 10, max_points: 10, answer: '5', correct_answer: {accepted: ['5']}},
+          {id: 'question-boolean', prompt: 'Верно ли, что 7 больше 4?', is_correct: true, points_awarded: 10, max_points: 10, answer: true, correct_answer: {correct: [true]}}
+        ]
+      }}})
+      return
+    }
+
     if (url.pathname === '/api/v1/forms/form-quiz') {
       await route.fulfill({ status: 200, headers, json: quizForm })
+      return
+    }
+
+    if (url.pathname === '/api/v1/forms/form-learning') {
+      await route.fulfill({status: 200, headers, json: learningQuizForm})
       return
     }
 
@@ -220,6 +270,57 @@ test('forms list does not create horizontal overflow', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Формы' })).toBeVisible()
   await expect(page.getByText('Very long form name that must stay inside its card')).toBeVisible()
 
+  await expectNoHorizontalOverflow(page)
+})
+
+test('quiz details show options and correct answers without placeholder glyphs', async ({page}, testInfo) => {
+  await page.goto('/forms/form-learning')
+  if (testInfo.project.name === 'mobile-chrome') {
+    await expect(page.getByText('Ответ', {exact: true}).first()).toBeVisible()
+    const fieldCard = page.getByRole('article').filter({has: page.getByRole('heading', {name: 'Поставь знак >, < или =: 3/9 … 5/9.'})})
+    await expect(fieldCard).toBeVisible()
+    await expect(fieldCard.getByText('>, <, =', {exact: true})).toBeVisible()
+    await expect(fieldCard.locator('dd').nth(1)).toHaveText('<')
+    const numberCard = page.getByRole('article').filter({has: page.getByRole('heading', {name: 'Сколько будет 2 + 3?'})})
+    await expect(numberCard.locator('dd').nth(1)).toHaveText('5')
+  } else {
+    await expect(page.getByRole('columnheader', {name: 'Варианты'})).toBeVisible()
+    await expect(page.getByRole('columnheader', {name: 'Правильный ответ'})).toBeVisible()
+    const fieldRow = page.getByRole('row').filter({has: page.getByRole('cell', {name: 'Поставь знак >, < или =: 3/9 … 5/9.'})})
+    await expect(fieldRow).toBeVisible()
+    await expect(fieldRow.getByRole('cell', {name: '>, <, ='})).toBeVisible()
+    await expect(fieldRow.locator('td').nth(3)).toHaveText('<')
+    const numberRow = page.getByRole('row').filter({has: page.getByRole('cell', {name: 'Сколько будет 2 + 3?'})})
+    await expect(numberRow.locator('td').nth(3)).toHaveText('5')
+  }
+  await expectNoHorizontalOverflow(page)
+})
+
+test('mobile learner completes all four interactive question types without overflow', async ({page}, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chrome')
+  await page.addInitScript(() => {
+    localStorage.setItem('user', JSON.stringify({id: 'learner-1', name: 'Миша', email: null, account_type: 'managed_learner'}))
+    localStorage.setItem('login_workspace', JSON.stringify({id: 'workspace-learning', name: 'Семья', slug: 'family', role: 'learner', timezone: 'Europe/Moscow'}))
+  })
+
+  await page.goto('/learn')
+  await expect(page.getByRole('heading', {name: 'Привет, Миша!'})).toBeVisible()
+  await expect(page.getByText('Диагностика за 1 класс')).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+  await page.getByText('Диагностика за 1 класс').click()
+
+  await page.getByText('5', {exact: true}).click()
+  await page.getByRole('button', {name: 'Дальше'}).click()
+  await page.getByText('2', {exact: true}).click()
+  await page.getByText('4', {exact: true}).click()
+  await page.getByRole('button', {name: 'Дальше'}).click()
+  await page.getByPlaceholder('Введи число').fill('5')
+  await page.getByRole('button', {name: 'Дальше'}).click()
+  await page.getByRole('button', {name: 'Да'}).click()
+  await page.getByRole('button', {name: 'Завершить'}).click()
+
+  await expect(page.getByRole('heading', {name: 'Отличная работа!'})).toBeVisible()
+  await expect(page.getByText('40 из 40 баллов · 100%')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 

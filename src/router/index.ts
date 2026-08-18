@@ -15,9 +15,63 @@ const routes: RouteRecordRaw[] = [
     meta: {layout: 'auth'}
   },
   {
+    path: '/accept-invitation',
+    name: 'accept-invitation',
+    component: () => import('@/views/auth/AcceptInvitationView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
     path: '/',
     name: 'dashboard',
     component: () => import('@/views/DashboardView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
+    path: '/learn',
+    name: 'learning-home',
+    component: () => import('@/views/learning/LearningHomeView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
+    path: '/learn/assignments/:assignmentId',
+    name: 'learning-attempt',
+    component: () => import('@/views/learning/AttemptView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
+    path: '/learn/review',
+    name: 'learning-review',
+    component: () => import('@/views/learning/ReviewView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
+    path: '/admin',
+    name: 'learning-admin',
+    component: () => import('@/views/admin/AdminDashboardView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
+    path: '/admin/learners',
+    name: 'admin-learners',
+    component: () => import('@/views/admin/LearnersView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
+    path: '/admin/content',
+    name: 'admin-content',
+    component: () => import('@/views/admin/ContentView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
+    path: '/admin/content/:assessmentId',
+    name: 'admin-assessment-editor',
+    component: () => import('@/views/admin/AssessmentEditorView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
+    path: '/admin/assignments',
+    name: 'admin-assignments',
+    component: () => import('@/views/admin/AssignmentsView.vue'),
     meta: {requiresAuth: true}
   },
   {

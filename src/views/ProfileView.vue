@@ -212,7 +212,7 @@ watchEffect(() => {
   if (authStore.user) {
     form.value = {
       name: authStore.user.name,
-      email: authStore.user.email,
+      email: authStore.user.email || '',
       timezone: authStore.user.timezone || 'Europe/Moscow'
     }
   }

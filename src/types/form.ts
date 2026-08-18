@@ -22,6 +22,8 @@ export interface FormField {
   description?: string
   order: number
   correctAnswer?: string
+  answerConfig?: {correct?: unknown[]; accepted?: unknown[]; tolerance?: number} | null
+  explanation?: string | null
   points?: number
 }
 

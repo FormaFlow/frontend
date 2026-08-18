@@ -1,5 +1,5 @@
 import client from './client'
-import type { AuthCredentials, AuthResponse, RegisterData, User } from '@/types/user'
+import type { AuthCredentials, AuthResponse, ManagedAuthCredentials, RegisterData, User } from '@/types/user'
 
 export const authApi = {
   register: (data: RegisterData) => {
@@ -7,6 +7,9 @@ export const authApi = {
   },
   login: (credentials: AuthCredentials) => {
     return client.post<AuthResponse>('login', credentials)
+  },
+  managedLogin: (credentials: ManagedAuthCredentials) => {
+    return client.post<AuthResponse>('managed-login', credentials)
   },
   logout: () => {
     return client.post('logout')

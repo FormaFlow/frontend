@@ -47,6 +47,120 @@
         @apply bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-lg p-6 transition-colors duration-200;
     }
 
+    .learning-shell,
+    .admin-shell {
+        @apply space-y-8;
+    }
+
+    .eyebrow {
+        @apply text-xs font-black uppercase tracking-[0.18em];
+    }
+
+    .hero-card {
+        @apply overflow-hidden rounded-3xl bg-gradient-to-br from-teal-500 via-primary-500 to-cyan-600 p-6 text-white shadow-xl sm:flex sm:items-center sm:justify-between sm:p-8;
+    }
+
+    .hero-stat {
+        @apply flex min-h-20 flex-col items-center justify-center rounded-2xl bg-white/15 p-2 text-center backdrop-blur;
+    }
+
+    .hero-stat strong {
+        @apply text-xl font-black;
+    }
+
+    .hero-stat span {
+        @apply mt-1 text-[10px] font-bold uppercase text-white/75;
+    }
+
+    .review-banner {
+        @apply flex items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-100 p-5 text-amber-950;
+    }
+
+    .task-card {
+        @apply flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800;
+    }
+
+    .subject-icon {
+        @apply flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-2xl font-black text-primary-600 dark:bg-primary-900/50;
+    }
+
+    .empty-learning {
+        @apply rounded-3xl border-2 border-dashed border-gray-200 p-10 text-center dark:border-gray-700;
+    }
+
+    .question-card {
+        @apply rounded-3xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800 sm:p-10;
+    }
+
+    .answer-option {
+        @apply flex w-full cursor-pointer items-center gap-3 rounded-2xl border-2 border-gray-200 p-4 text-left font-semibold transition hover:border-primary-300 dark:border-gray-600;
+    }
+
+    .answer-option--selected {
+        @apply border-primary-500 bg-primary-50 text-primary-800 dark:bg-primary-900/40 dark:text-primary-100;
+    }
+
+    .result-hero {
+        @apply rounded-3xl p-8 text-center;
+    }
+
+    .result-hero--great {
+        @apply bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-950;
+    }
+
+    .result-hero--practice {
+        @apply bg-gradient-to-br from-amber-100 to-orange-100 text-amber-950;
+    }
+
+    .admin-heading {
+        @apply flex flex-col justify-between gap-4 sm:flex-row sm:items-end;
+    }
+
+    .admin-shortcuts {
+        @apply grid gap-3 sm:grid-cols-3;
+    }
+
+    .admin-shortcuts a {
+        @apply grid grid-cols-[auto_1fr] items-center gap-x-3 rounded-2xl border border-gray-200 bg-white p-4 transition hover:border-primary-300 hover:shadow dark:border-gray-700 dark:bg-gray-800;
+    }
+
+    .admin-shortcuts span {
+        @apply row-span-2 text-2xl;
+    }
+
+    .admin-shortcuts strong {
+        @apply font-black;
+    }
+
+    .admin-shortcuts small {
+        @apply text-gray-500;
+    }
+
+    .learner-card {
+        @apply rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800;
+    }
+
+    .avatar {
+        @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-cyan-500 text-xl font-black text-white;
+    }
+
+    .metric {
+        @apply rounded-xl bg-gray-50 p-2 dark:bg-gray-700/50;
+    }
+
+    .metric strong,
+    .metric span {
+        @apply block;
+    }
+
+    .metric strong {
+        @apply text-lg font-black;
+    }
+
+    .metric span {
+        @apply mt-1 text-[10px] uppercase text-gray-500;
+    }
+
     .card-header {
         @apply border-b border-gray-200 dark:border-gray-700 pb-4 mb-4;
     }
