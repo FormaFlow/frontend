@@ -39,6 +39,18 @@
               </label>
             </div>
 
+            <div v-if="form.is_quiz" class="flex items-center gap-2">
+              <input
+                  id="timer-enabled"
+                  v-model="form.timer_enabled"
+                  type="checkbox"
+                  class="w-4 h-4 text-primary-600 rounded"
+              />
+              <label for="timer-enabled" class="text-sm font-medium">
+                {{ $t('forms.timer_enabled') }}
+              </label>
+            </div>
+
             <div v-if="form.is_quiz" class="form-group max-w-sm">
               <label for="reminder-interval" class="form-label">
                 {{ $t('forms.reminder_interval') }}
@@ -147,6 +159,7 @@ const {
     name: '',
     description: '',
     is_quiz: false,
+    timer_enabled: false,
     single_submission: false,
     quick_entry_favorite: false,
     reminder_interval_minutes: null as number | null
@@ -205,6 +218,7 @@ onMounted(async () => {
       name: currentForm.value.name,
       description: currentForm.value.description || '',
       is_quiz: currentForm.value.is_quiz || false,
+      timer_enabled: currentForm.value.timer_enabled || false,
       single_submission: currentForm.value.single_submission || false,
       quick_entry_favorite: currentForm.value.quick_entry_favorite || false,
       reminder_interval_minutes: currentForm.value.reminder_interval_minutes ?? null

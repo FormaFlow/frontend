@@ -6,6 +6,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
+    "submit": "Submit",
     "close": "Close",
     "loading": "Loading...",
     "error": "Error",
@@ -106,6 +107,9 @@
       "email": "Email"
     },
     "is_quiz": "Quiz Mode",
+    "timer_enabled": "Use timer",
+    "question_count": "Questions: {count}",
+    "required_question": "Required question",
     "single_submission": "Single Submission",
     "quick_entry_favorite": "Show in Quick Entry",
     "correct_answer": "Correct Answer",

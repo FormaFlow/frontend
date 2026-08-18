@@ -33,6 +33,7 @@ export const useForms = () => {
             description: formsStore.currentForm.description,
             published: formsStore.currentForm.published,
             is_quiz: formsStore.currentForm.is_quiz,
+            timer_enabled: formsStore.currentForm.timer_enabled,
             single_submission: formsStore.currentForm.single_submission,
             quick_entry_favorite: formsStore.currentForm.quick_entry_favorite,
             fields_count: formsStore.currentForm.fields_count

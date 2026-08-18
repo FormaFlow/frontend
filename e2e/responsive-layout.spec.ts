@@ -80,6 +80,7 @@ const quizForm = {
   description: 'Assigned quiz',
   published: true,
   is_quiz: true,
+  timer_enabled: false,
   single_submission: true,
   quick_entry_favorite: false,
   reminder_interval_minutes: 120,
@@ -88,6 +89,28 @@ const quizForm = {
   created_at: '2026-07-20T10:00:00+00:00',
   updated_at: '2026-07-20T10:00:00+00:00',
   fields: []
+}
+
+const quizEntryForm = {
+  ...quizForm,
+  id: 'form-quiz-entry',
+  fields_count: 2,
+  fields: [
+    {
+      id: 'quiz-required',
+      label: 'Very long required quiz question that must keep its marker at the beginning',
+      type: 'textarea',
+      required: true,
+      order: 0
+    },
+    {
+      id: 'quiz-optional',
+      label: 'Optional quiz question',
+      type: 'text',
+      required: false,
+      order: 1
+    }
+  ]
 }
 
 test.beforeEach(async ({ page }) => {
@@ -113,6 +136,20 @@ test.beforeEach(async ({ page }) => {
 
     if (url.pathname === '/api/v1/forms/form-quiz') {
       await route.fulfill({ status: 200, headers, json: quizForm })
+      return
+    }
+
+    if (url.pathname === '/api/v1/forms/form-quiz-entry') {
+      await route.fulfill({ status: 200, headers, json: quizEntryForm })
+      return
+    }
+
+    if (url.pathname === '/api/v1/forms/form-quiz-timer') {
+      await route.fulfill({
+        status: 200,
+        headers,
+        json: {...quizForm, id: 'form-quiz-timer', timer_enabled: true}
+      })
       return
     }
 
@@ -203,8 +240,8 @@ test.beforeEach(async ({ page }) => {
         headers,
         json: {
           id: 'entry-quiz',
-          form_id: 'form-quiz',
-          data: {},
+          form_id: 'form-quiz-entry',
+          data: {'quiz-required': 'Existing answer'},
           tags: ['legacy-tag'],
           created_at: '2026-08-10T10:00:00+00:00',
           updated_at: '2026-08-10T10:00:00+00:00'
@@ -335,7 +372,7 @@ test('entry editor preserves multiline textarea values', async ({page}) => {
   await expect(textarea).toHaveValue('First line\nSecond line')
 })
 
-test('legacy quiz create and edit hide tags and creation date', async ({page}) => {
+test('legacy quiz entry uses the focused questionnaire layout', async ({page}, testInfo) => {
   let createPayload: Record<string, unknown> | undefined
   let updatePayload: Record<string, unknown> | undefined
   page.on('request', request => {
@@ -348,14 +385,32 @@ test('legacy quiz create and edit hide tags and creation date', async ({page}) =
     }
   })
 
-  await page.goto('/entries/create?form_id=form-quiz')
-  await expect(page.getByRole('heading', {name: 'Создать запись'})).toBeVisible()
+  await page.goto('/entries/create?form_id=form-quiz-entry')
+  await expect(page.getByRole('heading', {name: 'School test'})).toBeVisible()
+  await expect(page.getByText('Вопросов: 2')).toBeVisible()
+  await expect(page.getByRole('link', {name: 'Назад'})).toBeHidden()
+  await expect(page.getByRole('heading', {name: 'Создать запись'})).toBeHidden()
+  await expect(page.getByTestId('quiz-timer')).toBeHidden()
   await expect(page.getByText('Теги', {exact: true})).toBeHidden()
   await expect(page.getByLabel('Дата и время создания')).toBeHidden()
-  await page.getByRole('button', {name: 'Создать', exact: true}).click()
+
+  const requiredMarker = page.getByTestId('required-question-marker').first()
+  await expect(requiredMarker).toBeVisible()
+  await requiredMarker.hover()
+  await expect(page.getByRole('tooltip', {name: 'Обязательный вопрос'})).toBeVisible()
+
+  await page.locator('#quiz-required').fill('Answer')
+  const submitButton = page.getByRole('button', {name: 'Отправить', exact: true})
+  await expect(submitButton).toHaveClass(/w-full/)
+  await expect(page.getByRole('link', {name: 'Отмена'})).toBeHidden()
+  if (testInfo.project.name === 'mobile-chrome') {
+    await page.screenshot({path: testInfo.outputPath('quiz-entry-focused-mobile.png'), fullPage: true})
+  }
+  await submitButton.click()
   await expect.poll(() => createPayload).toBeDefined()
   expect(createPayload).not.toHaveProperty('tags')
   expect(createPayload).not.toHaveProperty('created_at')
+  expect(createPayload).not.toHaveProperty('duration')
 
   await page.goto('/entries/entry-quiz/edit')
   await expect(page.getByRole('heading', {name: 'Редактировать запись'})).toBeVisible()
@@ -369,6 +424,11 @@ test('legacy quiz create and edit hide tags and creation date', async ({page}) =
   await page.goto('/entries/create?form_id=form-1')
   await expect(page.getByText('Теги', {exact: true})).toBeVisible()
   await expect(page.getByLabel('Дата и время создания')).toBeVisible()
+})
+
+test('legacy quiz timer is visible only when enabled for the form', async ({page}) => {
+  await page.goto('/entries/create?form_id=form-quiz-timer')
+  await expect(page.getByTestId('quiz-timer')).toBeVisible()
 })
 
 test('mobile notification has equal side margins', async ({ page }, testInfo) => {
@@ -410,10 +470,12 @@ test('quiz reminder interval is submitted from form editor', async ({ page }) =>
   })
 
   await page.goto('/forms/form-quiz/edit')
+  await page.getByLabel('Использовать таймер').check()
   await page.getByLabel('Напоминать, пока тест не пройден').selectOption('4320')
   await page.getByRole('button', { name: 'Сохранить' }).click()
 
   await expect.poll(() => updatePayload?.reminder_interval_minutes).toBe(4320)
+  expect(updatePayload?.timer_enabled).toBe(true)
 })
 
 test('quiz can be assigned to a searched user without mobile overflow', async ({ page }) => {

@@ -31,6 +31,7 @@ interface FormMetadata {
   description?: string
   published: boolean
   is_quiz: boolean
+  timer_enabled?: boolean
   single_submission: boolean
   quick_entry_favorite: boolean
   reminder_interval_minutes?: number | null
@@ -59,6 +60,7 @@ export interface CreateFormRequest {
   name: string
   description?: string
   is_quiz?: boolean
+  timer_enabled?: boolean
   single_submission?: boolean
   quick_entry_favorite?: boolean
   reminder_interval_minutes?: number | null
@@ -68,6 +70,7 @@ export interface UpdateFormRequest {
   name?: string
   description?: string
   is_quiz?: boolean
+  timer_enabled?: boolean
   single_submission?: boolean
   quick_entry_favorite?: boolean
   reminder_interval_minutes?: number | null

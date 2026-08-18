@@ -6,6 +6,7 @@
     "delete": "Удалить",
     "edit": "Редактировать",
     "create": "Создать",
+    "submit": "Отправить",
     "close": "Закрыть",
     "loading": "Загрузка...",
     "error": "Ошибка",
@@ -106,6 +107,9 @@
       "email": "Email"
     },
     "is_quiz": "Режим викторины",
+    "timer_enabled": "Использовать таймер",
+    "question_count": "Вопросов: {count}",
+    "required_question": "Обязательный вопрос",
     "single_submission": "Один ответ на аккаунт",
     "quick_entry_favorite": "Показывать в быстром добавлении",
     "correct_answer": "Правильный ответ",
