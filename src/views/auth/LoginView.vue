@@ -67,7 +67,7 @@
 
 <script setup lang="ts">
 import {reactive, ref} from 'vue'
-import {useRouter} from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
 import {useI18n} from 'vue-i18n'
 import AppInput from '@/components/common/AppInput.vue'
 import AppButton from '@/components/common/AppButton.vue'
@@ -79,10 +79,11 @@ import {useAuthStore} from '@/stores/auth'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const {login, loading} = useAuth()
 const {showSuccess} = useNotification()
 const authStore = useAuthStore()
-const mode = ref<'parent' | 'child'>('parent')
+const mode = ref<'parent' | 'child'>(route.query.mode === 'child' ? 'child' : 'parent')
 const managedError = ref('')
 
 const form = reactive({
@@ -95,7 +96,11 @@ const errors = reactive({
   password: ''
 })
 
-const childForm = reactive({workspace: '', login: '', pin: ''})
+const childForm = reactive({
+  workspace: typeof route.query.workspace === 'string' ? route.query.workspace : '',
+  login: typeof route.query.login === 'string' ? route.query.login : '',
+  pin: ''
+})
 
 const rules: ValidationRules = {
   email: [{required: true}, {email: true}],
@@ -118,7 +123,6 @@ const handleLogin = async () => {
     
     if (success) {
       showSuccess(t('auth.login_success'))
-      await router.push('/admin')
     }
 
   } catch (error) {

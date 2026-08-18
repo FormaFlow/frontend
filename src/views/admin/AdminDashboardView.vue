@@ -1,6 +1,7 @@
 <template>
   <div class="admin-shell">
     <header class="admin-heading"><div><p class="eyebrow text-primary-600">Семейная школа</p><h1 class="text-3xl font-black">Прогресс учеников</h1><p class="mt-2 text-gray-500">Результаты, регулярность и вопросы на повторение в одном месте.</p></div><router-link to="/admin/assignments" class="btn-primary">Назначить тест</router-link></header>
+    <PushNotificationPrompt audience="guardian" />
     <nav class="admin-shortcuts">
       <router-link to="/admin/learners"><span>👥</span><strong>Ученики</strong><small>Профили и PIN</small></router-link>
       <router-link to="/admin/content"><span>📚</span><strong>Контент</strong><small>Тесты и вопросы</small></router-link>
@@ -25,6 +26,7 @@ import {computed, onMounted, ref} from 'vue'
 import {learningApi, workspaceApi} from '@/api/learning'
 import {useWorkspaceStore} from '@/stores/workspace'
 import type {LearnerProgress} from '@/types/learning'
+import PushNotificationPrompt from '@/components/learning/PushNotificationPrompt.vue'
 const workspace = useWorkspaceStore(); const learners = ref<LearnerProgress[]>([]); const loading = ref(true)
 type TimelineAttempt = {id: string; assessment_title: string; subject_code: string; score: number; max_points: number; completed_at: string}
 const selectedLearner = ref<LearnerProgress | null>(null); const timeline = ref<TimelineAttempt[]>([])

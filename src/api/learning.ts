@@ -45,7 +45,7 @@ export const learningApi = {
   library: (workspaceId: string) => client.get<{packs: Array<{id: string; title: string; description: string; questions: number; target_grade: number}>}>(`workspaces/${workspaceId}/learning/library`),
   installPack: (workspaceId: string, packId: string) => client.post(`workspaces/${workspaceId}/learning/library/${packId}/install`),
   assign: (workspaceId: string, data: {assessment_id: string; learner_user_id: string; due_at?: string}) =>
-    client.post(`workspaces/${workspaceId}/learning/assignments`, data),
+    client.post<{assignment: {id: string}; notification_sent: boolean}>(`workspaces/${workspaceId}/learning/assignments`, data),
   progress: (workspaceId: string) => client.get<{learners: LearnerProgress[]}>(`workspaces/${workspaceId}/learning/progress`),
   timeline: (workspaceId: string, learnerId: string) => client.get<{attempts: Array<{id: string; assessment_title: string; subject_code: string; score: number; max_points: number; completed_at: string}>}>(`workspaces/${workspaceId}/learning/progress/${learnerId}`),
   schedule: (workspaceId: string, learnerId: string) => client.get<{schedule: StudySchedule | null}>(`workspaces/${workspaceId}/learning/schedules/${learnerId}`),
