@@ -1,16 +1,16 @@
 <template>
   <div class="space-y-6">
-    <div class="flex gap-4 items-center justify-between">
-      <div class="flex gap-4 items-center">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
         <router-link to="/forms" class="text-primary-500 hover:underline">
           ← {{ $t('common.back') }}
         </router-link>
-        <h1 class="text-3xl font-bold">{{ currentForm?.name }}</h1>
+        <h1 class="break-words text-3xl font-bold">{{ currentForm?.name }}</h1>
       </div>
       <button
           v-if="currentForm?.published"
           type="button"
-          class="btn-secondary"
+          class="btn-secondary self-start sm:self-auto"
           @click="openShare"
       >
         🔗 {{ $t('forms.share') }}
@@ -50,12 +50,29 @@
         <div v-if="currentForm.fields.length === 0" class="text-center py-8 text-gray-500">
           No fields yet
         </div>
-        <div v-else class="overflow-x-auto">
+        <div v-else class="space-y-3 md:hidden">
+          <article v-for="field in currentForm.fields" :key="field.id" class="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+            <div class="flex items-start justify-between gap-3">
+              <div><h3 class="font-semibold">{{ field.label }}</h3><p class="mt-1 text-sm text-gray-500">{{ field.type }}</p></div>
+              <span v-if="field.required" class="badge badge-success shrink-0">Yes</span>
+              <span v-else class="badge shrink-0">No</span>
+            </div>
+            <dl v-if="currentForm.is_quiz" class="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
+              <dt class="text-gray-500">Варианты</dt><dd class="min-w-0 break-words">{{ formatOptions(field) }}</dd>
+              <dt class="text-gray-500">Ответ</dt><dd class="min-w-0 break-words font-semibold">{{ formatAnswer(field) }}</dd>
+              <dt class="text-gray-500">Баллы</dt><dd>{{ field.points ?? 0 }}</dd>
+            </dl>
+          </article>
+        </div>
+        <div class="hidden overflow-x-auto md:block">
           <table class="table">
             <thead class="table-head">
             <tr>
               <th>{{ $t('forms.field_name') }}</th>
               <th>{{ $t('forms.field_type') }}</th>
+              <th v-if="currentForm.is_quiz">Варианты</th>
+              <th v-if="currentForm.is_quiz">Правильный ответ</th>
+              <th v-if="currentForm.is_quiz">Баллы</th>
               <th>{{ $t('forms.field_required') }}</th>
             </tr>
             </thead>
@@ -63,6 +80,9 @@
             <tr v-for="field in currentForm.fields" :key="field.id">
               <td>{{ field.label }}</td>
               <td>{{ field.type }}</td>
+              <td v-if="currentForm.is_quiz" class="min-w-48 text-sm">{{ formatOptions(field) }}</td>
+              <td v-if="currentForm.is_quiz" class="min-w-40 font-medium">{{ formatAnswer(field) }}</td>
+              <td v-if="currentForm.is_quiz">{{ field.points ?? 0 }}</td>
               <td>
                 <span v-if="field.required" class="badge badge-success">Yes</span>
                 <span v-else class="badge">No</span>
@@ -166,6 +186,7 @@ import {useForms} from '@/composables/useForms'
 import {useNotification} from '@/composables/useNotification'
 import {useI18n} from 'vue-i18n'
 import {remindersApi, type QuizAssignment, type ReminderUser} from '@/api/reminders'
+import type {FormField} from '@/types/form'
 
 const route = useRoute()
 const {t} = useI18n()
@@ -187,6 +208,17 @@ const shareLink = computed(() => {
   return `${backendBase}/shared/${currentForm.value.id}`
 })
 const assignedUserIds = computed(() => new Set(assignments.value.map(item => item.recipient.id)))
+const displayValue = (value: unknown) => value === true ? 'Да' : value === false ? 'Нет' : String(value)
+const formatOptions = (field: FormField) => field.options?.length
+  ? field.options.map(option => option.label === option.value ? String(option.label) : `${option.label} (${displayValue(option.value)})`).join(', ')
+  : '—'
+const formatAnswer = (field: FormField) => {
+  const configured = field.answerConfig?.accepted ?? field.answerConfig?.correct
+  if (configured?.length) return configured.map(displayValue).join(', ')
+  return field.correctAnswer !== undefined && field.correctAnswer !== null && field.correctAnswer !== ''
+    ? field.correctAnswer
+    : '—'
+}
 
 const handlePublish = async () => {
   if (!currentForm.value) return

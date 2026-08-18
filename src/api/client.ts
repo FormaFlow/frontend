@@ -73,6 +73,13 @@ class ApiClient {
     return response.data
   }
 
+  async postFormData<T>(url: string, data: FormData): Promise<T> {
+    const response: AxiosResponse<T> = await this.client.post(url, data, {
+      headers: {'Content-Type': 'multipart/form-data'}
+    })
+    return response.data
+  }
+
   async patch<T>(url: string, data?: unknown): Promise<T> {
     const response: AxiosResponse<T> = await this.client.patch(url, data)
     return response.data

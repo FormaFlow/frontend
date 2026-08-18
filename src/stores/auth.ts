@@ -1,13 +1,14 @@
 import {defineStore} from 'pinia'
 import {computed, ref} from 'vue'
 import {authApi} from '@/api/auth'
-import type {AuthCredentials, RegisterData, User} from '@/types/user'
+import type {AuthCredentials, ManagedAuthCredentials, RegisterData, User, Workspace} from '@/types/user'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const token = ref<string | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const loginWorkspace = ref<Workspace | null>(null)
 
   const initializeAuth = () => {
     const savedToken = localStorage.getItem('auth_token')
@@ -23,6 +24,8 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.removeItem('user')
       }
     }
+    const savedWorkspace = localStorage.getItem('login_workspace')
+    if (savedWorkspace) loginWorkspace.value = JSON.parse(savedWorkspace)
   }
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
@@ -76,6 +79,26 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const managedLogin = async (credentials: ManagedAuthCredentials) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await authApi.managedLogin(credentials)
+      token.value = response.token
+      user.value = response.user
+      loginWorkspace.value = response.workspace || null
+      localStorage.setItem('auth_token', response.token)
+      localStorage.setItem('user', JSON.stringify(response.user))
+      if (response.workspace) localStorage.setItem('login_workspace', JSON.stringify(response.workspace))
+      return response
+    } catch (err: unknown) {
+      error.value = (err as Error).message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const logout = async () => {
     try {
       await authApi.logout()
@@ -87,6 +110,8 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user')
+      localStorage.removeItem('login_workspace')
+      loginWorkspace.value = null
     }
   }
 
@@ -129,6 +154,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user,
+    loginWorkspace,
     token,
     loading,
     error,
@@ -136,6 +162,7 @@ export const useAuthStore = defineStore('auth', () => {
     initializeAuth,
     register,
     login,
+    managedLogin,
     logout,
     getProfile,
     updateProfile
