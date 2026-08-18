@@ -226,6 +226,19 @@ describe('QuickEntryWidget cache refresh', () => {
     expect(textarea.attributes('rows')).toBe('4')
   })
 
+  it('hides custom creation date for a quiz form', async () => {
+    const quizForm = {...forms[0], is_quiz: true} as Form
+    vi.mocked(formsApi.list).mockResolvedValue({forms: [quizForm], total: 1, limit: 10, offset: 0})
+    vi.mocked(formsApi.get).mockResolvedValue(quizForm)
+
+    const wrapper = mountWidget()
+    await flushPromises()
+    await selectForm(wrapper, 'form-1')
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Указать дату и время создания')
+  })
+
   it('shows the neighboring form names on navigation buttons', async () => {
     const wrapper = mountWidget()
     await flushPromises()

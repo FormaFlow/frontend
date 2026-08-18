@@ -142,7 +142,7 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div v-if="!selectedForm?.is_quiz" class="form-group">
           <label for="entry-created-at" class="form-label">{{ $t('entries.created_at') }}</label>
           <input
               id="entry-created-at"
@@ -430,9 +430,9 @@ const handleSubmit = async () => {
     const entry = await createEntry({
       form_id: selectedFormId.value,
       data: filteredData,
-      tags: tags.value,
+      tags: selectedForm.value?.is_quiz ? undefined : tags.value,
       duration: selectedForm.value?.is_quiz ? duration.value : undefined,
-      created_at: toIsoDateTime(createdAt.value),
+      created_at: selectedForm.value?.is_quiz ? undefined : toIsoDateTime(createdAt.value),
     })
 
     if (!entry) {

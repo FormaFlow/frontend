@@ -197,6 +197,22 @@ test.beforeEach(async ({ page }) => {
       return
     }
 
+    if (url.pathname === '/api/v1/entries/entry-quiz') {
+      await route.fulfill({
+        status: 200,
+        headers,
+        json: {
+          id: 'entry-quiz',
+          form_id: 'form-quiz',
+          data: {},
+          tags: ['legacy-tag'],
+          created_at: '2026-08-10T10:00:00+00:00',
+          updated_at: '2026-08-10T10:00:00+00:00'
+        }
+      })
+      return
+    }
+
     if (url.pathname === '/api/v1/forms') {
       await route.fulfill({
         status: 200,
@@ -317,6 +333,42 @@ test('entry editor preserves multiline textarea values', async ({page}) => {
   const textarea = page.getByLabel('Long notes')
   await expect(textarea).toHaveJSProperty('tagName', 'TEXTAREA')
   await expect(textarea).toHaveValue('First line\nSecond line')
+})
+
+test('legacy quiz create and edit hide tags and creation date', async ({page}) => {
+  let createPayload: Record<string, unknown> | undefined
+  let updatePayload: Record<string, unknown> | undefined
+  page.on('request', request => {
+    const path = new URL(request.url()).pathname
+    if (request.method() === 'POST' && path === '/api/v1/entries') {
+      createPayload = request.postDataJSON()
+    }
+    if (request.method() === 'PATCH' && path === '/api/v1/entries/entry-quiz') {
+      updatePayload = request.postDataJSON()
+    }
+  })
+
+  await page.goto('/entries/create?form_id=form-quiz')
+  await expect(page.getByRole('heading', {name: 'Создать запись'})).toBeVisible()
+  await expect(page.getByText('Теги', {exact: true})).toBeHidden()
+  await expect(page.getByLabel('Дата и время создания')).toBeHidden()
+  await page.getByRole('button', {name: 'Создать', exact: true}).click()
+  await expect.poll(() => createPayload).toBeDefined()
+  expect(createPayload).not.toHaveProperty('tags')
+  expect(createPayload).not.toHaveProperty('created_at')
+
+  await page.goto('/entries/entry-quiz/edit')
+  await expect(page.getByRole('heading', {name: 'Редактировать запись'})).toBeVisible()
+  await expect(page.getByText('Теги', {exact: true})).toBeHidden()
+  await expect(page.getByLabel('Дата и время создания')).toBeHidden()
+  await page.getByRole('button', {name: 'Сохранить', exact: true}).click()
+  await expect.poll(() => updatePayload).toBeDefined()
+  expect(updatePayload).not.toHaveProperty('tags')
+  expect(updatePayload).not.toHaveProperty('created_at')
+
+  await page.goto('/entries/create?form_id=form-1')
+  await expect(page.getByText('Теги', {exact: true})).toBeVisible()
+  await expect(page.getByLabel('Дата и время создания')).toBeVisible()
 })
 
 test('mobile notification has equal side margins', async ({ page }, testInfo) => {
