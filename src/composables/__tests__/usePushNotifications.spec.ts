@@ -67,4 +67,18 @@ describe('usePushNotifications', () => {
     expect(subscription.unsubscribe).toHaveBeenCalled()
     expect(notifications.enabled.value).toBe(false)
   })
+
+  it('rebinds an existing browser subscription to the currently authenticated user', async () => {
+    pushManager.getSubscription.mockResolvedValue(subscription)
+    const notifications = usePushNotifications()
+
+    await notifications.refresh()
+
+    expect(pushApi.subscribe).toHaveBeenCalledWith({
+      endpoint: subscription.endpoint,
+      keys: { p256dh: 'public-key', auth: 'auth-token' },
+      content_encoding: 'aes128gcm'
+    })
+    expect(notifications.enabled.value).toBe(true)
+  })
 })

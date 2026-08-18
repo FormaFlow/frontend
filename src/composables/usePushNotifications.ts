@@ -22,6 +22,22 @@ async function getRegistration(): Promise<ServiceWorkerRegistration> {
   return navigator.serviceWorker.ready
 }
 
+async function persistSubscription(subscription: PushSubscription): Promise<void> {
+  const serialized = subscription.toJSON()
+  if (!serialized.endpoint || !serialized.keys?.p256dh || !serialized.keys?.auth) {
+    throw new Error('The browser returned an incomplete push subscription.')
+  }
+
+  await pushApi.subscribe({
+    endpoint: serialized.endpoint,
+    keys: {
+      p256dh: serialized.keys.p256dh,
+      auth: serialized.keys.auth
+    },
+    content_encoding: 'aes128gcm'
+  })
+}
+
 export function usePushNotifications() {
   const supported = computed(() =>
     typeof window !== 'undefined'
@@ -37,7 +53,9 @@ export function usePushNotifications() {
     }
 
     const registration = await getRegistration()
-    enabled.value = await registration.pushManager.getSubscription() !== null
+    const subscription = await registration.pushManager.getSubscription()
+    if (subscription) await persistSubscription(subscription)
+    enabled.value = subscription !== null
   }
 
   const enable = async () => {
@@ -61,19 +79,7 @@ export function usePushNotifications() {
         userVisibleOnly: true,
         applicationServerKey: decodeVapidPublicKey((await pushApi.config()).public_key)
       })
-      const serialized = subscription.toJSON()
-      if (!serialized.endpoint || !serialized.keys?.p256dh || !serialized.keys?.auth) {
-        throw new Error('The browser returned an incomplete push subscription.')
-      }
-
-      await pushApi.subscribe({
-        endpoint: serialized.endpoint,
-        keys: {
-          p256dh: serialized.keys.p256dh,
-          auth: serialized.keys.auth
-        },
-        content_encoding: 'aes128gcm'
-      })
+      await persistSubscription(subscription)
       enabled.value = true
     } catch (exception) {
       error.value = exception instanceof Error ? exception.message : String(exception)
