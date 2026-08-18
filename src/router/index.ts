@@ -1,5 +1,6 @@
 import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
+import {useWorkspaceStore} from '@/stores/workspace'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -48,31 +49,31 @@ const routes: RouteRecordRaw[] = [
     path: '/admin',
     name: 'learning-admin',
     component: () => import('@/views/admin/AdminDashboardView.vue'),
-    meta: {requiresAuth: true}
+    meta: {requiresAuth: true, requiresManager: true}
   },
   {
     path: '/admin/learners',
     name: 'admin-learners',
     component: () => import('@/views/admin/LearnersView.vue'),
-    meta: {requiresAuth: true}
+    meta: {requiresAuth: true, requiresManager: true}
   },
   {
     path: '/admin/content',
     name: 'admin-content',
     component: () => import('@/views/admin/ContentView.vue'),
-    meta: {requiresAuth: true}
+    meta: {requiresAuth: true, requiresManager: true}
   },
   {
     path: '/admin/content/:assessmentId',
     name: 'admin-assessment-editor',
     component: () => import('@/views/admin/AssessmentEditorView.vue'),
-    meta: {requiresAuth: true}
+    meta: {requiresAuth: true, requiresManager: true}
   },
   {
     path: '/admin/assignments',
     name: 'admin-assignments',
     component: () => import('@/views/admin/AssignmentsView.vue'),
-    meta: {requiresAuth: true}
+    meta: {requiresAuth: true, requiresManager: true}
   },
   {
     path: '/reports',
@@ -158,7 +159,7 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
   console.log('Navigation guard:', {
@@ -173,6 +174,15 @@ router.beforeEach((to, from, next) => {
     next({name: 'login', query: {redirect: to.fullPath}})
   } else if ((to.name === 'login' || to.name === 'register') && authStore.isAuthenticated) {
     next({name: 'dashboard'})
+  } else if (to.meta.requiresManager) {
+    try {
+      const workspaceStore = useWorkspaceStore()
+      await workspaceStore.load()
+      if (workspaceStore.isManager) next()
+      else next({name: 'dashboard'})
+    } catch {
+      next({name: 'dashboard'})
+    }
   } else {
     next()
   }
