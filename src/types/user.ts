@@ -41,6 +41,6 @@ export interface Workspace {
   slug: string
   type: string
   timezone: string
-  role: 'owner' | 'admin' | 'learner' | 'member'
+  role: 'owner' | 'admin' | 'guardian' | 'learner' | 'member'
   modules?: Record<string, boolean>
 }

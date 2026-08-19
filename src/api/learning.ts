@@ -13,10 +13,12 @@ import type {
 
 export const workspaceApi = {
   list: () => client.get<{workspaces: WorkspaceSummary[]}>('workspaces'),
-  learners: (workspaceId: string) => client.get<{learners: Array<{id: string; name: string; login: string; target_grade: number; timezone: string}>}>(`workspaces/${workspaceId}/learners`),
+  learners: (workspaceId: string) => client.get<{learners: Array<{id: string; name: string; login: string | null; target_grade: number; timezone: string}>}>(`workspaces/${workspaceId}/learners`),
   createLearner: (workspaceId: string, data: {name: string; login: string; pin: string; target_grade: number}) =>
     client.post(`workspaces/${workspaceId}/learners`, data),
-  invite: (workspaceId: string, data: {email: string; role: 'admin' | 'member'}) =>
+  saveLearnerCredentials: (workspaceId: string, learnerId: string, data: {login: string; pin: string}) =>
+    client.put<{credentials: {login: string}}>(`workspaces/${workspaceId}/learners/${learnerId}/credentials`, data),
+  invite: (workspaceId: string, data: {email: string; role: 'admin' | 'guardian'}) =>
     client.post<{accept_url: string}>(`workspaces/${workspaceId}/invitations`, data),
   acceptInvitation: (token: string) => client.post<{workspace_id: string; role: string}>('workspaces/invitations/accept', {token}),
   updateModule: (workspaceId: string, module: string, enabled: boolean) => client.patch<{module: {key: string; enabled: boolean}}>(`workspaces/${workspaceId}/modules/${module}`, {enabled})

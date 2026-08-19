@@ -9,6 +9,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const workspaces = ref<WorkspaceSummary[]>([])
   const loading = ref(false)
   const isManager = computed(() => ['owner', 'admin'].includes(current.value?.role || ''))
+  const isGuardian = computed(() => current.value?.role === 'guardian')
+  const canViewLearning = computed(() => isManager.value || isGuardian.value)
   const isLearner = computed(() => current.value?.role === 'learner')
 
   async function load() {
@@ -37,5 +39,5 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     localStorage.setItem('workspace_id', workspace.id)
   }
 
-  return {current, workspaces, loading, isManager, isLearner, load, select}
+  return {current, workspaces, loading, isManager, isGuardian, canViewLearning, isLearner, load, select}
 })

@@ -43,4 +43,17 @@ describe('manager route guard', () => {
 
     expect(router.currentRoute.value.name).toBe('learning-admin')
   })
+
+  it('allows a guardian to view progress but blocks management pages', async () => {
+    useWorkspaceStore().current = {
+      id: 'workspace-1', name: 'Семья', slug: 'family', role: 'guardian',
+      timezone: 'Europe/Moscow', modules: {learning: true}
+    }
+
+    await router.push('/admin')
+    expect(router.currentRoute.value.name).toBe('learning-admin')
+
+    await router.push('/admin/learners')
+    expect(router.currentRoute.value.name).toBe('dashboard')
+  })
 })

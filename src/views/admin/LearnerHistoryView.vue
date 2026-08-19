@@ -7,7 +7,7 @@
         <h1 class="mt-2 text-3xl font-black">{{ learner?.name || 'Ученик' }}</h1>
         <p class="mt-2 text-gray-500 dark:text-gray-300">Здесь видны все назначения и каждая попытка. Завершённый тест можно открыть для пересдачи без потери истории.</p>
       </div>
-      <router-link to="/admin/assignments" class="btn-primary">Назначить ещё</router-link>
+      <router-link v-if="workspace.isManager" to="/admin/assignments" class="btn-primary">Назначить ещё</router-link>
     </header>
 
     <p v-if="message" class="rounded-2xl bg-green-50 p-4 font-bold text-green-800 dark:bg-green-950/50 dark:text-green-100">{{ message }}</p>
@@ -15,7 +15,7 @@
     <div v-if="loading" class="card text-center">Загружаю историю…</div>
     <div v-else-if="!assignments.length" class="empty-learning">
       <div class="text-5xl">🗓️</div><h2 class="mt-3 text-xl font-black">Назначений пока нет</h2>
-      <router-link to="/admin/assignments" class="btn-primary mt-5 inline-block">Назначить тест</router-link>
+      <router-link v-if="workspace.isManager" to="/admin/assignments" class="btn-primary mt-5 inline-block">Назначить тест</router-link>
     </div>
 
     <section v-else class="space-y-5">
@@ -25,7 +25,7 @@
           <span class="badge" :class="statusClass(assignment.status)">{{ statusName(assignment.status) }}</span>
         </div>
 
-        <div class="mt-5 rounded-2xl bg-gray-50 p-4 dark:bg-gray-900/50">
+        <div v-if="workspace.isManager" class="mt-5 rounded-2xl bg-gray-50 p-4 dark:bg-gray-900/50">
           <p class="mb-3 text-sm font-black">Редактировать назначение</p>
           <div class="grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
             <label><span class="form-label">Ученик</span><select v-model="edits[assignment.id].learner_user_id" class="form-select" :disabled="assignment.attempts.length > 0"><option v-for="item in learners" :key="item.id" :value="item.id">{{ item.name }}</option></select></label>
@@ -47,7 +47,7 @@
           <p v-else class="mt-2 text-sm text-gray-500 dark:text-gray-300">Ученик ещё не открывал этот тест.</p>
         </div>
 
-        <div class="mt-5 flex flex-wrap gap-3 border-t border-gray-200 pt-5 dark:border-gray-700">
+        <div v-if="workspace.isManager" class="mt-5 flex flex-wrap gap-3 border-t border-gray-200 pt-5 dark:border-gray-700">
           <button v-if="assignment.status === 'completed'" class="btn-primary" :disabled="busy === assignment.id" @click="reopen(assignment)">Назначить пересдачу</button>
           <button v-if="assignment.attempts.length === 0" class="btn-danger" :disabled="busy === assignment.id" @click="remove(assignment)">Удалить назначение</button>
         </div>
@@ -85,7 +85,9 @@ async function load() {
   loading.value = true
   try {
     const [summary, learnerList, timeline] = await Promise.all([
-      learningApi.progress(current.id), workspaceApi.learners(current.id), learningApi.timeline(current.id, learnerId.value)
+      learningApi.progress(current.id),
+      workspace.isManager ? workspaceApi.learners(current.id) : Promise.resolve({learners: []}),
+      learningApi.timeline(current.id, learnerId.value)
     ])
     progress.value = summary.learners
     learners.value = learnerList.learners

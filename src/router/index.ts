@@ -49,7 +49,7 @@ const routes: RouteRecordRaw[] = [
     path: '/admin',
     name: 'learning-admin',
     component: () => import('@/views/admin/AdminDashboardView.vue'),
-    meta: {requiresAuth: true, requiresManager: true}
+    meta: {requiresAuth: true, requiresLearningViewer: true}
   },
   {
     path: '/admin/learners',
@@ -61,7 +61,7 @@ const routes: RouteRecordRaw[] = [
     path: '/admin/learners/:learnerId/history',
     name: 'admin-learner-history',
     component: () => import('@/views/admin/LearnerHistoryView.vue'),
-    meta: {requiresAuth: true, requiresManager: true}
+    meta: {requiresAuth: true, requiresLearningViewer: true}
   },
   {
     path: '/admin/content',
@@ -180,11 +180,12 @@ router.beforeEach(async (to, from, next) => {
     next({name: 'login', query: {redirect: to.fullPath}})
   } else if ((to.name === 'login' || to.name === 'register') && authStore.isAuthenticated) {
     next({name: 'dashboard'})
-  } else if (to.meta.requiresManager) {
+  } else if (to.meta.requiresManager || to.meta.requiresLearningViewer) {
     try {
       const workspaceStore = useWorkspaceStore()
       await workspaceStore.load()
-      if (workspaceStore.isManager) next()
+      const allowed = to.meta.requiresManager ? workspaceStore.isManager : workspaceStore.canViewLearning
+      if (allowed) next()
       else next({name: 'dashboard'})
     } catch {
       next({name: 'dashboard'})

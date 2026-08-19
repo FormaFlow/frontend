@@ -2,7 +2,7 @@ export interface WorkspaceSummary {
   id: string
   name: string
   slug: string
-  role: 'owner' | 'admin' | 'learner' | 'member'
+  role: 'owner' | 'admin' | 'guardian' | 'learner' | 'member'
   timezone: string
   modules: Record<string, boolean>
 }
@@ -90,7 +90,7 @@ export interface ReviewFeedback {
 export interface LearnerProgress {
   id: string
   name: string
-  login: string
+  login: string | null
   target_grade: number
   assignments: {total: number; completed: number; overdue: number}
   attempts_completed: number

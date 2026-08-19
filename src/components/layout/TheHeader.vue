@@ -2,10 +2,24 @@
   <header class="sticky top-0 z-40 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 items-center justify-between">
-        <router-link to="/" class="flex items-center gap-2 text-lg font-bold text-primary-500">
-          <img src="/icons/forma-school-icon-192-v2.png" alt="" class="h-8 w-8 rounded-lg">
-          Forma Школа
-        </router-link>
+        <div class="flex min-w-0 items-center gap-2">
+          <router-link
+              :to="brandLink"
+              data-testid="header-brand"
+              class="flex min-w-0 items-center gap-2 text-lg font-bold text-primary-500"
+          >
+            <img :src="brandIcon" alt="" class="h-8 w-8 shrink-0 rounded-lg">
+            <span class="truncate">{{ brandName }}</span>
+          </router-link>
+          <router-link
+              v-if="workspaceStore.canViewLearning && !workspaceStore.isLearner"
+              :to="isAdminRoute ? '/' : '/admin'"
+              data-testid="workspace-mode-switch"
+              class="shrink-0 rounded-lg border border-primary-200 px-2.5 py-1 text-xs font-bold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/50"
+          >
+            {{ isAdminRoute ? 'На сайт' : (workspaceStore.isGuardian ? 'Прогресс' : 'Админ') }}
+          </router-link>
+        </div>
 
         <button
             type="button"
@@ -37,14 +51,6 @@
             @click="showMenu = false"
         >
           Мой план
-        </router-link>
-        <router-link
-            v-if="workspaceStore.isManager"
-            to="/admin"
-            class="mx-2 my-2 block rounded-lg bg-red-50 px-3 py-2 font-bold text-red-700 transition hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/60"
-            @click="showMenu = false"
-        >
-          Админ
         </router-link>
         <template v-if="!workspaceStore.isLearner">
         <router-link
@@ -126,7 +132,7 @@
 
 <script setup lang="ts">
 import {computed, onMounted, ref} from 'vue'
-import {useRouter} from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
 import {useI18n} from 'vue-i18n'
 import {useAuthStore} from '@/stores/auth'
 import {useTheme} from '@/composables/useTheme'
@@ -135,6 +141,7 @@ import {useNotification} from '@/composables/useNotification'
 import {useWorkspaceStore} from '@/stores/workspace'
 
 const router = useRouter()
+const route = useRoute()
 const {locale, t} = useI18n()
 const {setTheme, theme} = useTheme()
 const authStore = useAuthStore()
@@ -148,6 +155,11 @@ onMounted(() => {
 const showMenu = ref(false)
 const user = computed(() => authStore.user)
 const currentLocale = computed(() => locale.value)
+const isAdminRoute = computed(() => route.path.startsWith('/admin'))
+const isSchoolMode = computed(() => workspaceStore.isLearner || route.path.startsWith('/learn'))
+const brandName = computed(() => isAdminRoute.value ? 'Forma Админ' : isSchoolMode.value ? 'Forma Школа' : 'FormaFlow')
+const brandLink = computed(() => isAdminRoute.value ? '/admin' : isSchoolMode.value ? '/learn' : '/')
+const brandIcon = computed(() => isSchoolMode.value ? '/icons/forma-school-icon-192-v2.png' : '/icons/icon-192.png')
 
 const toggleTheme = () => {
   const themes: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system']
