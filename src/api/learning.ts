@@ -47,7 +47,7 @@ export const learningApi = {
   library: (workspaceId: string) => client.get<{packs: Array<{id: string; title: string; description: string; questions: number; target_grade: number}>}>(`workspaces/${workspaceId}/learning/library`),
   installPack: (workspaceId: string, packId: string) => client.post(`workspaces/${workspaceId}/learning/library/${packId}/install`),
   assign: (workspaceId: string, data: {assessment_id: string; learner_user_id: string; due_at?: string}) =>
-    client.post(`workspaces/${workspaceId}/learning/assignments`, data),
+    client.post<{assignment: {id: string}; notification_sent: boolean}>(`workspaces/${workspaceId}/learning/assignments`, data),
   updateAssignment: (workspaceId: string, assignmentId: string, data: {due_at?: string | null; learner_user_id?: string}) =>
     client.patch(`workspaces/${workspaceId}/learning/assignments/${assignmentId}`, data),
   deleteAssignment: (workspaceId: string, assignmentId: string) =>

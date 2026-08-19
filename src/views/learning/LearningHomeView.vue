@@ -12,6 +12,7 @@
         <div class="hero-stat"><strong>{{ today?.reviews_due || 0 }}</strong><span>повторить</span></div>
       </div>
     </section>
+    <PushNotificationPrompt audience="learner" />
 
     <div v-if="loading" class="card text-center">Загружаю твой план…</div>
     <template v-else>
@@ -42,6 +43,7 @@ import {learningApi} from '@/api/learning'
 import {useAuthStore} from '@/stores/auth'
 import {useWorkspaceStore} from '@/stores/workspace'
 import type {TodayPayload} from '@/types/learning'
+import PushNotificationPrompt from '@/components/learning/PushNotificationPrompt.vue'
 
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()

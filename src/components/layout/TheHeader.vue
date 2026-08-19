@@ -2,7 +2,7 @@
   <header class="sticky top-0 z-40 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 items-center justify-between">
-        <router-link :to="workspaceStore.isLearner ? '/learn' : (workspaceStore.isManager ? '/admin' : '/')" class="flex items-center gap-2 text-lg font-bold text-primary-500">
+        <router-link to="/" class="flex items-center gap-2 text-lg font-bold text-primary-500">
           <img src="/icons/forma-school-icon-192-v2.png" alt="" class="h-8 w-8 rounded-lg">
           Forma Школа
         </router-link>
@@ -41,10 +41,10 @@
         <router-link
             v-if="workspaceStore.isManager"
             to="/admin"
-            class="block px-2 py-3 font-bold text-primary-600"
+            class="mx-2 my-2 block rounded-lg bg-red-50 px-3 py-2 font-bold text-red-700 transition hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/60"
             @click="showMenu = false"
         >
-          Учебная админка
+          Админ
         </router-link>
         <template v-if="!workspaceStore.isLearner">
         <router-link
@@ -72,11 +72,6 @@
         >
           {{ $t('quizzes.title') }}
         </router-link>
-        <div class="flex items-center justify-between px-2 py-3 text-gray-400 dark:text-gray-500">
-          <span aria-disabled="true">{{ $t('payments.title') }}</span>
-          <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-700">{{ $t('common.soon') }}</span>
-        </div>
-
         <div class="my-2 border-t border-gray-200 dark:border-gray-700"></div>
 
         <button

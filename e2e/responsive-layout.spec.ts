@@ -440,8 +440,8 @@ test('quiz library keeps an opened quiz and its draft available offline', async 
   await page.getByRole('button', {name: 'Открыть навигацию'}).click()
   const navigation = page.getByRole('navigation', {name: 'Основная навигация'})
   await expect(navigation.getByRole('link', {name: 'Викторины'})).toBeVisible()
-  await expect(navigation.getByText('Платежи')).toHaveAttribute('aria-disabled', 'true')
-  await expect(navigation.getByText('Скоро')).toBeVisible()
+  await expect(navigation.getByText('Платежи')).toHaveCount(0)
+  await expect(navigation.getByText('Скоро')).toHaveCount(0)
 })
 
 test('quick entry statistics are opt-in and remember each explicit choice', async ({page}) => {
