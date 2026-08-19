@@ -61,6 +61,32 @@ export interface AttemptResult {
   }>
 }
 
+export interface LearningAttemptHistory {
+  id: string
+  status: string
+  score: number | null
+  max_points: number
+  started_at: string
+  completed_at?: string | null
+}
+
+export interface LearningAssignmentHistory {
+  id: string
+  assessment_title: string
+  subject_code: string
+  status: 'assigned' | 'in_progress' | 'completed'
+  assigned_at: string
+  due_at?: string | null
+  completed_at?: string | null
+  attempts: LearningAttemptHistory[]
+}
+
+export interface ReviewFeedback {
+  is_correct: boolean
+  correct_answer: Record<string, unknown>
+  explanation?: string | null
+}
+
 export interface LearnerProgress {
   id: string
   name: string

@@ -6,9 +6,14 @@
     <section v-else class="question-card">
       <div class="mb-5 flex items-center justify-between"><span class="badge-warning badge">Этап {{ current.stage + 1 }}</span><span class="text-sm text-gray-500">Осталось: {{ reviews.length }}</span></div>
       <h2 class="text-2xl font-black"><MathText :text="current.question.prompt" /></h2>
-      <div class="mt-8"><QuestionInput v-model="answer" :question="current.question"/></div>
-      <button class="btn-primary mt-8 w-full py-3" :disabled="answer === undefined || submitting" @click="send">{{ submitting ? 'Проверяю…' : 'Ответить' }}</button>
-      <p v-if="feedback" class="mt-4 rounded-xl p-4 text-center font-bold" :class="feedback.correct ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-800'">{{ feedback.text }}</p>
+      <div v-if="!feedback" class="mt-8"><QuestionInput v-model="answer" :question="current.question"/></div>
+      <button v-if="!feedback" class="btn-primary mt-8 w-full py-3" :disabled="answer === undefined || submitting" @click="send">{{ submitting ? 'Проверяю…' : 'Ответить' }}</button>
+      <div v-else class="mt-6 rounded-2xl p-5" :class="feedback.correct ? 'bg-green-50 text-green-900 dark:bg-green-950/50 dark:text-green-100' : 'bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100'">
+        <p class="font-black">{{ feedback.correct ? 'Верно! Отличная работа.' : 'Пока не получилось — разберём ответ.' }}</p>
+        <p v-if="!feedback.correct" class="mt-3 text-sm"><span class="font-bold">Правильный ответ:</span> {{ formatAcceptedAnswers(feedback.correctAnswer, current.question.options) }}</p>
+        <p v-if="feedback.explanation" class="mt-3 text-sm leading-relaxed"><MathText :text="feedback.explanation" /></p>
+        <button class="btn-primary mt-5 w-full" @click="nextReview">Дальше</button>
+      </div>
     </section>
   </div>
 </template>
@@ -19,6 +24,7 @@ import {learningApi} from '@/api/learning'
 import {useWorkspaceStore} from '@/stores/workspace'
 import QuestionInput from '@/components/learning/QuestionInput.vue'
 import MathText from '@/components/learning/MathText.vue'
+import {formatAcceptedAnswers} from '@/utils/learningAnswers'
 import type {LearningQuestion} from '@/types/learning'
 
 type Review = {id: string; stage: number; question: LearningQuestion}
@@ -27,7 +33,7 @@ const reviews = ref<Review[]>([])
 const loading = ref(true)
 const submitting = ref(false)
 const answer = ref<unknown>()
-const feedback = ref<{correct: boolean; text: string} | null>(null)
+const feedback = ref<{correct: boolean; correctAnswer: Record<string, unknown>; explanation?: string | null} | null>(null)
 const current = computed(() => reviews.value[0])
 onMounted(async () => {
   const active = await workspace.load()
@@ -37,9 +43,10 @@ onMounted(async () => {
 async function send() {
   if (!workspace.current || !current.value) return
   submitting.value = true
-  const response = await learningApi.answerReview(workspace.current.id, current.value.id, answer.value, crypto.randomUUID()) as {review: {stage: number}}
-  const improved = response.review.stage > current.value.stage
-  feedback.value = {correct: improved, text: improved ? 'Верно! Интервал до следующего повтора увеличен.' : 'Пока не получилось — вернёмся к вопросу завтра.'}
-  setTimeout(() => { reviews.value.shift(); answer.value = undefined; feedback.value = null; submitting.value = false }, 900)
+  try {
+    const response = await learningApi.answerReview(workspace.current.id, current.value.id, answer.value, crypto.randomUUID())
+    feedback.value = {correct: response.feedback.is_correct, correctAnswer: response.feedback.correct_answer, explanation: response.feedback.explanation}
+  } finally { submitting.value = false }
 }
+function nextReview() { reviews.value.shift(); answer.value = undefined; feedback.value = null }
 </script>

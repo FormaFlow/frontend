@@ -4,7 +4,9 @@ import type {
   AttemptPayload,
   AttemptResult,
   LearnerProgress,
+  LearningAssignmentHistory,
   LearningQuestion,
+  ReviewFeedback,
   TodayPayload,
   WorkspaceSummary
 } from '@/types/learning'
@@ -30,7 +32,7 @@ export const learningApi = {
     }),
   dueReviews: (workspaceId: string) => client.get<{reviews: Array<{id: string; stage: number; question: LearningQuestion}>}>(`workspaces/${workspaceId}/learning/reviews/due`),
   answerReview: (workspaceId: string, reviewId: string, answer: unknown, idempotencyKey: string) =>
-    client.post(`workspaces/${workspaceId}/learning/reviews/${reviewId}/answer`, {answer, idempotency_key: idempotencyKey}),
+    client.post<{review: {stage: number; status: string}; feedback: ReviewFeedback}>(`workspaces/${workspaceId}/learning/reviews/${reviewId}/answer`, {answer, idempotency_key: idempotencyKey}),
   assessments: (workspaceId: string) => client.get<{assessments: AssessmentSummary[]}>(`workspaces/${workspaceId}/learning/assessments`),
   editor: (workspaceId: string, assessmentId: string) => client.get<{assessment: AssessmentSummary & {questions: LearningQuestion[]}}>(`workspaces/${workspaceId}/learning/assessments/${assessmentId}/editor`),
   updateQuestion: (workspaceId: string, assessmentId: string, questionId: string, data: Partial<LearningQuestion>) =>
@@ -46,8 +48,14 @@ export const learningApi = {
   installPack: (workspaceId: string, packId: string) => client.post(`workspaces/${workspaceId}/learning/library/${packId}/install`),
   assign: (workspaceId: string, data: {assessment_id: string; learner_user_id: string; due_at?: string}) =>
     client.post(`workspaces/${workspaceId}/learning/assignments`, data),
+  updateAssignment: (workspaceId: string, assignmentId: string, data: {due_at?: string | null; learner_user_id?: string}) =>
+    client.patch(`workspaces/${workspaceId}/learning/assignments/${assignmentId}`, data),
+  deleteAssignment: (workspaceId: string, assignmentId: string) =>
+    client.delete(`workspaces/${workspaceId}/learning/assignments/${assignmentId}`),
+  reopenAssignment: (workspaceId: string, assignmentId: string) =>
+    client.post(`workspaces/${workspaceId}/learning/assignments/${assignmentId}/reopen`),
   progress: (workspaceId: string) => client.get<{learners: LearnerProgress[]}>(`workspaces/${workspaceId}/learning/progress`),
-  timeline: (workspaceId: string, learnerId: string) => client.get<{attempts: Array<{id: string; assessment_title: string; subject_code: string; score: number; max_points: number; completed_at: string}>}>(`workspaces/${workspaceId}/learning/progress/${learnerId}`),
+  timeline: (workspaceId: string, learnerId: string) => client.get<{assignments: LearningAssignmentHistory[]; attempts: Array<{id: string; assessment_title: string; subject_code: string; score: number; max_points: number; completed_at: string}>}>(`workspaces/${workspaceId}/learning/progress/${learnerId}`),
   schedule: (workspaceId: string, learnerId: string) => client.get<{schedule: StudySchedule | null}>(`workspaces/${workspaceId}/learning/schedules/${learnerId}`),
   saveSchedule: (workspaceId: string, learnerId: string, data: Omit<StudySchedule, 'id' | 'learner_user_id' | 'guardian_user_id'>) =>
     client.put<{schedule: StudySchedule}>(`workspaces/${workspaceId}/learning/schedules/${learnerId}`, data),

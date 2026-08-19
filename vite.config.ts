@@ -12,27 +12,29 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/favicon.ico', 'icons/apple-touch-icon.png'],
+      includeAssets: ['icons/forma-school-favicon-v2.ico', 'icons/forma-school-apple-180-v2.png'],
       manifest: {
-        name: 'FormaFlow Learning',
-        short_name: 'FormaFlow',
+        id: '/?source=pwa-v2',
+        name: 'Forma Школа — учёба и тесты',
+        short_name: 'Forma Школа',
         description: 'Семейные учебные планы, тесты и работа над ошибками',
-        theme_color: '#18b8c6',
-        background_color: '#ffffff',
+        theme_color: '#07245b',
+        background_color: '#07245b',
         display: 'standalone',
         scope: '/',
         start_url: '/',
         icons: [
           {
-            src: '/icons/icon-192.png',
+            src: '/icons/forma-school-icon-192-v2.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: '/icons/icon-512.png',
+            src: '/icons/forma-school-icon-512-v2.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any'
+            purpose: 'any maskable'
           }
         ]
       },

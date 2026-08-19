@@ -57,6 +57,12 @@ const routes: RouteRecordRaw[] = [
     meta: {requiresAuth: true}
   },
   {
+    path: '/admin/learners/:learnerId/history',
+    name: 'admin-learner-history',
+    component: () => import('@/views/admin/LearnerHistoryView.vue'),
+    meta: {requiresAuth: true}
+  },
+  {
     path: '/admin/content',
     name: 'admin-content',
     component: () => import('@/views/admin/ContentView.vue'),

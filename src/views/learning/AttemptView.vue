@@ -30,13 +30,17 @@
       <article v-for="(question, index) in result.questions" :key="question.id" class="card border-l-4" :class="question.is_correct ? 'border-green-500' : 'border-red-400'">
         <p class="text-sm font-bold" :class="question.is_correct ? 'text-green-600' : 'text-red-600'">{{ question.is_correct ? 'Верно' : 'Нужно повторить' }} · вопрос {{ index + 1 }}</p>
         <h2 class="mt-2 font-bold"><MathText :text="question.prompt" /></h2>
+        <div class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+          <div class="rounded-xl bg-gray-50 p-3 dark:bg-gray-900/50"><p class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Твой ответ</p><p class="mt-1 font-bold">{{ formatLearningAnswer(question.answer, question.options) }}</p></div>
+          <div v-if="!question.is_correct" class="rounded-xl bg-green-50 p-3 text-green-900 dark:bg-green-950/50 dark:text-green-100"><p class="text-xs font-bold uppercase tracking-wide">Правильный ответ</p><p class="mt-1 font-black">{{ formatAcceptedAnswers(question.correct_answer, question.options) }}</p></div>
+        </div>
         <p v-if="!question.is_correct && question.explanation" class="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-100"><MathText :text="question.explanation" /></p>
         <div v-if="!question.is_correct && workspace.current?.modules?.tutor" class="mt-3">
-          <button class="text-sm font-bold text-primary-600" :disabled="tutorLoading === question.id" @click="askTutor(question.id)">{{ tutorLoading === question.id ? 'Думаю…' : '💬 Объяснить ещё проще' }}</button>
-          <div v-if="tutorAnswers[question.id]" class="mt-3 rounded-2xl border border-primary-100 bg-primary-50 p-4 text-sm text-primary-950"><p class="font-black">Учебный помощник</p><p class="mt-2 leading-relaxed">{{ tutorAnswers[question.id].answer }}</p><div class="mt-3 flex flex-wrap gap-2"><span v-for="suggestion in tutorAnswers[question.id].suggestions" :key="suggestion" class="rounded-full bg-white px-3 py-1 text-xs font-bold text-primary-700">{{ suggestion }}</span></div></div>
+          <button class="rounded-xl border border-primary-200 px-4 py-2 text-sm font-bold text-primary-700 dark:border-primary-700 dark:text-primary-200" :disabled="tutorLoading === question.id" @click="askTutor(question.id)">{{ tutorLoading === question.id ? 'Думаю…' : '💬 Объяснить ещё проще' }}</button>
+          <div v-if="tutorAnswers[question.id]" class="mt-3 rounded-2xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-900 dark:border-primary-700 dark:bg-primary-900/40 dark:text-primary-50"><div class="flex items-center justify-between gap-2"><p class="font-black">Учебный помощник</p><span v-if="tutorAnswers[question.id].provider === 'mock'" class="rounded-full bg-white px-2 py-1 text-[10px] font-bold text-primary-700 dark:bg-gray-800 dark:text-primary-100">Демо</span></div><p class="mt-2 leading-relaxed">{{ tutorAnswers[question.id].answer }}</p><div class="mt-3 flex flex-wrap gap-2"><span v-for="suggestion in tutorAnswers[question.id].suggestions" :key="suggestion" class="rounded-full bg-white px-3 py-1 text-xs font-bold text-primary-700 dark:bg-gray-800 dark:text-primary-100">{{ suggestion }}</span></div></div>
         </div>
       </article>
-      <div class="flex flex-col gap-3 sm:flex-row"><router-link to="/learn" class="btn-primary flex-1 text-center">Вернуться к плану</router-link><router-link v-if="wrongCount" to="/learn/review" class="btn-secondary flex-1 text-center">Разобрать ошибки ({{ wrongCount }})</router-link></div>
+      <div class="flex flex-col gap-3 sm:flex-row"><router-link v-if="wrongCount" to="/learn/review" class="btn-primary flex-1 text-center">Разобрать ошибки ({{ wrongCount }})</router-link><router-link to="/learn" :class="wrongCount ? 'btn-secondary' : 'btn-primary'" class="flex-1 text-center">Вернуться к плану</router-link></div>
     </section>
   </div>
 </template>
@@ -48,6 +52,7 @@ import {learningApi} from '@/api/learning'
 import {useWorkspaceStore} from '@/stores/workspace'
 import QuestionInput from '@/components/learning/QuestionInput.vue'
 import MathText from '@/components/learning/MathText.vue'
+import {formatAcceptedAnswers, formatLearningAnswer} from '@/utils/learningAnswers'
 import type {AttemptPayload, AttemptResult} from '@/types/learning'
 
 const route = useRoute()
@@ -59,7 +64,7 @@ const error = ref('')
 const attempt = ref<AttemptPayload | null>(null)
 const result = ref<AttemptResult | null>(null)
 const tutorLoading = ref('')
-const tutorAnswers = ref<Record<string, {answer: string; suggestions: string[]}>>({})
+const tutorAnswers = ref<Record<string, {answer: string; suggestions: string[]; provider: string}>>({})
 const answers = ref<Record<string, unknown>>({})
 const currentIndex = ref(0)
 const currentQuestion = computed(() => attempt.value!.assessment.questions[currentIndex.value])

@@ -3,7 +3,7 @@
       class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
     <div class="card m-4 w-full max-w-md">
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-primary-500">FormaFlow</h1>
+        <h1 class="text-3xl font-bold text-primary-500">Forma Школа</h1>
         <p class="text-gray-600 dark:text-gray-400 mt-2">Учёба без лишнего стресса</p>
       </div>
 
