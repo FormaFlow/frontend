@@ -18,6 +18,7 @@ export default defineConfig({
         name: 'Forma Школа — учёба и тесты',
         short_name: 'Forma Школа',
         description: 'Семейные учебные планы, тесты и работа над ошибками',
+        lang: 'ru',
         theme_color: '#07245b',
         background_color: '#07245b',
         display: 'standalone',
